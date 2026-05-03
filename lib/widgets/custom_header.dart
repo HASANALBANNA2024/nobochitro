@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/screens/search_screen.dart';
+import 'package:nobochitro/widgets/custom_search_bar.dart';
 
 class CustomHeader extends StatelessWidget {
   final Color primaryAccent;
   final VoidCallback onMenuPressed;
-
   final bool isLoggedIn = false;
 
   const CustomHeader({
@@ -16,166 +16,147 @@ class CustomHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isLargeScreen = screenWidth > 800;
+
+    // ব্রেকপয়েন্ট লজিক
+    final bool showSearchBar = screenWidth > 900;
+    final bool showLogoText = screenWidth > 600;
+    final bool isWebView = screenWidth > 1100;
 
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
-    return SafeArea(
-      bottom: false,
-      child: Container(
-        width: double.infinity, // ফুল উইডথ নিশ্চিত করে
-        padding: EdgeInsets.symmetric(
-            horizontal: isLargeScreen ? 32 : 16,
-            vertical: 12
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.05)),
         ),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(
-            bottom: BorderSide(color: colorScheme.onSurface.withOpacity(0.05)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          // প্যাডিং কমিয়ে দেওয়া হয়েছে যেন কন্টেন্ট একদম দুই প্রান্তে যেতে পারে
+          padding: EdgeInsets.symmetric(
+              horizontal: isWebView ? 12 : 8,
+              vertical: 12
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // ১. বাম পাশের অংশ: লোগো (এবং ওয়েবে মেনু ও টেক্সট)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isLargeScreen) ...[
-                  IconButton(
-                    padding: const EdgeInsets.only(right: 12),
-                    icon: const Icon(Icons.menu_rounded),
-                    onPressed: onMenuPressed,
-                  ),
-                  Image.asset(
-                    'assets/images/app_icon.png',
-                    height: 35,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'NoboChitro - নবচিত্র',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // ১. বাম পাশে লোগো সেকশন (একদম বামে থাকবে)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isWebView)
+                    IconButton(
+                      padding: const EdgeInsets.only(right: 4),
+                      icon: const Icon(Icons.menu_rounded),
+                      onPressed: onMenuPressed,
                     ),
-                  ),
-                ] else ...[
                   Image.asset(
                     'assets/images/app_icon.png',
-                    height: 28,
+                    height: showLogoText ? 35 : 28,
                     fit: BoxFit.contain,
                   ),
+                  if (showLogoText) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      'NoboChitro - নবচিত্র',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
-
-            // ২. মাঝখানের অংশ: ওয়েব সার্চ বার
-            if (isLargeScreen)
-              Expanded(
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: _buildSearchBar(context),
-                  ),
-                ),
               ),
 
-            // ৩. ডান পাশের অংশ: লগইন এবং সার্চ (মোবাইলের জন্য সাজানো)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // মোবাইলে সার্চ আইকনটি এখন লগইনের একদম কাছে থাকবে
-                if (!isLargeScreen) ...[
-                  const SizedBox(width: 4), // গ্যাপ কমানো হয়েছে
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(Icons.search_rounded, size: 24),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const SearchScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 5,),
+              // মাঝখানে Spacer লোগোকে বামে এবং বাকি সব কিছুকে ডানে ধাক্কা দিবে
+              const Spacer(),
+
+              // ২. ডান পাশের সেকশন (সার্চ বার এবং বাটন গ্রুপ - একদম ডানে থাকবে)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(width: 5),
+                  if (showSearchBar) ...[
+                    Container(
+                      // বড় স্ক্রিনে সার্চ বারকে আরও চওড়া (৫০০-৬০০ পিক্সেল) করা হয়েছে
+                      width: screenWidth * 0.45,
+                      constraints: const BoxConstraints(maxWidth: 600, minWidth: 250),
+                      child: CustomSearchBar(
+                        onSearch: (value) {
+                          // search logic
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                  ],
+
+                  // মোবাইল/ট্যাবলেটে সার্চ আইকন
+                  if (!showSearchBar) ...[
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.search_rounded, size: 24),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const SearchScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 15),
+                  ],
+
+                  // লগইন ও সাইনআপ বাটন
+                  _buildActionButtons(context, isWebView),
                 ],
-                isLoggedIn
-                    ? _buildLoggedInView(primaryAccent)
-                    : _buildLoggedOutView(context, primaryAccent, isLargeScreen),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildLoggedInView(Color primaryAccent) {
-    return Icon(Icons.account_circle, color: primaryAccent, size: 28);
-  }
-
-  Widget _buildLoggedOutView(BuildContext context, Color primaryAccent, bool isLargeScreen) {
+  Widget _buildActionButtons(BuildContext context, bool showSignUp) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         TextButton(
           onPressed: () {},
           style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             minimumSize: Size.zero,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: Text(
             'Login',
             style: TextStyle(
-                color: primaryAccent,
-                fontWeight: FontWeight.w600,
-                fontSize: isLargeScreen ? 14 : 13
+              color: primaryAccent,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
         ),
-        // Sign Up শুধুমাত্র ওয়েবে দেখাবে
-        if (isLargeScreen) ...[
-          const SizedBox(width: 8),
+        if (showSignUp) ...[
+          const SizedBox(width: 12),
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAccent,
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text(
               'Sign Up',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ],
-    );
-  }
-
-  Widget _buildSearchBar(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 45,
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
-      ),
-      child: const TextField(
-        decoration: InputDecoration(
-          hintText: 'Search photographers...',
-          hintStyle: TextStyle(fontSize: 14),
-          prefixIcon: Icon(Icons.search_rounded, size: 20),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 12),
-        ),
-      ),
     );
   }
 }
