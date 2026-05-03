@@ -8,6 +8,7 @@ import 'package:nobochitro/settings/settings_utils.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
 import 'package:nobochitro/widgets/custom_header.dart';
 import 'package:nobochitro/widgets/custom_side_navigation.dart';
+import 'package:nobochitro/photographer_section/photographer_section.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(bool) onThemeChanged;
@@ -120,9 +121,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 20),
                   PhotographyPackages(primaryAccent: primaryAccent),
                   const SizedBox(height: 20),
-                  const CommunityGallery(),
+                  PhotographerSection(primaryAccent: primaryAccent),
+                  const SizedBox(height: 20,),
+                  CommunityGallery(primaryAccent: primaryAccent),
                   const SizedBox(height: 20),
-                  ResponsiveReviewList(),
+                  ResponsiveReviewList(primaryAccent: primaryAccent),
                   const SizedBox(height: 20),
                 ],
               ),
