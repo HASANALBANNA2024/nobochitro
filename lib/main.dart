@@ -1,5 +1,3 @@
-// lib/main.dart
-
 import 'package:flutter/material.dart';
 import 'package:nobochitro/widgets/app_theme.dart'; // Make sure your app name matches here
 import 'package:nobochitro/screens/dashboard_screen.dart';
@@ -16,8 +14,7 @@ class PhotographyApp extends StatefulWidget {
 }
 
 class _PhotographyAppState extends State<PhotographyApp> {
-  // To manually test, change this to ThemeMode.light or ThemeMode.dark
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.dark; // ডিফল্ট লাইট মোড
 
   void toggleTheme(bool isOn) {
     setState(() {
@@ -29,14 +26,12 @@ class _PhotographyAppState extends State<PhotographyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Nobochitro',
-      // Light Theme
-      theme: AppTheme.lightTheme,
-      // Dark Theme
-      darkTheme: AppTheme.darkTheme,
-      // System Theme flow
+      theme: ThemeData(brightness: Brightness.light, primaryColor: Colors.teal),
+      darkTheme: ThemeData(brightness: Brightness.dark, primaryColor: const Color(0xFFD4AF37)),
       themeMode: _themeMode,
       debugShowCheckedModeBanner: false,
-      home: const DashboardScreen(),
+      // toggleTheme ফাংশনটি ড্যাশবোর্ডে পাস করা হলো
+      home: DashboardScreen(onThemeChanged: toggleTheme),
     );
   }
 }
