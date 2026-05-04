@@ -272,7 +272,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                       'View Profile',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Colors.blueGrey,
                       ),
                     ),
                   ),

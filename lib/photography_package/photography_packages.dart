@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:nobochitro/photography_package/package_details_screen.dart';
 
 class PackageModel {
   final String title;
@@ -18,10 +20,7 @@ class PackageModel {
 class PhotographyPackages extends StatefulWidget {
   final Color primaryAccent;
 
-  const PhotographyPackages({
-    super.key,
-    required this.primaryAccent,
-  });
+  const PhotographyPackages({super.key, required this.primaryAccent});
 
   @override
   State<PhotographyPackages> createState() => _PhotographyPackagesState();
@@ -35,71 +34,92 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
   final List<PackageModel> packages = [
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),  PackageModel(
-      title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
     PackageModel(
       title: "Cinematic Wedding",
-      subtitle: "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
       price: "\$499",
-      imageUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
     ),
-
-
+    PackageModel(
+      title: "Cinematic Wedding",
+      subtitle:
+          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
+      price: "\$499",
+      imageUrl:
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
+    ),
   ];
 
   @override
@@ -139,12 +159,18 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
     final theme = Theme.of(context);
     final double screenWidth = MediaQuery.of(context).size.width;
 
-    // fraction এমনভাবে সেট করা হয়েছে যাতে দুই পাশে কার্ডের অংশ (কাটা পার্ট) দেখা যায়
-    // Web: 0.35 (মাঝে ১টি পূর্ণ, দুই পাশে দুটি কাটা), Tablet: 0.55, Mobile: 0.8
-    double fraction = screenWidth > 1200 ? 0.35 : (screenWidth > 800 ? 0.55 : 0.8);
+    // রেসপনসিভ ফ্র্যাকশন সেট করা
+    double fraction = screenWidth > 1200
+        ? 0.35
+        : (screenWidth > 800 ? 0.55 : 0.8);
 
+    // রেড লাইন বা এরর এড়ানোর জন্য এবং পেজ কন্ট্রোলার আপডেট করার সঠিক নিয়ম
     if (_pageController.viewportFraction != fraction) {
-      _pageController = PageController(viewportFraction: fraction, initialPage: _currentPage);
+      _pageController.dispose(); // আগের কন্ট্রোলার ডিসপোজ করা ভালো প্র্যাকটিস
+      _pageController = PageController(
+        viewportFraction: fraction,
+        initialPage: _currentPage,
+      );
     }
 
     return Column(
@@ -157,11 +183,18 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
             children: [
               Text(
                 'Exclusive Packages',
-                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               TextButton(
-                onPressed: () {},
-                child: Text('View All', style: TextStyle(color: widget.primaryAccent)),
+                onPressed: () {
+                  // View All এর অ্যাকশন এখানে দিতে পারেন
+                },
+                child: Text(
+                  'View All',
+                  style: TextStyle(color: widget.primaryAccent),
+                ),
               ),
             ],
           ),
@@ -173,30 +206,32 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
           child: PageView.builder(
             controller: _pageController,
             itemCount: packages.length,
-            // padEnds: true রাখলে প্রথম ও শেষ কার্ডের সময়ও দুই পাশে গ্যাপ/কাটা অংশ বজায় থাকে
-            padEnds: true,
+            // padEnds: false দিলে প্রথম কার্ডটি একদম বাম (Start) থেকে শুরু হবে
+            padEnds: false,
             physics: const BouncingScrollPhysics(),
             onPageChanged: (index) => _currentPage = index,
             itemBuilder: (context, index) {
               return AnimatedBuilder(
                 animation: _pageController,
                 builder: (context, child) {
-                  // স্লাইড করার সময় পাশের কার্ডগুলো সামান্য ছোট দেখাবে যা প্রিমিয়াম লুক দেয়
                   double value = 1.0;
+                  // স্লাইড অ্যানিমেশন লজিক
                   if (_pageController.position.hasContentDimensions) {
-                    value = _pageController.page! - index;
+                    value = (_pageController.page ?? 0) - index;
                     value = (1 - (value.abs() * 0.06)).clamp(0.0, 1.0);
                   }
                   return Center(
-                    child: Transform.scale(
-                      scale: value,
-                      child: child,
-                    ),
+                    child: Transform.scale(scale: value, child: child),
                   );
                 },
+                // এখানে context পাস করা হয়েছে যাতে এরর না আসে
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
                   child: _buildPackageCard(
+                    context, // context যোগ করা হয়েছে
                     packages[index],
                     theme.colorScheme,
                     theme.textTheme,
@@ -211,7 +246,13 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
     );
   }
 
-  Widget _buildPackageCard(PackageModel package, ColorScheme colorScheme, TextTheme textTheme, Color primaryAccent) {
+  Widget _buildPackageCard(
+    BuildContext context,
+    PackageModel package,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+    Color primaryAccent,
+  ) {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -226,73 +267,102 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Image.network(
-              package.imageUrl,
-              fit: BoxFit.cover,
-              width: double.infinity,
+      child: InkWell(
+        // পুরো কার্ডে ট্যাপ অপশন এবং রিপল ইফেক্টের জন্য
+        onTap: () {
+          // ১. কার্ডে ট্যাপ করলে ডিটেইলস স্ক্রিনে নিয়ে যাবে
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  PackageDetailsScreen(primaryAccent: primaryAccent),
             ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    package.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 5),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        package.subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textTheme.bodyMedium?.color?.withOpacity(0.7),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Image.network(
+                package.imageUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+              ),
+            ),
+            Expanded(
+              flex: 5,
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      package.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Text(
+                          package.subtitle,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textTheme.bodyMedium?.color?.withOpacity(
+                              0.7,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        package.price,
-                        style: TextStyle(
-                          color: primaryAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryAccent,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          package.price,
+                          style: TextStyle(
+                            color: primaryAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
                           ),
                         ),
-                        child: const Text('Book'),
-                      )
-                    ],
-                  )
-                ],
+                        ElevatedButton(
+                          onPressed: () {
+                            // ২. বুক বাটনে ক্লিক করলে সরাসরি বুকিং বা ডিটেইলসে নিতে পারেন
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PackageDetailsScreen(
+                                  primaryAccent: primaryAccent,
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryAccent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Book'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
