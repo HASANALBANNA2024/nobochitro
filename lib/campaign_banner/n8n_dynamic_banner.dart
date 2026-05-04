@@ -278,6 +278,29 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
                   ],
                 ),
               ),
+              // App Icon (এটি Stack এর সবার নিচে থাকবে যাতে অন্য কিছুর নিচে চাপা না পড়ে)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.all(4), // আইকনের চারপাশে হালকা প্যাডিং
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.2), // আইকনটি হাইলাইট করার জন্য হালকা ব্যাকগ্রাউন্ড
+                    shape: BoxShape.circle,
+                  ),
+                  child: Image.asset(
+                    'assets/images/app_icon.png',
+                    width: isWeb ? 40 : 28, // মোবাইল ভিউতে ছোট রাখা হয়েছে
+                    height: isWeb ? 40 : 28,
+                    fit: BoxFit.contain,
+                    errorBuilder: (c, e, s) => Icon(
+                      Icons.auto_awesome,
+                      color: const Color(0xFFFFD700), // গোল্ডেন কালার
+                      size: isWeb ? 30 : 20,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
