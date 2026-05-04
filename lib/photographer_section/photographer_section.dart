@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:nobochitro/photographer_section/photographer_profile_screen.dart';
 
 class PhotographerSection extends StatefulWidget {
   final Color primaryAccent;
@@ -15,11 +17,36 @@ class _PhotographerSectionState extends State<PhotographerSection> {
   Timer? _timer;
 
   final List<Map<String, String>> photographers = [
-    {'name': 'Hasan Al Banna', 'expert': 'Wedding Specialist', 'image': 'https://i.pravatar.cc/300?u=1', 'rating': '4.9'},
-    {'name': 'Sabbir Ahmed', 'expert': 'Portrait Expert', 'image': 'https://i.pravatar.cc/300?u=2', 'rating': '4.8'},
-    {'name': 'Tanvir Hossain', 'expert': 'Event Photographer', 'image': 'https://i.pravatar.cc/300?u=3', 'rating': '4.7'},
-    {'name': 'Rifat Khan', 'expert': 'Fashion & Model', 'image': 'https://i.pravatar.cc/300?u=4', 'rating': '5.0'},
-    {'name': 'Mehedi Hasan', 'expert': 'Cinematographer', 'image': 'https://i.pravatar.cc/300?u=5', 'rating': '4.9'},
+    {
+      'name': 'Hasan Al Banna',
+      'expert': 'Wedding Specialist',
+      'image': 'https://i.pravatar.cc/300?u=1',
+      'rating': '4.9',
+    },
+    {
+      'name': 'Sabbir Ahmed',
+      'expert': 'Portrait Expert',
+      'image': 'https://i.pravatar.cc/300?u=2',
+      'rating': '4.8',
+    },
+    {
+      'name': 'Tanvir Hossain',
+      'expert': 'Event Photographer',
+      'image': 'https://i.pravatar.cc/300?u=3',
+      'rating': '4.7',
+    },
+    {
+      'name': 'Rifat Khan',
+      'expert': 'Fashion & Model',
+      'image': 'https://i.pravatar.cc/300?u=4',
+      'rating': '5.0',
+    },
+    {
+      'name': 'Mehedi Hasan',
+      'expert': 'Cinematographer',
+      'image': 'https://i.pravatar.cc/300?u=5',
+      'rating': '4.9',
+    },
   ];
 
   @override
@@ -41,9 +68,17 @@ class _PhotographerSectionState extends State<PhotographerSection> {
         double delta = 300.0; // প্রতি ৩ সেকেন্ডে কতটুকু স্ক্রল হবে
 
         if (currentScroll >= maxScroll) {
-          _scrollController.animateTo(0, duration: const Duration(milliseconds: 1000), curve: Curves.easeOut);
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeOut,
+          );
         } else {
-          _scrollController.animateTo(currentScroll + delta, duration: const Duration(milliseconds: 1000), curve: Curves.easeInOut);
+          _scrollController.animateTo(
+            currentScroll + delta,
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOut,
+          );
         }
       }
     });
@@ -72,11 +107,16 @@ class _PhotographerSectionState extends State<PhotographerSection> {
             children: [
               Text(
                 'Meet Our Experts',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               TextButton(
                 onPressed: () {},
-                child: Text('See All', style: TextStyle(color: widget.primaryAccent)),
+                child: Text(
+                  'See All',
+                  style: TextStyle(color: widget.primaryAccent),
+                ),
               ),
             ],
           ),
@@ -107,7 +147,9 @@ class _PhotographerSectionState extends State<PhotographerSection> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.08)),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withOpacity(0.08),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +159,9 @@ class _PhotographerSectionState extends State<PhotographerSection> {
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: Image.network(
                     data['image']!,
                     width: double.infinity,
@@ -126,7 +170,13 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: theme.colorScheme.onSurface.withOpacity(0.05),
-                        child: const Center(child: Icon(Icons.person, size: 50, color: Colors.grey)),
+                        child: const Center(
+                          child: Icon(
+                            Icons.person,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -136,8 +186,15 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                   right: 10,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: widget.primaryAccent, shape: BoxShape.circle),
-                    child: const Icon(Icons.verified, color: Colors.white, size: 16),
+                    decoration: BoxDecoration(
+                      color: widget.primaryAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.verified,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
               ],
@@ -155,14 +212,24 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     Expanded(
                       child: Text(
                         data['name']!,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
-                        Text(data['rating']!, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
+                        Text(
+                          data['rating']!,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
                   ],
@@ -170,19 +237,44 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                 const SizedBox(height: 4),
                 Text(
                   data['expert']!,
-                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 13),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // call to profile section
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PhotographerProfileScreen(
+                            primaryAccent: Color(
+                              0xFF6200EE,
+                            ), // এখানে আপনার অ্যাপের মেইন কালারটি দিন
+                          ),
+                        ),
+                      );
+                    },
                     style: TextButton.styleFrom(
-                      backgroundColor: theme.colorScheme.onSurface.withOpacity(0.05),
+                      backgroundColor: theme.colorScheme.onSurface.withOpacity(
+                        0.05,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    child: const Text('View Profile', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text(
+                      'View Profile',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ],
