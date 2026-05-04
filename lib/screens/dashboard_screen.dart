@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/categories_grid/categories_grid.dart';
 import 'package:nobochitro/community_gallery/community_gallery.dart';
-import 'package:nobochitro/hero_banner/hero_banner.dart';
+import 'package:nobochitro/campaign_banner/n8n_dynamic_banner.dart';
 import 'package:nobochitro/photographer_section/photographer_section.dart';
 import 'package:nobochitro/photography_package/photography_packages.dart';
 import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
@@ -132,7 +132,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  HeroBanner(primaryAccent: primaryAccent),
+                  // n8n banner dart file call
+                  N8nDynamicBanner(
+                    primaryAccent: primaryAccent,
+                    onBookingClick: () {
+                      print("Booking session clicked!");
+                    },
+                  ),
                   const SizedBox(height: 20),
                   Text(
                     'Explore Categories',
