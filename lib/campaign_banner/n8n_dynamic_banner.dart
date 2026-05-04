@@ -131,11 +131,12 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     if (!_isCampaignActive) return HeroBanner(primaryAccent: widget.primaryAccent);
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isWeb = screenWidth > 800;
+    final bool isWeb = screenWidth > 600; // সাধারণত ৬০০ এর বেশি হলে আমরা ওয়েব/ট্যাবলেট ধরি
     final String currentDate = DateFormat('dd MMM, EEEE').format(DateTime.now());
 
     return AnimatedSwitcher(
@@ -143,31 +144,32 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
       child: Container(
         key: const ValueKey('dynamic_banner'),
         width: double.infinity,
+        // আপনার HeroBanner এর হাইট লজিক এখানে হুবহু বসানো হয়েছে
         constraints: BoxConstraints(
-          minHeight: isWeb ? 300 : 230,
-          maxHeight: isWeb ? 380 : 280,
+          minHeight: isWeb ? 280 : 200,
+          maxHeight: isWeb ? 350 : 250,
         ),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(20),
           image: DecorationImage(
             image: NetworkImage(_currentBanner.imageUrl),
             fit: BoxFit.cover,
-            alignment: Alignment.centerRight, // ছবিকে একটু ডানে রাখা হয়েছে যাতে টেক্সট ক্লিয়ার থাকে
+            alignment: Alignment.centerRight,
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // High-Contrast Gradient for clear readability
+              // Dark Gradient Overlay
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.black.withOpacity(0.9),
-                        Colors.black.withOpacity(0.4),
+                        Colors.black.withOpacity(0.85),
+                        Colors.black.withOpacity(0.3),
                         Colors.transparent
                       ],
                       begin: Alignment.centerLeft,
@@ -177,104 +179,100 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
                 ),
               ),
 
-              // App Icon
-              Positioned(
-                top: 15,
-                right: 15,
-                child: Image.asset(
-                  'assets/images/app_icon.png',
-                  width: 45,
-                  height: 45,
-                  errorBuilder: (c, e, s) => const Icon(Icons.star, color: Colors.amber),
-                ),
-              ),
-
-              // Main Information (Centered Vertically)
+              // Main Content Area
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20),
+                padding: EdgeInsets.all(isWeb ? 25.0 : 15.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center, // সবকিছু মাঝখানে রাখার জন্য
+                  mainAxisAlignment: MainAxisAlignment.center, // কন্টেন্ট মাঝখানে রাখার জন্য
                   children: [
-                    // Timer & Date
+                    // Timer & Date Row
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
                           child: Row(
                             children: [
                               ScaleTransition(
                                 scale: _pulseController,
-                                child: const Icon(Icons.circle, color: Colors.white, size: 7),
+                                child: const Icon(Icons.circle, color: Colors.white, size: 5),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 4),
                               Text(
                                 "LIVE: ${_formatTime(_secondsRemaining)}",
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: Colors.white, fontSize: isWeb ? 11 : 9, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Text(
-                          currentDate,
-                          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w600),
+                            currentDate,
+                            style: TextStyle(color: Colors.white70, fontSize: isWeb ? 11 : 9)
                         ),
                       ],
                     ),
-                    const SizedBox(height: 15),
 
-                    // Title (Bigger and Brighter)
+                    const Spacer(), // অটোমেটিক ব্যালেন্সড স্পেসিং
+
+                    // Title - ওয়েব এবং মোবাইলের জন্য আলাদা সাইজ
                     Text(
                       _currentBanner.title,
-                      style: const TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontSize: 28, // সাইজ বাড়ানো হয়েছে
-                        fontWeight: FontWeight.bold, // আরও বোল্ড করা হয়েছে
-                        letterSpacing: -0.5,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: const Color(0xFFFFD700),
+                        fontSize: isWeb ? 30 : 20, // মোবাইলে ২০, ওয়েবে ৩০
+                        fontWeight: FontWeight.w900,
+                        height: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 8),
 
-                    // Subtitle (Clear and White)
+                    // Subtitle
                     Text(
                       _currentBanner.subtitle,
-                      style: const TextStyle(
+                      maxLines: 1,
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: isWeb ? 18 : 14,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 12),
 
-                    // Information/Bullets (High Visibility)
-                    Text(
-                      _currentBanner.description,
-                      style: const TextStyle(
-                        color: Colors.white, // পিওর হোয়াইট করা হয়েছে
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 20), // বাটন এবং টেক্সটের মাঝে গ্যাপ
+                    const SizedBox(height: 6),
 
-                    // Book Now Button
-                    ElevatedButton(
-                      onPressed: widget.onBookingClick,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD4AF37),
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                      ),
+                    // Description - মোবাইল ভিউতে টেক্সট ছোট করা হয়েছে
+                    SizedBox(
+                      width: isWeb ? screenWidth * 0.4 : screenWidth * 0.55,
                       child: Text(
-                        _currentBanner.buttonText,
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                        _currentBanner.description,
+                        maxLines: 3,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: isWeb ? 14 : 10,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Button
+                    SizedBox(
+                      height: isWeb ? 40 : 32,
+                      child: ElevatedButton(
+                        onPressed: widget.onBookingClick,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD4AF37),
+                          foregroundColor: Colors.black,
+                          padding: EdgeInsets.symmetric(horizontal: isWeb ? 30 : 20),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(
+                          _currentBanner.buttonText,
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: isWeb ? 13 : 11),
+                        ),
                       ),
                     ),
                   ],
