@@ -13,7 +13,9 @@ class PackageDetailsScreen extends StatelessWidget {
     final cardColor = isDark ? const Color(0xFF252525) : Colors.white;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8F9FA),
+      backgroundColor: isDark
+          ? const Color(0xFF121212)
+          : const Color(0xFFF8F9FA),
       appBar: buildCustomAppBar(context, primaryAccent, "Package Details"),
       body: Center(
         child: Container(
@@ -52,7 +54,10 @@ class PackageDetailsScreen extends StatelessWidget {
                   "Booking & Customization",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const Text("Add-ons", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                const Text(
+                  "Add-ons",
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
                 const SizedBox(height: 15),
 
                 // Add ons
@@ -79,7 +84,9 @@ class PackageDetailsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         image: const DecorationImage(
-          image: NetworkImage("https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800"),
+          image: NetworkImage(
+            "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800",
+          ),
           fit: BoxFit.cover,
         ),
       ),
@@ -97,8 +104,22 @@ class PackageDetailsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Royal Wedding Package", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-            Text("৳95,000", style: TextStyle(color: accent, fontSize: 32, fontWeight: FontWeight.w900)),
+            const Text(
+              "Royal Wedding Package",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              "৳95,000",
+              style: TextStyle(
+                color: accent,
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ],
         ),
       ),
@@ -108,27 +129,49 @@ class PackageDetailsScreen extends StatelessWidget {
   // ---Check List (Pixel Perfect) ---
   Widget _buildDetailedChecklist(bool isDark, Color cardColor, Color accent) {
     final List<Map<String, dynamic>> items = [
-      {"icon": Icons.camera_alt_rounded, "label": "100+ High-Res Retouched Photos", "color": Colors.deepPurple},
-      {"icon": Icons.videocam_rounded, "label": "4K Video Highlights (5 mins)", "color": Colors.indigo},
-      {"icon": Icons.hourglass_bottom_rounded, "label": "8 Hours Coverage Album", "color": Colors.orange},
-      {"icon": Icons.calendar_month_rounded, "label": "Complimentary Pre-Wedding Session", "color": Colors.pink},
-      {"icon": Icons.menu_book_rounded, "label": "Premium Wedding Album", "color": Colors.red},
+      {
+        "icon": Icons.camera_alt_rounded,
+        "label": "100+ High-Res Retouched Photos",
+        "color": Colors.deepPurple,
+      },
+      {
+        "icon": Icons.videocam_rounded,
+        "label": "4K Video Highlights (5 mins)",
+        "color": Colors.indigo,
+      },
+      {
+        "icon": Icons.hourglass_bottom_rounded,
+        "label": "8 Hours Coverage Album",
+        "color": Colors.orange,
+      },
+      {
+        "icon": Icons.calendar_month_rounded,
+        "label": "Complimentary Pre-Wedding Session",
+        "color": Colors.pink,
+      },
+      {
+        "icon": Icons.menu_book_rounded,
+        "label": "Premium Wedding Album",
+        "color": Colors.red,
+      },
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // যদি স্ক্রিন উইডথ ৬০০ পিক্সেলের বেশি হয় (Web/Tablet), তবে ২ কলামে দেখাবে
+        // web and mobile
         bool isWideScreen = constraints.maxWidth > 600;
 
         return GridView.builder(
-          shrinkWrap: true, // কলামের ভেতরে ব্যবহারের জন্য জরুরি
-          physics: const NeverScrollableScrollPhysics(), // মেইন স্ক্রল হ্যান্ডেল করবে
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isWideScreen ? 2 : 1, // ওয়েবে ২ কলাম, মোবাইলে ১ কলাম
+            crossAxisCount: isWideScreen
+                ? 2
+                : 1, // web 2 column and mobile 1 column
             crossAxisSpacing: 15,
             mainAxisSpacing: 12,
-            mainAxisExtent: 75, // প্রতিটি কার্ডের ফিক্সড হাইট যাতে ডিজাইন নষ্ট না হয়
+            mainAxisExtent: 75, // fixed height
           ),
           itemBuilder: (context, index) {
             final item = items[index];
@@ -142,10 +185,12 @@ class PackageDetailsScreen extends StatelessWidget {
                     color: Colors.black.withOpacity(0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
                 border: Border.all(
-                  color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withOpacity(0.05),
                 ),
               ),
               child: Row(
@@ -166,7 +211,7 @@ class PackageDetailsScreen extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 13, // ২ কলামের জন্য ফন্ট সাইজ সামান্য কমানো হয়েছে
+                        fontSize: 13,
                       ),
                     ),
                   ),
@@ -186,7 +231,9 @@ class PackageDetailsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -194,12 +241,32 @@ class PackageDetailsScreen extends StatelessWidget {
           headingRowHeight: 60,
           horizontalMargin: 15,
           columnSpacing: 20,
-          headingRowColor: WidgetStateProperty.all(isDark ? Colors.white.withOpacity(0.02) : Colors.grey[50]),
+          headingRowColor: WidgetStateProperty.all(
+            isDark ? Colors.white.withOpacity(0.02) : Colors.grey[50],
+          ),
           columns: const [
             DataColumn(label: Text('')),
-            DataColumn(label: Text('Royal\nWedding', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Silver\nPackage', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
-            DataColumn(label: Text('Gold\nPackage', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
+            DataColumn(
+              label: Text(
+                'Royal\nWedding',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Silver\nPackage',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Gold\nPackage',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
           ],
           rows: [
             _buildDataRow('Photos', '100+', '200+', '100+', true, isDark),
@@ -211,15 +278,37 @@ class PackageDetailsScreen extends StatelessWidget {
     );
   }
 
-  DataRow _buildDataRow(String feature, String v1, String v2, String v3, bool isFirst, bool isDark) {
+  DataRow _buildDataRow(
+    String feature,
+    String v1,
+    String v2,
+    String v3,
+    bool isFirst,
+    bool isDark,
+  ) {
     return DataRow(
       cells: [
-        DataCell(Text(feature, style: const TextStyle(fontSize: 13, color: Colors.grey))),
-        DataCell(Container(
-          alignment: Alignment.center,
-          color: isDark ? Colors.deepPurple.withOpacity(0.1) : Colors.deepPurple.withOpacity(0.05),
-          child: Text(v1, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-        )),
+        DataCell(
+          Text(
+            feature,
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+        ),
+        DataCell(
+          Container(
+            alignment: Alignment.center,
+            color: isDark
+                ? Colors.deepPurple.withOpacity(0.1)
+                : Colors.deepPurple.withOpacity(0.05),
+            child: Text(
+              v1,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
+            ),
+          ),
+        ),
         DataCell(Center(child: Text(v2, style: const TextStyle(fontSize: 13)))),
         DataCell(Center(child: Text(v3, style: const TextStyle(fontSize: 13)))),
       ],
@@ -228,18 +317,34 @@ class PackageDetailsScreen extends StatelessWidget {
 
   // --- add ons ---
   Widget _buildAddOnChips(bool isDark, Color cardColor) {
-    final addons = ["Drone Shot +৳5,000", "Extra Album +৳10,000", "Extra Cinematographer +৳8,000"];
+    final addons = [
+      "Drone Shot +৳5,000",
+      "Extra Album +৳10,000",
+      "Extra Cinematographer +৳8,000",
+    ];
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: addons.map((text) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-      )).toList(),
+      children: addons
+          .map(
+            (text) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -252,10 +357,19 @@ class PackageDetailsScreen extends StatelessWidget {
         onPressed: () {},
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6342E8), // image pop color
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           elevation: 0,
         ),
-        child: const Text("Book Now", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+        child: const Text(
+          "Book Now",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

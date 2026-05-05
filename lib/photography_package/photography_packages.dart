@@ -125,7 +125,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
   @override
   void initState() {
     super.initState();
-    // ইনিশিয়াল কন্ট্রোলার
+    // initial controller
     _pageController = PageController(viewportFraction: 0.8, initialPage: 0);
     _startAutoScroll();
   }
@@ -158,15 +158,14 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final double screenWidth = MediaQuery.of(context).size.width;
-
-    // রেসপনসিভ ফ্র্যাকশন সেট করা
+    //Responsive Fraction set
     double fraction = screenWidth > 1200
         ? 0.35
         : (screenWidth > 800 ? 0.55 : 0.8);
 
-    // রেড লাইন বা এরর এড়ানোর জন্য এবং পেজ কন্ট্রোলার আপডেট করার সঠিক নিয়ম
+    // page controller
     if (_pageController.viewportFraction != fraction) {
-      _pageController.dispose(); // আগের কন্ট্রোলার ডিসপোজ করা ভালো প্র্যাকটিস
+      _pageController.dispose(); //previous controller dispose
       _pageController = PageController(
         viewportFraction: fraction,
         initialPage: _currentPage,
@@ -189,7 +188,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
               ),
               TextButton(
                 onPressed: () {
-                  // View All এর অ্যাকশন এখানে দিতে পারেন
+                  // View All function for future used
                 },
                 child: Text(
                   'View All',
@@ -206,7 +205,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
           child: PageView.builder(
             controller: _pageController,
             itemCount: packages.length,
-            // padEnds: false দিলে প্রথম কার্ডটি একদম বাম (Start) থেকে শুরু হবে
+            // left start for card scroll
             padEnds: false,
             physics: const BouncingScrollPhysics(),
             onPageChanged: (index) => _currentPage = index,
@@ -215,7 +214,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                 animation: _pageController,
                 builder: (context, child) {
                   double value = 1.0;
-                  // স্লাইড অ্যানিমেশন লজিক
+                  // slide animation logic
                   if (_pageController.position.hasContentDimensions) {
                     value = (_pageController.page ?? 0) - index;
                     value = (1 - (value.abs() * 0.06)).clamp(0.0, 1.0);
@@ -224,14 +223,14 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                     child: Transform.scale(scale: value, child: child),
                   );
                 },
-                // এখানে context পাস করা হয়েছে যাতে এরর না আসে
+                // to passed context
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 10,
                   ),
                   child: _buildPackageCard(
-                    context, // context যোগ করা হয়েছে
+                    context, // context add
                     packages[index],
                     theme.colorScheme,
                     theme.textTheme,
@@ -268,9 +267,9 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
         ],
       ),
       child: InkWell(
-        // পুরো কার্ডে ট্যাপ অপশন এবং রিপল ইফেক্টের জন্য
+        // full card tape option and ripple effect
         onTap: () {
-          // ১. কার্ডে ট্যাপ করলে ডিটেইলস স্ক্রিনে নিয়ে যাবে
+          //to Navigator details screen
 
           Navigator.push(
             context,
@@ -335,7 +334,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            // ২. বুক বাটনে ক্লিক করলে সরাসরি বুকিং বা ডিটেইলসে নিতে পারেন
+                            // book button
                             Navigator.push(
                               context,
                               MaterialPageRoute(

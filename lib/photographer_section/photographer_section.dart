@@ -53,8 +53,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-
-    // ওয়েবে অটো-স্ক্রলিং লজিক (স্মুথ ফ্লো)
+    // web auto scrolling logic
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startAutoScroll();
     });
@@ -65,7 +64,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
       if (_scrollController.hasClients) {
         double maxScroll = _scrollController.position.maxScrollExtent;
         double currentScroll = _scrollController.position.pixels;
-        double delta = 300.0; // প্রতি ৩ সেকেন্ডে কতটুকু স্ক্রল হবে
+        double delta = 300.0; // how much scrolling in  3 second
 
         if (currentScroll >= maxScroll) {
           _scrollController.animateTo(
@@ -154,7 +153,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ইমেজ সেকশন উইথ এরর হ্যান্ডলিং
+          // image section
           Expanded(
             child: Stack(
               children: [
@@ -166,7 +165,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     data['image']!,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    // ইমেজ লোড না হলে এই আইকন বা কালার দেখাবে (CORS সমস্যা সমাধানে সহায়ক)
+                    // icon setup for no loading image
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: theme.colorScheme.onSurface.withOpacity(0.05),
@@ -252,9 +251,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => PhotographerProfileScreen(
-                            primaryAccent: Color(
-                              0xFF6200EE,
-                            ), // এখানে আপনার অ্যাপের মেইন কালারটি দিন
+                            primaryAccent: Color(0xFF6200EE), // app color
                           ),
                         ),
                       );
