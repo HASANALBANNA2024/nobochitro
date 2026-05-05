@@ -1,0 +1,551 @@
+import 'dart:ui'; // PointerDeviceKind এর জন্য প্রয়োজন
+
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:nobochitro/payments/payment_sheet.dart';
+import 'package:nobochitro/widgets/custom_appbar.dart';
+
+class BookingSummaryScreen extends StatefulWidget {
+  final Color primaryAccent;
+  const BookingSummaryScreen({super.key, required this.primaryAccent});
+
+  @override
+  State<BookingSummaryScreen> createState() => _BookingSummaryScreenState();
+}
+
+class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
+  DateTime? _selectedDate;
+  String _selectedTime = "10:00 AM";
+  String _selectedLocationType = "Studio";
+
+  final List<Map<String, dynamic>> _photographers = [
+    {
+      "name": "Ayesha Rahman",
+      "image": "https://i.pravatar.cc/150?u=1",
+      "badge": "Pro",
+      "rating": "4.9",
+      "reviews": "124",
+      "specialty": "Portrait & Wedding",
+    },
+    {
+      "name": "Rahat Khan",
+      "image": "https://i.pravatar.cc/150?u=2",
+      "badge": "Elite",
+      "rating": "4.8",
+      "reviews": "89",
+      "specialty": "Event & Fashion",
+    },
+  ];
+
+  int _selectedPhotographerIndex = 0;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: widget.primaryAccent,
+              primary: widget.primaryAccent,
+              onPrimary: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isWeb = screenWidth > 800;
+
+    return Scaffold(
+      appBar: buildCustomAppBar(
+        context,
+        widget.primaryAccent,
+        "Booking Details",
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isWeb ? screenWidth * 0.2 : 16.0,
+              vertical: 20,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle("Booking Summary", theme),
+                _buildEnhancedSummaryCard(theme, isDark),
+
+                const SizedBox(height: 25),
+
+                _buildSectionTitle("Select Professional Photographer", theme),
+
+                // মাউস ড্র্যাগ সাপোর্ট যুক্ত ফটোগ্রাফার লিস্ট
+                ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
+                    },
+                  ),
+                  child: SizedBox(
+                    height: 130,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _photographers.length,
+                      itemBuilder: (context, index) =>
+                          _buildEnhancedPhotographerCard(index, theme, isDark),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                _buildSectionTitle("Schedule Your Session", theme),
+                _buildDateTimeSelector(theme, isDark),
+
+                const SizedBox(height: 25),
+
+                _buildSectionTitle("Set Event Location", theme),
+                _buildLocationSelector(theme, isDark),
+
+                const SizedBox(height: 30),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 60, // হাইট একটু বাড়ানো হয়েছে
+                  child: ElevatedButton(
+                    onPressed: _selectedDate == null
+                        ? null
+                        : () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => PaymentSheet(
+                                primaryAccent: widget.primaryAccent,
+                                amount: 15750.0,
+                              ),
+                            );
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          widget.primaryAccent, // আপনার প্রাইমারি কালার
+                      foregroundColor: Colors.black, // টেক্সট কালার
+                      disabledBackgroundColor: Colors.grey.withOpacity(0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          18,
+                        ), // কর্নার আরও রাউন্ড করা হয়েছে
+                      ),
+                      elevation: 8, // শ্যাডো বাড়ানো হয়েছে
+                      shadowColor: widget.primaryAccent.withOpacity(0.4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Proceed to Payment",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 18,
+                        ), // একটি আইকন যোগ করা হয়েছে
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      child: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedSummaryCard(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[900] : Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.camera_alt_outlined, color: widget.primaryAccent),
+              const SizedBox(width: 10),
+              Text(
+                "Premium Portrait Session",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 30),
+          _infoRow(Icons.timer_outlined, "Duration", "3 Hours Full Session"),
+          _infoRow(
+            Icons.collections_rounded,
+            "Deliverables",
+            "50+ Retouched Photos",
+          ),
+          _infoRow(Icons.location_on_outlined, "Location", "Studio or Outdoor"),
+          const Divider(height: 30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Total Amount",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              Text(
+                "15,750 BDT",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  color: widget.primaryAccent,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          const Spacer(),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedPhotographerCard(
+    int index,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    bool isSelected = _selectedPhotographerIndex == index;
+    var p = _photographers[index];
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPhotographerIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 240,
+        margin: const EdgeInsets.only(right: 15),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? widget.primaryAccent.withOpacity(0.1)
+              : (isDark ? Colors.grey[900] : Colors.white),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? widget.primaryAccent
+                : (isDark ? Colors.white10 : Colors.black12),
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 35,
+                  backgroundImage: NetworkImage(p['image']!),
+                ),
+                if (isSelected)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: widget.primaryAccent,
+                      child: const Icon(
+                        Icons.check,
+                        size: 14,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p['name']!,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    maxLines: 1,
+                  ),
+                  Text(
+                    p['specialty']!,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 14),
+                      Text(
+                        " ${p['rating']} ",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "(${p['reviews']})",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateTimeSelector(ThemeData theme, bool isDark) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => _selectDate(context),
+          borderRadius: BorderRadius.circular(15),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[900] : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: isDark ? Colors.white10 : Colors.black12,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_month, color: widget.primaryAccent),
+                const SizedBox(width: 15),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Select Date",
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    Text(
+                      _selectedDate == null
+                          ? "Choose a date"
+                          : DateFormat(
+                              'EEEE, dd MMMM yyyy',
+                            ).format(_selectedDate!),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // মাউস ড্র্যাগ সাপোর্ট যুক্ত টাইম স্লট লিস্ট
+        ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ["10:00 AM", "01:00 PM", "04:00 PM", "07:00 PM"].map((
+                time,
+              ) {
+                bool isSelected = _selectedTime == time;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: ChoiceChip(
+                    label: Text(time),
+                    selected: isSelected,
+                    onSelected: (val) => setState(() => _selectedTime = time),
+                    selectedColor: widget.primaryAccent,
+                    backgroundColor: isDark
+                        ? Colors.grey[800]
+                        : Colors.grey[200],
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? Colors.black
+                          : (isDark ? Colors.white : Colors.black),
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationSelector(ThemeData theme, bool isDark) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            _locationTypeChip("Studio", Icons.storefront_outlined),
+            const SizedBox(width: 10),
+            _locationTypeChip("Outdoor", Icons.terrain_outlined),
+          ],
+        ),
+        const SizedBox(height: 15),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[900] : Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+          ),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: _selectedLocationType == "Studio"
+                  ? "Studio address will be shared after booking"
+                  : "Enter event location or city name",
+              hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+              border: InputBorder.none,
+              icon: Icon(
+                Icons.location_on,
+                color: widget.primaryAccent,
+                size: 20,
+              ),
+            ),
+            enabled: _selectedLocationType == "Outdoor",
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _locationTypeChip(String type, IconData icon) {
+    bool isSelected = _selectedLocationType == type;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedLocationType = type),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? widget.primaryAccent : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? widget.primaryAccent
+                  : Colors.grey.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected ? Colors.black : Colors.grey,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                type,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.black : Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

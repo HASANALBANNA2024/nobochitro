@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:nobochitro/booking_summary_screen/booking_summary_screen.dart';
 import 'package:nobochitro/photography_package/package_details_screen.dart';
 
 class PackageModel {
@@ -338,7 +339,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PackageDetailsScreen(
+                                builder: (_) => BookingSummaryScreen(
                                   primaryAccent: primaryAccent,
                                 ),
                               ),
