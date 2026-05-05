@@ -1,4 +1,4 @@
-import 'dart:ui'; // PointerDeviceKind এর জন্য প্রয়োজন
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -17,6 +17,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   DateTime? _selectedDate;
   String _selectedTime = "10:00 AM";
   String _selectedLocationType = "Studio";
+  int _selectedDurationHours = 1;
+  int _selectedDurationMinutes = 0;
+  int _selectedPhotographerIndex = 0;
 
   final List<Map<String, dynamic>> _photographers = [
     {
@@ -36,8 +39,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       "specialty": "Event & Fashion",
     },
   ];
-
-  int _selectedPhotographerIndex = 0;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -93,90 +94,23 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 _buildEnhancedSummaryCard(theme, isDark),
 
                 const SizedBox(height: 25),
-
                 _buildSectionTitle("Select Professional Photographer", theme),
-
-                // মাউস ড্র্যাগ সাপোর্ট যুক্ত ফটোগ্রাফার লিস্ট
-                ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(
-                    dragDevices: {
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.mouse,
-                    },
-                  ),
-                  child: SizedBox(
-                    height: 130,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _photographers.length,
-                      itemBuilder: (context, index) =>
-                          _buildEnhancedPhotographerCard(index, theme, isDark),
-                    ),
-                  ),
-                ),
+                _buildPhotographerList(context, theme, isDark),
 
                 const SizedBox(height: 25),
-
                 _buildSectionTitle("Schedule Your Session", theme),
                 _buildDateTimeSelector(theme, isDark),
 
                 const SizedBox(height: 25),
+                _buildSectionTitle("Set Duration", theme), // ডিউরেশন টাইটেল
+                _buildDurationSelector(theme, isDark), // ডিউরেশন উইজেট
 
+                const SizedBox(height: 25),
                 _buildSectionTitle("Set Event Location", theme),
                 _buildLocationSelector(theme, isDark),
 
                 const SizedBox(height: 30),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 60, // হাইট একটু বাড়ানো হয়েছে
-                  child: ElevatedButton(
-                    onPressed: _selectedDate == null
-                        ? null
-                        : () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (context) => PaymentSheet(
-                                primaryAccent: widget.primaryAccent,
-                                amount: 15750.0,
-                              ),
-                            );
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          widget.primaryAccent, // আপনার প্রাইমারি কালার
-                      foregroundColor: Colors.black, // টেক্সট কালার
-                      disabledBackgroundColor: Colors.grey.withOpacity(0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          18,
-                        ), // কর্নার আরও রাউন্ড করা হয়েছে
-                      ),
-                      elevation: 8, // শ্যাডো বাড়ানো হয়েছে
-                      shadowColor: widget.primaryAccent.withOpacity(0.4),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Proceed to Payment",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Icon(
-                          Icons.arrow_forward_ios,
-                          size: 18,
-                        ), // একটি আইকন যোগ করা হয়েছে
-                      ],
-                    ),
-                  ),
-                ),
+                _buildProceedButton(context),
                 const SizedBox(height: 20),
               ],
             ),
@@ -185,6 +119,8 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       ),
     );
   }
+
+  // --- UI Components Methods ---
 
   Widget _buildSectionTitle(String title, ThemeData theme) {
     return Padding(
@@ -218,25 +154,46 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.camera_alt_outlined, color: widget.primaryAccent),
-              const SizedBox(width: 10),
-              Text(
-                "Premium Portrait Session",
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: widget.primaryAccent.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.camera_alt_outlined,
+                  color: widget.primaryAccent,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Premium Portrait Session",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const Divider(height: 30),
-          _infoRow(Icons.timer_outlined, "Duration", "3 Hours Full Session"),
+          const Divider(height: 32, thickness: 0.8),
+          _infoRow(
+            Icons.timer_outlined,
+            "Duration",
+            "${_selectedDurationHours}h ${_selectedDurationMinutes}m Full Session",
+          ),
           _infoRow(
             Icons.collections_rounded,
             "Deliverables",
             "50+ Retouched Photos",
           ),
-          _infoRow(Icons.location_on_outlined, "Location", "Studio or Outdoor"),
-          const Divider(height: 30),
+          _infoRow(
+            Icons.location_on_outlined,
+            "Location",
+            _selectedLocationType,
+          ),
+          const Divider(height: 32, thickness: 0.8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -248,13 +205,115 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 "15,750 BDT",
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  fontSize: 20,
+                  fontSize: 22,
                   color: widget.primaryAccent,
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPhotographerList(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+      ),
+      child: SizedBox(
+        height: 130,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: _photographers.length,
+          itemBuilder: (context, index) =>
+              _buildEnhancedPhotographerCard(index, theme, isDark),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDurationSelector(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[900] : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Booking Duration",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "${_selectedDurationHours}h ${_selectedDurationMinutes}m",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              _buildRoundBtn(Icons.remove, () {
+                setState(() {
+                  if (_selectedDurationHours > 1 ||
+                      _selectedDurationMinutes >= 30) {
+                    if (_selectedDurationMinutes == 0) {
+                      _selectedDurationHours--;
+                      _selectedDurationMinutes = 30;
+                    } else {
+                      _selectedDurationMinutes -= 30;
+                    }
+                  }
+                });
+              }, isDark),
+              const SizedBox(width: 15),
+              _buildRoundBtn(Icons.add, () {
+                setState(() {
+                  _selectedDurationMinutes += 30;
+                  if (_selectedDurationMinutes >= 60) {
+                    _selectedDurationHours++;
+                    _selectedDurationMinutes = 0;
+                  }
+                });
+              }, isDark),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoundBtn(IconData icon, VoidCallback onTap, bool isDark) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: widget.primaryAccent,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: widget.primaryAccent.withOpacity(0.3),
+              blurRadius: 5,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.black, size: 20),
       ),
     );
   }
@@ -281,7 +340,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   ) {
     bool isSelected = _selectedPhotographerIndex == index;
     var p = _photographers[index];
-
     return GestureDetector(
       onTap: () => setState(() => _selectedPhotographerIndex = index),
       child: AnimatedContainer(
@@ -303,27 +361,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         ),
         child: Row(
           children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 35,
-                  backgroundImage: NetworkImage(p['image']!),
-                ),
-                if (isSelected)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: CircleAvatar(
-                      radius: 12,
-                      backgroundColor: widget.primaryAccent,
-                      child: const Icon(
-                        Icons.check,
-                        size: 14,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-              ],
+            CircleAvatar(
+              radius: 35,
+              backgroundImage: NetworkImage(p['image']!),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -353,13 +393,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "(${p['reviews']})",
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey,
                         ),
                       ),
                     ],
@@ -422,19 +455,12 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 20),
-
-        // মাউস ড্র্যাগ সাপোর্ট যুক্ত টাইম স্লট লিস্ট
-        ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
-          ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: ["10:00 AM", "01:00 PM", "04:00 PM", "07:00 PM"].map((
-                time,
-              ) {
+        const SizedBox(height: 15),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ...["10:00 AM", "01:00 PM", "04:00 PM", "07:00 PM"].map((time) {
                 bool isSelected = _selectedTime == time;
                 return Padding(
                   padding: const EdgeInsets.only(right: 10),
@@ -443,28 +469,30 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     selected: isSelected,
                     onSelected: (val) => setState(() => _selectedTime = time),
                     selectedColor: widget.primaryAccent,
-                    backgroundColor: isDark
-                        ? Colors.grey[800]
-                        : Colors.grey[200],
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? Colors.black
-                          : (isDark ? Colors.white : Colors.black),
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
                   ),
                 );
-              }).toList(),
-            ),
+              }),
+              ActionChip(
+                label: Text(
+                  ![
+                        "10:00 AM",
+                        "01:00 PM",
+                        "04:00 PM",
+                        "07:00 PM",
+                      ].contains(_selectedTime)
+                      ? _selectedTime
+                      : "Custom",
+                ),
+                onPressed: () async {
+                  TimeOfDay? t = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (t != null)
+                    setState(() => _selectedTime = t.format(context));
+                },
+              ),
+            ],
           ),
         ),
       ],
@@ -481,31 +509,21 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             _locationTypeChip("Outdoor", Icons.terrain_outlined),
           ],
         ),
-        const SizedBox(height: 15),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.grey[900] : Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
-          ),
-          child: TextField(
+        if (_selectedLocationType == "Outdoor") ...[
+          const SizedBox(height: 15),
+          TextField(
             decoration: InputDecoration(
-              hintText: _selectedLocationType == "Studio"
-                  ? "Studio address will be shared after booking"
-                  : "Enter event location or city name",
-              hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-              border: InputBorder.none,
-              icon: Icon(
-                Icons.location_on,
-                color: widget.primaryAccent,
-                size: 20,
+              hintText: "Enter event location or city name",
+              filled: true,
+              fillColor: isDark ? Colors.grey[900] : Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide.none,
               ),
+              prefixIcon: Icon(Icons.location_on, color: widget.primaryAccent),
             ),
-            enabled: _selectedLocationType == "Outdoor",
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -544,6 +562,47 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProceedButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        onPressed: _selectedDate == null
+            ? null
+            : () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => PaymentSheet(
+                    primaryAccent: widget.primaryAccent,
+                    amount: 15750.0,
+                  ),
+                );
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: widget.primaryAccent,
+          foregroundColor: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          elevation: 8,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Proceed to Payment",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            SizedBox(width: 10),
+            Icon(Icons.arrow_forward_ios, size: 18),
+          ],
         ),
       ),
     );
