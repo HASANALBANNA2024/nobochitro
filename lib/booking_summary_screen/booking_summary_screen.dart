@@ -422,6 +422,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               ),
             ),
             child: Row(
+              //
               children: [
                 Icon(Icons.calendar_month, color: widget.primaryAccent),
                 const SizedBox(width: 15),
