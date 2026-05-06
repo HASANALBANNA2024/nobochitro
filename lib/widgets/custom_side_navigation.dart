@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
+import 'package:nobochitro/client_profile/client_profile_screen.dart';
+import 'package:nobochitro/photographer_section/photographer_profile_screen.dart';
 
 class CustomSideNavigation extends StatelessWidget {
   final int selectedIndex;
@@ -87,7 +89,12 @@ class CustomSideNavigation extends StatelessWidget {
                   selectedIcon: Icons.person_rounded,
                   label: "Profile",
                   primaryAccent: primaryAccent,
-                  onTap: () => onDestinationSelected(3),
+                 onTap: (){
+                    onDestinationSelected(3);
+                    Navigator.push(context, MaterialPageRoute(builder: (_)=>
+                    ClientProfileScreen()
+                    ));
+                 }
                 ),
 
                 const Padding(

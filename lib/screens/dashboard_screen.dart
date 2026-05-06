@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/campaign_banner/n8n_dynamic_banner.dart';
 import 'package:nobochitro/categories_grid/categories_grid.dart';
+import 'package:nobochitro/client_profile/client_profile_screen.dart';
 import 'package:nobochitro/community_gallery/community_gallery.dart';
 import 'package:nobochitro/photographer_section/photographer_section.dart';
 import 'package:nobochitro/photography_package/photography_packages.dart';
@@ -125,7 +126,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   );
-                } else {
+                }
+                else if(index == 3){
+                  Navigator.push(context, MaterialPageRoute(builder: (_)=> ClientProfileScreen() ));
+                }else {
                   // Regular index update for Home and Packages
                   setState(() => _currentIndex = index);
                 }
