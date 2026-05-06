@@ -31,6 +31,7 @@ class CustomBottomNav extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.grid_view), activeIcon: Icon(Icons.grid_view), label: 'Packages'),
         BottomNavigationBarItem(icon: Icon(Icons.book_online_outlined), activeIcon: Icon(Icons.book_online), label: 'Bookings'),
+        BottomNavigationBarItem(icon: Icon(Icons.person_off_outlined), activeIcon: Icon(Icons.person_off_rounded), label: "Profile"),
         BottomNavigationBarItem(icon: Icon(Icons.settings), activeIcon: Icon(Icons.person), label: 'Settings'),
       ],
     );

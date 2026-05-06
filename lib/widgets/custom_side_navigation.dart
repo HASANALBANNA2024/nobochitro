@@ -64,6 +64,7 @@ class CustomSideNavigation extends StatelessWidget {
                   label: "My Bookings",
                   primaryAccent: primaryAccent,
                   onTap: () {
+                    onDestinationSelected(2);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -84,7 +85,7 @@ class CustomSideNavigation extends StatelessWidget {
                   isSelected: selectedIndex == 3,
                   icon: Icons.person_outline,
                   selectedIcon: Icons.person_rounded,
-                  label: "Account",
+                  label: "Profile",
                   primaryAccent: primaryAccent,
                   onTap: () => onDestinationSelected(3),
                 ),

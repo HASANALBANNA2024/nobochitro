@@ -96,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : CustomBottomNav(
               currentIndex: _currentIndex,
               onTap: (index) {
-                if (index == 3) {
+                if (index == 4) {
                   // Open settings bottom sheet for mobile view
                   SettingsUtils.showSettings(
                     context,
