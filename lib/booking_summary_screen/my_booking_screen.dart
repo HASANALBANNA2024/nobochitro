@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
-import 'package:nobochitro/widgets/custom_side_navigation.dart';
 
 class MyBookingScreen extends StatelessWidget {
   final Color primaryAccent;
@@ -55,16 +54,6 @@ class MyBookingScreen extends StatelessWidget {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // [WEB SIDEBAR AREA]
-          if (isWeb)
-            CustomSideNavigation(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-              // এখানে widget.onThemeChanged হবে না, কারণ এটি StatelessWidget
-              onThemeChanged: onThemeChanged,
-              onSettingsPressed: onSettingsPressed,
-            ),
-
           Expanded(
             child: Center(
               child: Container(
@@ -82,7 +71,12 @@ class MyBookingScreen extends StatelessWidget {
                           final booking = bookings[index];
                           bool isCompleted = booking['status'] == "Completed";
 
-                          return _buildBookingCard(booking, isDark, isCompleted, theme);
+                          return _buildBookingCard(
+                            booking,
+                            isDark,
+                            isCompleted,
+                            theme,
+                          );
                         },
                       ),
                     ),
@@ -98,15 +92,20 @@ class MyBookingScreen extends StatelessWidget {
       // এখানে currentIndex এবং onTap এর বদলে এই স্ক্রিনে থাকা ভেরিয়েবলগুলো পাস করা হলো
       bottomNavigationBar: !isWeb
           ? CustomBottomNav(
-        currentIndex: selectedIndex,
-        onTap: onDestinationSelected,
-      )
+              currentIndex: selectedIndex,
+              onTap: onDestinationSelected,
+            )
           : null,
     );
   }
 
   // বুকিং কার্ড উইজেট
-  Widget _buildBookingCard(Map<String, dynamic> booking, bool isDark, bool isCompleted, ThemeData theme) {
+  Widget _buildBookingCard(
+    Map<String, dynamic> booking,
+    bool isDark,
+    bool isCompleted,
+    ThemeData theme,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -129,9 +128,14 @@ class MyBookingScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: isCompleted ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                  color: isCompleted
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -145,7 +149,10 @@ class MyBookingScreen extends StatelessWidget {
               ),
               Text(
                 booking['amount'],
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -159,7 +166,10 @@ class MyBookingScreen extends StatelessWidget {
             children: [
               Icon(Icons.person_outline, size: 16, color: primaryAccent),
               const SizedBox(width: 5),
-              Text(booking['photographer'], style: const TextStyle(color: Colors.grey)),
+              Text(
+                booking['photographer'],
+                style: const TextStyle(color: Colors.grey),
+              ),
             ],
           ),
           const SizedBox(height: 15),
@@ -187,10 +197,15 @@ class MyBookingScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryAccent,
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 0,
                 ),
-                child: const Text("Give Review & Rating", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  "Give Review & Rating",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
