@@ -129,7 +129,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 }
                 else if(index == 3){
                   Navigator.push(context, MaterialPageRoute(builder: (_)=> ClientProfileScreen() ));
-                }else {
+                }
+                else if(index == 0 ){
+                  Navigator.push(context, MaterialPageRoute(builder: (_)=> DashboardScreen(onThemeChanged: widget.onThemeChanged)));
+                }
+                else {
                   // Regular index update for Home and Packages
                   setState(() => _currentIndex = index);
                 }

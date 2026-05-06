@@ -98,17 +98,44 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   Widget _buildHeader(Color gold, Color teal, bool isDark) {
     return Column(
       children: [
-        // লোগো সেকশন
+        // logo
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_library_outlined, color: gold, size: 28),
-            const SizedBox(width: 10),
-            Text("Nobochitro - নবচিত্র",
-                style: TextStyle(color: gold, fontSize: 18, fontWeight: FontWeight.bold)
+            // Logo image section
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/app_icon.png',),
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+                children: [
+                  // goldColor এবং tealColor
+                  TextSpan(
+                    text: "Nobochitro",
+                    style: TextStyle(color: const Color(0xFFD4AF37), fontSize: 18),
+                  ),
+                  TextSpan(
+                    text: " - নবচিত্র",
+                    style: TextStyle(color: const Color(0xFF008080), fontSize: 16),
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
+        ), // এখানে কোনো বাড়তি কমা বা ব্র্যাকেট থাকলে কেটে দিন
         const SizedBox(height: 30),
 
         // প্রোফাইল ইমেজ

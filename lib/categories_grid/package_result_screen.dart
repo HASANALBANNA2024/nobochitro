@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/community_gallery/community_gallery.dart';
+import 'package:nobochitro/photography_package/package_details_screen.dart';
 import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
+import 'package:nobochitro/widgets/custom_header.dart';
 
 class PackageResultScreen extends StatefulWidget {
   final String categoryName;
@@ -370,7 +372,9 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                       SizedBox(
                         width: double.infinity, height: 35,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_)=> PackageDetailsScreen(primaryAccent: widget.primaryAccent)  ));
+                          },
                           style: ElevatedButton.styleFrom(backgroundColor: accent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                           child: const Text("View Details & Book", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)), // বাটন টেক্সট আপডেট
                         ),
