@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
+import 'package:nobochitro/campaign_banner/n8n_dynamic_banner.dart';
 import 'package:nobochitro/categories_grid/categories_grid.dart';
 import 'package:nobochitro/community_gallery/community_gallery.dart';
-import 'package:nobochitro/campaign_banner/n8n_dynamic_banner.dart';
 import 'package:nobochitro/photographer_section/photographer_section.dart';
 import 'package:nobochitro/photography_package/photography_packages.dart';
 import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
@@ -45,30 +46,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
       key: _scaffoldKey,
       backgroundColor: background,
 
-      // web drawer
-      drawer: isLargeScreen
+      drawer: !isLargeScreen
           ? CustomSideNavigation(
               selectedIndex: _currentIndex,
               onDestinationSelected: (index) {
-                setState(() => _currentIndex = index);
-                if (Navigator.canPop(context)) Navigator.pop(context);
+                setState(() {
+                  _currentIndex = index;
+                });
               },
-              // settings click dialog open and theme change
               onSettingsPressed: () {
-                if (Navigator.canPop(context)) Navigator.pop(context);
+                if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
                 SettingsUtils.showSettings(
                   context,
                   primaryAccent,
-                  widget.onThemeChanged, // Theme Function
+                  widget.onThemeChanged,
                 );
               },
-              // Drawer theme switch connect
+
+              // ৪. থিম পরিবর্তন করলে সরাসরি মেইন অ্যাপে সিগন্যাল যাবে
               onThemeChanged: (isDark) {
                 widget.onThemeChanged(isDark);
               },
             )
           : null,
-
       body: Column(
         children: [
           CustomHeader(
@@ -95,13 +95,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
               currentIndex: _currentIndex,
               onTap: (index) {
                 if (index == 3) {
-                  // mobile view bottom sheet
+                  // Open settings bottom sheet for mobile view
                   SettingsUtils.showSettings(
                     context,
                     primaryAccent,
-                    widget.onThemeChanged, // Theme Function Connected
+                    widget.onThemeChanged,
+                  );
+                } else if (index == 2) {
+                  // Direct navigation to My Booking Screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MyBookingScreen(
+                        primaryAccent: primaryAccent,
+                        selectedIndex: _currentIndex, // Pass current state
+                        onDestinationSelected: (idx) {
+                          setState(() => _currentIndex = idx);
+                        },
+                        onThemeChanged: widget.onThemeChanged,
+                        onSettingsPressed: () {
+                          SettingsUtils.showSettings(
+                            context,
+                            primaryAccent,
+                            widget.onThemeChanged,
+                          );
+                        },
+                      ),
+                    ),
                   );
                 } else {
+                  // Regular index update for Home and Packages
                   setState(() => _currentIndex = index);
                 }
               },
