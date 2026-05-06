@@ -142,6 +142,7 @@ class CustomSideNavigation extends StatelessWidget {
   Widget _buildHeader(BuildContext context, bool isDarkMode) {
     return DrawerHeader(
       margin: EdgeInsets.zero,
+      padding: EdgeInsets.zero, // বাড়তি প্যাডিং কমানোর জন্য
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -151,9 +152,11 @@ class CustomSideNavigation extends StatelessWidget {
       ),
       child: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min, // কনটেন্ট অনুযায়ী সাইজ হবে
           children: [
             Container(
+              height: 80, // লোগোর জন্য একটি নির্দিষ্ট হাইট দিন
+              width: 80,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isDarkMode
@@ -161,9 +164,12 @@ class CustomSideNavigation extends StatelessWidget {
                     : Colors.black.withOpacity(0.02),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Image.asset("assets/images/app_icon.png"),
+              child: Image.asset(
+                "assets/images/app_icon.png",
+                fit: BoxFit.contain, // ইমেজ যেন কনটেইনারের বাইরে না যায়
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               "Nobochitro - নবচিত্র",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(

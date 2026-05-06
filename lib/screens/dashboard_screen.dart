@@ -46,29 +46,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
       key: _scaffoldKey,
       backgroundColor: background,
 
-      drawer: !isLargeScreen
-          ? CustomSideNavigation(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              onSettingsPressed: () {
-                if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
-                SettingsUtils.showSettings(
-                  context,
-                  primaryAccent,
-                  widget.onThemeChanged,
-                );
-              },
-
-              // ৪. থিম পরিবর্তন করলে সরাসরি মেইন অ্যাপে সিগন্যাল যাবে
-              onThemeChanged: (isDark) {
-                widget.onThemeChanged(isDark);
-              },
-            )
-          : null,
+      // ৫২ নম্বর লাইনের কোডটি এভাবে পরিবর্তন করুন:
+      drawer: CustomSideNavigation(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          // আইটেম সিলেক্ট করলে যেন ড্রয়ারটি অটো বন্ধ হয়ে যায়
+          Navigator.pop(context);
+        },
+        onSettingsPressed: () {
+          // ড্রয়ার খোলা থাকলে বন্ধ করবে
+          if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+            Navigator.pop(context);
+          }
+          SettingsUtils.showSettings(
+            context,
+            primaryAccent,
+            widget.onThemeChanged,
+          );
+        },
+        onThemeChanged: (isDark) {
+          widget.onThemeChanged(isDark);
+        },
+      ),
       body: Column(
         children: [
           CustomHeader(
