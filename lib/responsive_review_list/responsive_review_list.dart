@@ -160,7 +160,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Align(
+        Container(
           alignment: Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.only(left: 20, bottom: 15),
@@ -222,7 +222,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
           ],
         ),
         Padding(
-          padding: const EdgeInsets.only(right: 20, top: 10),
+          padding: const EdgeInsets.only(right: 10, top: 0),
           child: TextButton.icon(
             onPressed: _showAllReviewsSheet, // আপডেট করা হয়েছে
             icon: const Icon(Icons.grid_view_rounded, size: 16),
@@ -241,7 +241,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
   }
 }
 
-// --- হেল্পার উইজেট: অ্যারো বাটন ---
+// --- Arrow Button ---
 class _Arrow extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -259,7 +259,7 @@ class _Arrow extends StatelessWidget {
   );
 }
 
-// --- হেল্পার উইজেট: রিভিউ কার্ড ---
+// --- Helper Widgets---
 class _ReviewCard extends StatelessWidget {
   final ReviewModel review;
   final Color primaryAccent;
@@ -268,7 +268,7 @@ class _ReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.topCenter,
+      alignment: Alignment.center,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(

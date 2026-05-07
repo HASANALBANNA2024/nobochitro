@@ -171,7 +171,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
-                // vertical: 20,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,30 +182,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       print("Booking session clicked!");
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 5),
                   Text(
                     'Explore Categories',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
                   CategoriesGrid(primaryAccent: primaryAccent),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 5),
                   PhotographyPackages(primaryAccent: primaryAccent),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 5),
                   PhotographerSection(primaryAccent: primaryAccent),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 5),
                   CommunityGallery(
                     primaryAccent: primaryAccent,
                     sectionTitle: "Community Highlights",
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 5),
                   ResponsiveReviewList(
                     primaryAccent: primaryAccent,
                     sectionTitle: "Client Testimonials",
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),

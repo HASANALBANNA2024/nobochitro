@@ -23,7 +23,8 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.0
 
-# ল্যাঞ্চার আইকন কনফিগারেশন (Android, iOS & Web support)
+# (Android, iOS & Web support)
+# (অ্যাডাপ্টিভ আইকন কনফিগারেশন - লঞ্চার আইকনের জন্য)
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
@@ -33,20 +34,28 @@ flutter_launcher_icons:
     background_color: "#121212"
     theme_color: "#121212"
   image_path: "assets/images/app_icon.png"
+  # অ্যান্ড্রয়েডে আইকন যেন গোল বা স্কয়ার শেপের ভেতর থাকে তার জন্য:
   adaptive_icon_background: "#121212"
   adaptive_icon_foreground: "assets/images/app_icon.png"
 
-# নেটিভ স্প্ল্যাশ স্ক্রিন কনফিগারেশন (Android, iOS & Web support)
+# (নেটিভ স্প্ল্যাশ কনফিগারেশন)
 flutter_native_splash:
-  color: "#121212"
-  image: assets/images/app_icon.png
+  color: "#121212" # আপনার ডার্ক থিমের সাথে মিল রেখে ব্যাকগ্রাউন্ড কালো করলাম
+  image: "assets/images/app_icon.png"
 
   android_12:
-    color: "#121212"
-    image: assets/images/app_icon.png
+    image: "assets/images/app_icon.png"
+    # আইকনকে একটি শেপের ভেতর দেখানোর জন্য নিচের কালারটি মাস্ট:
+    icon_background_color: "#121212"
+    # ডার্ক মোডের জন্য আলাদা সাপোর্ট (ঐচ্ছিক কিন্তু ভালো)
+    image_dark: "assets/images/app_icon.png"
+    icon_background_color_dark: "#121212"
 
-  web: true # ওয়েবের জন্য স্প্ল্যাশ স্ক্রিন এনাবল করা হলো
+  web: true
   fullscreen: true
+  android: true
+  ios: true
+
 
 flutter:
   uses-material-design: true

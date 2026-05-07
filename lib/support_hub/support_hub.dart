@@ -161,7 +161,7 @@ class _SupportHubState extends State<SupportHub>
                           horizontal: 10,
                           vertical: 5,
                         ),
-                        margin: const EdgeInsets.only(right: 10),
+                        margin: const EdgeInsets.only(right: 2),
                         decoration: BoxDecoration(
                           color: Colors.black87,
                           borderRadius: BorderRadius.circular(8),
