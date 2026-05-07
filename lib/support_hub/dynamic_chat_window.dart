@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nobochitro/main.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 class DynamicChatWindow extends StatefulWidget {
   final String title;
   final Color primaryAccent;
@@ -17,11 +18,13 @@ class DynamicChatWindow extends StatefulWidget {
 class _DynamicChatWindowState extends State<DynamicChatWindow> {
   bool _isMaximized = false;
   final TextEditingController _messageController = TextEditingController();
+
+  // মেসেজ লিস্টে এখন ইমেজ বা লিঙ্ক থাকতে পারে
   final List<Map<String, dynamic>> _messages = [
-    {"text": "Hello! How can we help you today?", "isMe": false},
+    {"text": "Hello! How can we help you today?", "isMe": false, "type": "text"},
+    {"text": "Check our portfolio: https://nobochitro.com", "isMe": false, "type": "text"},
   ];
 
-  // position track
   Offset _position = const Offset(-1, -1);
 
   @override
@@ -29,21 +32,20 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
     final size = MediaQuery.of(context).size;
     final bool isMobile = size.width < 700;
 
-    // ডিফল্ট পজিশন সেট করা (একদম নিচে, ডানে ২৫ পিক্সেল গ্যাপ)
     if (_position == const Offset(-1, -1)) {
       _position = Offset(size.width - (isMobile ? size.width : 380) - 25, size.height - (isMobile ? size.height : 550));
     }
 
-    double width = isMobile ? size.width : (_isMaximized ? size.width * 0.8 : 380);
-    double height = isMobile ? size.height : (_isMaximized ? size.height * 0.8 : 550);
+    // ফুল স্ক্রিন লজিক: _isMaximized হলে একদম ১০০% সাইজ নেবে
+    double width = isMobile ? size.width : (_isMaximized ? size.width : 380);
+    double height = isMobile ? size.height : (_isMaximized ? size.height : 550);
 
     return Stack(
       children: [
         Positioned(
-          left: isMobile ? 0 : _position.dx,
-          top: isMobile ? 0 : _position.dy,
+          left: (isMobile || _isMaximized) ? 0 : _position.dx,
+          top: (isMobile || _isMaximized) ? 0 : _position.dy,
           child: GestureDetector(
-            // ড্র্যাগিং লজিক
             onPanUpdate: (details) {
               if (!isMobile && !_isMaximized) {
                 setState(() {
@@ -54,17 +56,16 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
             child: Material(
               color: Colors.transparent,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 100), // ড্র্যাগিং স্মুথ করার জন্য কম সময়
+                duration: const Duration(milliseconds: 200),
                 width: width,
                 height: height,
                 curve: Curves.easeInOut,
-                // নিচে একদম লেগে থাকবে (Bottom line flush)
                 margin: EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(isMobile || _isMaximized ? 0 : 20),
+                  borderRadius: BorderRadius.circular((isMobile || _isMaximized) ? 0 : 20),
                   boxShadow: [
-                    if (!isMobile)
+                    if (!isMobile && !_isMaximized)
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
                         blurRadius: 20,
@@ -73,7 +74,7 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(isMobile || _isMaximized ? 0 : 20),
+                  borderRadius: BorderRadius.circular((isMobile || _isMaximized) ? 0 : 20),
                   child: Scaffold(
                     appBar: _buildAppBar(isMobile),
                     body: Column(
@@ -92,7 +93,6 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
     );
   }
 
-  // --- AppBar Handler of chat window ---
   PreferredSizeWidget _buildAppBar(bool isMobile) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -101,7 +101,6 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
         child: AppBar(
           backgroundColor: widget.primaryAccent,
           elevation: 0,
-          // cursor: SystemMouseCursors.grab, // এই লাইনটি এখান থেকে ডিলিট করে দিন
           automaticallyImplyLeading: isMobile,
           title: Row(
             children: [
@@ -114,29 +113,22 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
                     width: 26,
                     height: 26,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.person, size: 20, color: Colors.white);
-                    },
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 20, color: Colors.white),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                widget.title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
+              Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
             ],
           ),
           actions: [
             if (!isMobile) ...[
               IconButton(
                 icon: Icon(_isMaximized ? Icons.close_fullscreen : Icons.open_in_full, size: 20, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    _isMaximized = !_isMaximized;
-                    if (_isMaximized) _position = Offset.zero;
-                  });
-                },
+                onPressed: () => setState(() {
+                  _isMaximized = !_isMaximized;
+                  if (_isMaximized) _position = Offset.zero;
+                }),
               ),
               IconButton(
                 icon: const Icon(Icons.remove, size: 20, color: Colors.white),
@@ -144,36 +136,37 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
               ),
             ],
             if (isMobile)
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
+              IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
           ],
         ),
       ),
     );
   }
 
-  // --- Message List এবং Input Area আগের কোডেই থাকবে ---
   Widget _buildMessageList() {
     return ListView.builder(
       padding: const EdgeInsets.all(15),
       itemCount: _messages.length,
       itemBuilder: (context, index) {
         final msg = _messages[index];
+        bool isImage = msg['type'] == 'image';
+
         return Align(
           alignment: msg['isMe'] ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: isImage ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
             decoration: BoxDecoration(
-              color: msg['isMe'] ? widget.primaryAccent : Colors.grey[200],
-              borderRadius: BorderRadius.circular(15).copyWith(
-                bottomRight: msg['isMe'] ? const Radius.circular(0) : const Radius.circular(15),
-                bottomLeft: msg['isMe'] ? const Radius.circular(15) : const Radius.circular(0),
-              ),
+              color: isImage ? Colors.transparent : (msg['isMe'] ? widget.primaryAccent : Colors.grey[200]),
+              borderRadius: BorderRadius.circular(15),
             ),
-            child: Text(
+            child: isImage
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.network(msg['text'], fit: BoxFit.cover), // নেটওয়ার্ক ইমেজ সাপোর্ট
+            )
+                : Text(
               msg['text'],
               style: TextStyle(color: msg['isMe'] ? Colors.white : Colors.black87),
             ),
@@ -188,10 +181,17 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.0)),
+        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(Icons.image, color: widget.primaryAccent),
+            onPressed: () {
+              // ok logic call
+              print("Image Picker Opened");
+            },
+          ),
           Expanded(
             child: TextField(
               controller: _messageController,
@@ -199,7 +199,7 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
                 hintText: "Type a message...",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
                 filled: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 15),
               ),
             ),
           ),
@@ -211,7 +211,7 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
               onPressed: () {
                 if (_messageController.text.isNotEmpty) {
                   setState(() {
-                    _messages.add({"text": _messageController.text, "isMe": true});
+                    _messages.add({"text": _messageController.text, "isMe": true, "type": "text"});
                     _messageController.clear();
                   });
                 }

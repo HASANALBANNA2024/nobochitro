@@ -83,9 +83,9 @@ class _SupportHubState extends State<SupportHub>
                         },
                       );
 
-                      // চ্যাট উইন্ডো বন্ধ (Pop) হলে কোড এখানে ফিরে আসবে
+                      // chat window pop
                       if (mounted) {
-                        setState(() => _isChatOpen = false); // বাটন আবার দেখাবে
+                        setState(() => _isChatOpen = false);
                       }
                     }
                   },
@@ -96,9 +96,31 @@ class _SupportHubState extends State<SupportHub>
                   const Color(0xFF0084FF),
                   "Messenger",
                   1,
-                      () {
+                      ()  async{
                     _toggleMenu();
-                    print("Opening Messenger...");
+                    setState(() {
+                      _isChatOpen = true;
+                    });
+                    final navContext = navigatorKey.currentContext;
+                    if(navContext != null){
+                      await showGeneralDialog(
+                        context: navContext,
+                        barrierDismissible: true,
+                        barrierLabel: "Chat",
+                        pageBuilder: (context, anim1, anim2) {
+                          return DynamicChatWindow(
+                            title: "Nobochitro Messenger",
+                            primaryAccent: widget.primaryAccent,
+                          );
+                        },
+                      );
+
+                      // chat window pop
+                      if (mounted) {
+                        setState(() => _isChatOpen = false);
+                      }
+
+                    }
                   },
                 ),
                 // AI Support Option
