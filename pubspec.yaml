@@ -1,22 +1,16 @@
 name: nobochitro
-description: "A new Flutter project."
-
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-
-
+description: "A professional photography application for Web, Android, and iOS."
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
   sdk: ^3.11.0
-
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_rating_bar: ^4.0.1
   flutter_staggered_grid_view: ^0.7.0
-
-
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   intl: ^0.20.2
@@ -25,19 +19,36 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
 
+# ল্যাঞ্চার আইকন কনফিগারেশন (Android, iOS & Web support)
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  web:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+    background_color: "#121212"
+    theme_color: "#121212"
+  image_path: "assets/images/app_icon.png"
+  adaptive_icon_background: "#121212"
+  adaptive_icon_foreground: "assets/images/app_icon.png"
 
+# নেটিভ স্প্ল্যাশ স্ক্রিন কনফিগারেশন (Android, iOS & Web support)
+flutter_native_splash:
+  color: "#121212"
+  image: assets/images/app_icon.png
 
+  android_12:
+    color: "#121212"
+    image: assets/images/app_icon.png
+
+  web: true # ওয়েবের জন্য স্প্ল্যাশ স্ক্রিন এনাবল করা হলো
+  fullscreen: true
 
 flutter:
-
-
-
   uses-material-design: true
   assets:
     - assets/images/app_icon.png
-
-

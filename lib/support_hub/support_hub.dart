@@ -48,8 +48,8 @@ class _SupportHubState extends State<SupportHub>
         Positioned(
           right: 20,
           bottom: isMobile
-              ? 110
-              : 60, // Set to 110 to stay above the Nav Bar on mobile
+              ? 45
+              : 45, // Set to 110 to stay above the Nav Bar on mobile
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -62,7 +62,7 @@ class _SupportHubState extends State<SupportHub>
                   "WhatsApp",
                   3,
                   () {
-                    // TODO: Logic to open WhatsApp (e.g., url_launcher)
+
                     print("Opening WhatsApp...");
                   },
                 ),
@@ -73,7 +73,6 @@ class _SupportHubState extends State<SupportHub>
                   "Messenger",
                   2,
                   () {
-                    // TODO: Logic to open Facebook Messenger
                     print("Opening Messenger...");
                   },
                 ),
@@ -84,9 +83,7 @@ class _SupportHubState extends State<SupportHub>
                   "AI Support",
                   1,
                   () {
-                    // TODO: Logic to navigate to AI Chat Screen
-                    // Example: Navigator.push(context, MaterialPageRoute(builder: (context) => AiChatScreen()));
-                    print("Navigating to AI Support Screen...");
+                   print("Navigating to AI Support Screen...");
                   },
                 ),
                 const SizedBox(height: 12),

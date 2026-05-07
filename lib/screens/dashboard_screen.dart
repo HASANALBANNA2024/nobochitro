@@ -241,7 +241,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             offset: _isReviewVisible ? Offset.zero : const Offset(-0.5, 0),
             duration: const Duration(milliseconds: 800),
             child: Padding(
-              padding: EdgeInsets.only(left: 20, bottom: isMobile ? 60 : 60),
+              padding: EdgeInsets.only(left: 20),
               child: InkWell(
                 onTap: () => ReviewService.showReviewSheet(context),
                 borderRadius: BorderRadius.circular(30),
