@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
 class ClientProfileScreen extends StatefulWidget {
-  const ClientProfileScreen({super.key});
+  final Color? primaryAccent;
+  final int? selectedIndex;
+  final ValueChanged<int>? onDestinationSelected;
+  final Function(bool)? onThemeChanged;
+  final VoidCallback? onSettingsPressed;
+
+  const ClientProfileScreen({
+    super.key,
+    this.primaryAccent, // required নেই
+    this.selectedIndex,
+    this.onDestinationSelected,
+    this.onThemeChanged,
+    this.onSettingsPressed,
+  });
 
   @override
   State<ClientProfileScreen> createState() => _ClientProfileScreenState();
@@ -28,16 +42,6 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     final Color goldColor = const Color(0xFFD4AF37);
     final Color tealColor = const Color(0xFF008080);
 
-    // Dummy Data list
-    final List<Map<String, dynamic>> menuItems = [
-      {"icon": Icons.person_outline, "title": "Profile Settings", "bn": "প্রোফাইল সেটিংস", "sub": "Update your personal info"},
-      {"icon": Icons.event_available, "title": "My Bookings", "bn": "আমার বুকিং", "sub": "Check your schedule"},
-      {"icon": Icons.grid_view_rounded, "title": "Packages", "bn": "প্যাকেজ সমূহ", "sub": "View chosen plans"},
-      {"icon": Icons.account_balance_wallet_outlined, "title": "Payments", "bn": "পেমেন্ট পদ্ধতি", "sub": "Manage billing details"},
-      {"icon": Icons.star_outline_rounded, "title": "My Reviews", "bn": "আমার রিভিউ", "sub": "See your feedback"},
-      {"icon": Icons.notifications_none_rounded, "title": "Notifications", "bn": "নোটিফিকেশন", "sub": "Stay updated"},
-    ];
-
     return Scaffold(
       backgroundColor: background,
       appBar: buildCustomAppBar(context, goldColor, "Profile"),
@@ -50,38 +54,83 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
-                  // --- Header Section  ---
+                  // --- Header Section ---
                   _buildHeader(goldColor, tealColor, isDark),
-
                   const SizedBox(height: 32),
-
                   // --- Status Bar ---
                   _buildStatusBar(surface, tealColor, isWeb),
-
                   const SizedBox(height: 32),
-
-                  // --- Responsive Menu Grid ---
+                  // --- Responsive Menu Wrapper  ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GridView.builder(
-                      shrinkWrap: true, // ScrollView use
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: menuItems.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isWeb ? 2 : 1, // web 2 and mobile 1
-                        mainAxisExtent: 90, // Card Height
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemBuilder: (context, index) {
-                        return _buildMenuCard(menuItems[index], surface, tealColor, isDark);
-                      },
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 12,
+                      children: [
+                        // profile settings
+                        _buildSingleMenu(
+                          isWeb: isWeb,
+                          screenWidth: screenWidth,
+                          icon: Icons.person_outline,
+                          title: "Profile Settings",
+                          titleBn: "প্রোফাইল সেটিংস",
+                          sub: "Update your personal info",
+                          surface: surface,
+                          tealColor: tealColor,
+                          onTap: () => print("Settings Screen-এ যাও"),
+                        ),
+
+                        //Bookings
+                        _buildSingleMenu(
+                          isWeb: isWeb,
+                          screenWidth: screenWidth,
+                          icon: Icons.event_available,
+                          title: "My Bookings",
+                          titleBn: "আমার বুকিং",
+                          sub: "Check your schedule",
+                          surface: surface,
+                          tealColor: tealColor,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MyBookingScreen(
+                                  primaryAccent:
+                                      widget.primaryAccent ?? goldColor,
+                                  selectedIndex: widget.selectedIndex ?? 0,
+                                  onDestinationSelected:
+                                      widget.onDestinationSelected ?? (i) {},
+                                  onThemeChanged:
+                                      widget.onThemeChanged ?? (v) {},
+                                  onSettingsPressed:
+                                      widget.onSettingsPressed ?? () {},
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
+                        // ৩. আমার রিভিউ
+                        _buildSingleMenu(
+                          isWeb: isWeb,
+                          screenWidth: screenWidth,
+                          icon: Icons.star_outline_rounded,
+                          title: "My Reviews",
+                          titleBn: "আমার রিভিউ",
+                          sub: "See your feedback",
+                          surface: surface,
+                          tealColor: tealColor,
+                          onTap: () => print("Review Screen-এ যাও"),
+                        ),
+
+                        // এভাবে আরও যতগুলো খুশি কার্ড সরাসরি কল করতে পারবেন...
+                      ],
                     ),
                   ),
 
                   const SizedBox(height: 32),
 
-                  // --- action button in same row ---
+                  // --- action button ---
                   _buildActionButtons(goldColor, surface, isDark),
 
                   const SizedBox(height: 20),
@@ -109,7 +158,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 image: const DecorationImage(
-                  image: AssetImage('assets/images/app_icon.png',),
+                  image: AssetImage('assets/images/app_icon.png'),
                   fit: BoxFit.contain,
                 ),
               ),
@@ -125,11 +174,17 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   // goldColor এবং tealColor
                   TextSpan(
                     text: "Nobochitro",
-                    style: TextStyle(color: const Color(0xFFD4AF37), fontSize: 18),
+                    style: TextStyle(
+                      color: const Color(0xFFD4AF37),
+                      fontSize: 18,
+                    ),
                   ),
                   TextSpan(
                     text: " - নবচিত্র",
-                    style: TextStyle(color: const Color(0xFF008080), fontSize: 16),
+                    style: TextStyle(
+                      color: const Color(0xFF008080),
+                      fontSize: 16,
+                    ),
                   ),
                 ],
               ),
@@ -151,7 +206,14 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         const SizedBox(height: 16),
 
         // নাম ও জয়েনিং ডেট
-        Text(_nameEn, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: gold)),
+        Text(
+          _nameEn,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: gold,
+          ),
+        ),
         Text(_nameBn, style: const TextStyle(fontSize: 16, color: Colors.grey)),
         const SizedBox(height: 12),
 
@@ -160,23 +222,35 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             children: [
-              _buildContactInfo(Icons.phone_android_rounded, "+880 17XX-XXXXXX", isDark),
+              _buildContactInfo(
+                Icons.phone_android_rounded,
+                "+880 17XX-XXXXXX",
+                isDark,
+              ),
               const SizedBox(height: 6),
-              _buildContactInfo(Icons.email_outlined, "hasan.ali@example.com", isDark),
+              _buildContactInfo(
+                Icons.email_outlined,
+                "hasan.ali@example.com",
+                isDark,
+              ),
               const SizedBox(height: 6),
-              _buildContactInfo(Icons.location_on_outlined, "Mirpur, Dhaka, Bangladesh", isDark),
+              _buildContactInfo(
+                Icons.location_on_outlined,
+                "Mirpur, Dhaka, Bangladesh",
+                isDark,
+              ),
             ],
           ),
         ),
 
         const SizedBox(height: 12),
-        Text("Joined: ${DateFormat('MMM d, yyyy').format(_joinedDate)}",
-            style: const TextStyle(color: Colors.grey, fontSize: 12)
+        Text(
+          "Joined: ${DateFormat('MMM d, yyyy').format(_joinedDate)}",
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
         ),
       ],
     );
   }
-
 
   // build header
   Widget _buildContactInfo(IconData icon, String text, bool isDark) {
@@ -212,7 +286,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         children: [
           _statusItem(Icons.calendar_today, "Bookings: $_bookings", teal),
           Container(width: 1, height: 20, color: Colors.grey.withOpacity(0.3)),
-          _statusItem(Icons.verified_user_outlined, "Verified: ${_isVerified ? 'Yes' : 'No'}", teal),
+          _statusItem(
+            Icons.verified_user_outlined,
+            "Verified: ${_isVerified ? 'Yes' : 'No'}",
+            teal,
+          ),
         ],
       ),
     );
@@ -223,42 +301,70 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 8),
-        Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
 
   // information  menu card
-  Widget _buildMenuCard(Map<String, dynamic> item, Color surface, Color teal, bool isDark) {
-    return Container(
-      alignment: Alignment.center, // কন্টেইনারের ভেতরের সবকিছু সেন্টারে রাখার জন্য
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: ListTile(
-        // নিচের প্রপার্টিগুলো টেক্সট সেন্টারে আনতে সাহায্য করবে
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        visualDensity: const VisualDensity(vertical: -4), // অতিরিক্ত ফাঁকা জায়গা কমাবে
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-              color: teal.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12)
+  Widget _buildSingleMenu({
+    required bool isWeb,
+    required double screenWidth,
+    required IconData icon,
+    required String title,
+    required String titleBn,
+    required String sub,
+    required Color surface,
+    required Color tealColor,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      // ওয়েবে অর্ধেক জায়গা নিবে, মোবাইলে ফুল
+      width: isWeb
+          ? (screenWidth > 1100 ? (1100 / 2) - 24 : (screenWidth / 2) - 24)
+          : screenWidth,
+      child: Container(
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 0,
           ),
-          child: Icon(item['icon'], color: teal, size: 24),
+          visualDensity: const VisualDensity(vertical: -4),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: tealColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: tealColor, size: 24),
+          ),
+          title: Text(
+            "$title ($titleBn)",
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            sub,
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            size: 18,
+            color: Colors.grey,
+          ),
+          onTap: onTap, // সরাসরি আপনার কাস্টম লজিক এখানে কাজ করবে
         ),
-        title: Text(
-            "${item['title']} (${item['bn']})",
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)
-        ),
-        subtitle: Text(
-            item['sub'],
-            style: const TextStyle(fontSize: 11, color: Colors.grey)
-        ),
-        trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
-        onTap: () {},
       ),
     );
   }
@@ -277,10 +383,15 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: gold,
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 4,
                 ),
-                child: const Text("EDIT PROFILE", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  "EDIT PROFILE",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ),
@@ -294,7 +405,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   backgroundColor: surface,
                   foregroundColor: isDark ? Colors.white : Colors.black,
                   side: const BorderSide(color: Colors.white10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Icon(Icons.headset_mic_outlined),
               ),
