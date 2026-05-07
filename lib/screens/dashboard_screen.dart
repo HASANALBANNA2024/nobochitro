@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/campaign_banner/n8n_dynamic_banner.dart';
@@ -24,6 +26,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
+  bool _isReviewVisible = false;
+  Timer? _reviewTimer;
 
   // drawer open control
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -47,19 +51,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: background,
-
-      // ৫২ নম্বর লাইনের কোডটি এভাবে পরিবর্তন করুন:
       drawer: CustomSideNavigation(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
           });
-          // আইটেম সিলেক্ট করলে যেন ড্রয়ারটি অটো বন্ধ হয়ে যায়
           Navigator.pop(context);
         },
         onSettingsPressed: () {
-          // ড্রয়ার খোলা থাকলে বন্ধ করবে
           if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
             Navigator.pop(context);
           }
@@ -217,43 +217,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // review widget of review
   Widget _buildWriteReviewButton(BuildContext context, Color primaryAccent) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 10,
-      ), // নিচ থেকে একটু উপরে রাখার জন্য
-      child: InkWell(
-        onTap: () => ReviewService.showReviewSheet(context),
-        borderRadius: BorderRadius.circular(30),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: primaryAccent,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.rate_review_rounded, color: Colors.black, size: 20),
-              SizedBox(width: 10),
-              Text(
-                "Write Review",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+    final size = MediaQuery.of(context).size;
+    final bool isMobile = size.width < 600;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        // Timer set
+        _reviewTimer ??= Timer.periodic(const Duration(seconds: 10), (timer) {
+          if (context.mounted) {
+            setState(() => _isReviewVisible = true);
+            Future.delayed(const Duration(seconds: 10), () {
+              if (context.mounted) {
+                setState(() => _isReviewVisible = false);
+              }
+            });
+          }
+        });
+
+        return AnimatedOpacity(
+          opacity: _isReviewVisible ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 800),
+          child: AnimatedSlide(
+            offset: _isReviewVisible ? Offset.zero : const Offset(-0.5, 0),
+            duration: const Duration(milliseconds: 800),
+            child: Padding(
+              padding: EdgeInsets.only(left: 20, bottom: isMobile ? 60 : 60),
+              child: InkWell(
+                onTap: () => ReviewService.showReviewSheet(context),
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryAccent,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(
+                        Icons.rate_review_rounded,
+                        color: Colors.black,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        "Write Review",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
