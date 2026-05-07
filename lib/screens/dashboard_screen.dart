@@ -205,7 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     primaryAccent: primaryAccent,
                     sectionTitle: "Client Testimonials",
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),

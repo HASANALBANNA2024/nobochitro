@@ -3,6 +3,7 @@ import 'package:nobochitro/screens/dashboard_screen.dart';
 import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() {
   runApp(const PhotographyApp());
 }
@@ -36,6 +37,7 @@ class _PhotographyAppState extends State<PhotographyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Nobochitro',
       theme: ThemeData(
         brightness: Brightness.light,

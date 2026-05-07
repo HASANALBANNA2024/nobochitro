@@ -1,6 +1,7 @@
 import 'dart:math' as math;
-
+import 'package:nobochitro/main.dart';
 import 'package:flutter/material.dart';
+import 'package:nobochitro/support_hub/dynamic_chat_window.dart';
 
 class SupportHub extends StatefulWidget {
   final Color primaryAccent;
@@ -60,10 +61,23 @@ class _SupportHubState extends State<SupportHub>
                   Icons.message,
                   const Color(0xFF25D366),
                   "WhatsApp",
-                  3,
-                  () {
-
-                    print("Opening WhatsApp...");
+                  2,
+                      () {
+                    // সরাসরি context ব্যবহার না করে navigatorKey এর context ব্যবহার করুন
+                    final navContext = navigatorKey.currentContext;
+                    if (navContext != null) {
+                      showGeneralDialog(
+                        context: navContext,
+                        barrierDismissible: true,
+                        barrierLabel: "Chat",
+                        pageBuilder: (context, anim1, anim2) {
+                          return DynamicChatWindow(
+                            title: "Nobochitro Whatsapp",
+                            primaryAccent: widget.primaryAccent,
+                          );
+                        },
+                      );
+                    }
                   },
                 ),
                 // Option: Messenger
@@ -71,7 +85,7 @@ class _SupportHubState extends State<SupportHub>
                   Icons.facebook,
                   const Color(0xFF0084FF),
                   "Messenger",
-                  2,
+                  1,
                   () {
                     print("Opening Messenger...");
                   },
@@ -81,7 +95,7 @@ class _SupportHubState extends State<SupportHub>
                   Icons.auto_awesome,
                   widget.primaryAccent,
                   "AI Support",
-                  1,
+                  0,
                   () {
                    print("Navigating to AI Support Screen...");
                   },
