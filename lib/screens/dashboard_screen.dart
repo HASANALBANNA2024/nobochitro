@@ -222,7 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return StatefulBuilder(
       builder: (context, setState) {
-        // Timer set
+        // Timer settings
         _reviewTimer ??= Timer.periodic(const Duration(seconds: 10), (timer) {
           if (context.mounted) {
             setState(() => _isReviewVisible = true);
