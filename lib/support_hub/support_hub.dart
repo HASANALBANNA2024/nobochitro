@@ -30,6 +30,7 @@ class _SupportHubState extends State<SupportHub>
     super.dispose();
   }
 
+  // Toggle menu animation and state
   void _toggleMenu() {
     setState(() {
       _isOpen = !_isOpen;
@@ -42,35 +43,51 @@ class _SupportHubState extends State<SupportHub>
     final size = MediaQuery.of(context).size;
     final bool isMobile = size.width < 700;
 
-    // overlay এর ভেতরে Positioned কাজ করার জন্য Stack ব্যবহার করা বাধ্যতামূলক
     return Stack(
       children: [
         Positioned(
           right: 20,
-          // মোবাইলে ১১০ পিক্সেল উপরে, আর ওয়েব/ট্যাব এ ৪০ পিক্সেল উপরে
-          bottom: isMobile ? 60 : 60,
+          bottom: isMobile
+              ? 110
+              : 60, // Set to 110 to stay above the Nav Bar on mobile
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (_isOpen) ...[
+                // Option: WhatsApp
                 _buildOption(
                   Icons.message,
                   const Color(0xFF25D366),
                   "WhatsApp",
                   3,
+                  () {
+                    // TODO: Logic to open WhatsApp (e.g., url_launcher)
+                    print("Opening WhatsApp...");
+                  },
                 ),
+                // Option: Messenger
                 _buildOption(
                   Icons.facebook,
                   const Color(0xFF0084FF),
                   "Messenger",
                   2,
+                  () {
+                    // TODO: Logic to open Facebook Messenger
+                    print("Opening Messenger...");
+                  },
                 ),
+                // Option: AI Support
                 _buildOption(
                   Icons.auto_awesome,
                   widget.primaryAccent,
                   "AI Support",
                   1,
+                  () {
+                    // TODO: Logic to navigate to AI Chat Screen
+                    // Example: Navigator.push(context, MaterialPageRoute(builder: (context) => AiChatScreen()));
+                    print("Navigating to AI Support Screen...");
+                  },
                 ),
                 const SizedBox(height: 12),
               ],
@@ -114,7 +131,14 @@ class _SupportHubState extends State<SupportHub>
     );
   }
 
-  Widget _buildOption(IconData icon, Color color, String label, int index) {
+  // Updated helper to handle clicks and auto-close the menu
+  Widget _buildOption(
+    IconData icon,
+    Color color,
+    String label,
+    int index,
+    VoidCallback onTap,
+  ) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -124,43 +148,50 @@ class _SupportHubState extends State<SupportHub>
             opacity: _controller.value,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_isOpen)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      margin: const EdgeInsets.only(right: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          label,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            decoration: TextDecoration
-                                .none, // overlay এর টেক্সট এরর দূর করবে
+              child: GestureDetector(
+                onTap: () {
+                  // Execute the custom logic (Navigate or URL)
+                  onTap();
+                  // Automatically close the options menu after selection
+                  _toggleMenu();
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isOpen)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        margin: const EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Text(
+                            label,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              decoration: TextDecoration.none,
+                            ),
                           ),
                         ),
                       ),
+                    Container(
+                      width: 45,
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 22),
                     ),
-                  Container(
-                    width: 45,
-                    height: 45,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 22),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
