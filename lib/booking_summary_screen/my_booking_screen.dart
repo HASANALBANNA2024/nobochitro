@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/responsive_review_list/_review_sheet_widget.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
 
 class MyBookingScreen extends StatelessWidget {
   final Color primaryAccent;
-
-  // এই প্যারামিটারগুলো ক্লাসে ঘোষণা করা হলো যাতে অন্য স্ক্রিন থেকে মান আনা যায়
   final int selectedIndex;
   final Function(int) onDestinationSelected;
   final Function(bool) onThemeChanged;
@@ -26,10 +25,7 @@ class MyBookingScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isWeb = screenWidth > 800;
-    final Color goldColor = const Color(0xFFD4AF37);
-    final Color tealColor = const Color(0xFF008080);
 
-    // Sample Data
     final List<Map<String, dynamic>> bookings = [
       {
         "title": "Premium Portrait Session",
@@ -50,9 +46,7 @@ class MyBookingScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      // আপনার কাস্টম অ্যাপবার
       appBar: buildCustomAppBar(context, primaryAccent, "My Bookings"),
-
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,11 +67,13 @@ class MyBookingScreen extends StatelessWidget {
                           final booking = bookings[index];
                           bool isCompleted = booking['status'] == "Completed";
 
+                          // পরিবর্তন ১: এখানে context পাস করে দিয়েছি
                           return _buildBookingCard(
                             booking,
                             isDark,
                             isCompleted,
                             theme,
+                            context, // <-- এই context টি পাঠানো হলো
                           );
                         },
                       ),
@@ -89,9 +85,6 @@ class MyBookingScreen extends StatelessWidget {
           ),
         ],
       ),
-
-      // কাস্টম বটম নেভিগেশন বার
-      // এখানে currentIndex এবং onTap এর বদলে এই স্ক্রিনে থাকা ভেরিয়েবলগুলো পাস করা হলো
       bottomNavigationBar: !isWeb
           ? CustomBottomNav(
               currentIndex: selectedIndex,
@@ -101,30 +94,27 @@ class MyBookingScreen extends StatelessWidget {
     );
   }
 
-  // বুকিং কার্ড উইজেট
+  // পরিবর্তন ২: এখানে BuildContext context প্যারামিটারটি যোগ করেছি
   Widget _buildBookingCard(
     Map<String, dynamic> booking,
     bool isDark,
     bool isCompleted,
     ThemeData theme,
+    BuildContext context, // <-- এখানে context রিসিভ করা হচ্ছে
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(
-          24,
-        ), // একটু বেশি রাউন্ড করলে আধুনিক লাগে
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
-        // ... Shadow logic
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // বুকিং আইডি যোগ করা
               Text(
                 "#NB-58267",
                 style: TextStyle(
@@ -134,10 +124,7 @@ class MyBookingScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _statusChip(
-                booking['status'],
-                isCompleted,
-              ), // স্ট্যাটাস চিপ আলাদা উইজেট
+              _statusChip(booking['status'], isCompleted),
             ],
           ),
           const SizedBox(height: 12),
@@ -146,8 +133,6 @@ class MyBookingScreen extends StatelessWidget {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-
-          // পেমেন্ট এবং অ্যামাউন্ট রো
           Row(
             children: [
               const Icon(Icons.wallet, size: 16, color: Colors.grey),
@@ -175,8 +160,7 @@ class MyBookingScreen extends StatelessWidget {
               ),
             ],
           ),
-          const Divider(height: 30, thickness: 0.5), // সেপারেশন লাইন
-          // টাইম এবং লোকেশন ডিটেইলস
+          const Divider(height: 30, thickness: 0.5),
           Row(
             children: [
               _infoTile(Icons.calendar_today, booking['date'], isDark),
@@ -190,10 +174,7 @@ class MyBookingScreen extends StatelessWidget {
             "Dhanmondi, Dhaka (Studio)",
             isDark,
           ),
-
           const SizedBox(height: 20),
-
-          // বাটন সেকশন
           Row(
             children: [
               Expanded(
@@ -212,15 +193,17 @@ class MyBookingScreen extends StatelessWidget {
               if (isCompleted)
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // এখন আর লাল দাগ আসবে না, কারণ context এখন এই মেথডের পরিচিত
+                      ReviewService.showReviewSheet(context);
+                    },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          primaryAccent, // নিশ্চিত করুন primaryAccent ডিফাইন করা আছে
+                      backgroundColor: primaryAccent,
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: 2, // দেখতে আরও প্রফেশনাল লাগবে
+                      elevation: 2,
                     ),
                     child: const Text(
                       "Review",
@@ -235,7 +218,6 @@ class MyBookingScreen extends StatelessWidget {
     );
   }
 
-  // ছোট হেল্পার উইজেট
   Widget _infoTile(IconData icon, String text, bool isDark) {
     return Row(
       children: [

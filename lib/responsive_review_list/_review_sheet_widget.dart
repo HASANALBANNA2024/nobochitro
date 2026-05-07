@@ -1,12 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ReviewService {
-  // UI এর জন্য ডিফল্ট কালার
   static const Color goldColor = Color(0xFFD4AF37);
   static const Color tealColor = Color(0xFF008080);
   static const Color surfaceColor = Color(0xFF131313);
 
-  // এখানে আমরা সরাসরি context নিচ্ছি, তাই main.dart এ কিছু করা লাগবে না
   static void showReviewSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -26,25 +27,46 @@ class _DynamicReviewSheet extends StatefulWidget {
 
 class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
   int _rating = 0;
-  String _selectedType = "Client";
   final TextEditingController _reviewController = TextEditingController();
+
+  // ইমেজ লিস্ট (একাধিক ছবি নেওয়ার সুবিধার জন্য লিস্ট রাখা ভালো)
+  final List<File> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
+    if (image != null) {
+      setState(() {
+        _selectedImages.add(File(image.path));
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight:
+            MediaQuery.of(context).size.height *
+            0.85, // স্ক্রিনের ৮৫% এর বেশি বড় হবে না
+      ),
       padding: EdgeInsets.fromLTRB(20, 15, 20, bottomInset + 20),
       decoration: const BoxDecoration(
         color: ReviewService.surfaceColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handlebar (UI Design)
+            // Handlebar
             Center(
               child: Container(
                 width: 45,
@@ -58,27 +80,16 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
             ),
 
             const Text(
-              "Create Review",
+              "Share Experience",
               style: TextStyle(
                 color: ReviewService.goldColor,
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
 
-            // রিভিউ টাইপ চিপস (UI)
-            Row(
-              children: [
-                _buildTypeChip("Client", Icons.verified),
-                const SizedBox(width: 10),
-                _buildTypeChip("Fan", Icons.favorite),
-              ],
-            ),
-
-            const SizedBox(height: 30),
-
-            // স্টার রেটিং UI
+            // ১. রেটিং সেকশন
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -90,23 +101,22 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                       index < _rating
                           ? Icons.star_rounded
                           : Icons.star_outline_rounded,
-                      color: index < _rating ? Colors.amber : Colors.grey[700],
-                      size: 45,
+                      color: index < _rating ? Colors.amber : Colors.white10,
+                      size: 40,
                     ),
                   ),
                 ),
               ),
             ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 25),
-
-            // রিভিউ টেক্সট বক্স
+            // ২. কমেন্ট বক্স
             TextField(
               controller: _reviewController,
-              maxLines: 3,
+              maxLines: 4,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: "Write your feedback...",
+                hintText: "What's on your mind?",
                 hintStyle: const TextStyle(color: Colors.white24),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
@@ -116,10 +126,69 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                 ),
               ),
             ),
+            const SizedBox(height: 15),
 
-            const SizedBox(height: 30),
+            // ৩. ইমেজ প্রিভিউ সেকশন (ওভারফ্লো প্রতিরোধ করবে)
+            if (_selectedImages.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: 15),
+                height: 90, // ফিক্সড হাইট যাতে ফ্লেক্সিবল থাকে
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImages.length,
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(right: 10),
+                          width: 80,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            image: DecorationImage(
+                              image: FileImage(_selectedImages[index]),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 12,
+                          top: 2,
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedImages.removeAt(index)),
+                            child: const CircleAvatar(
+                              radius: 10,
+                              backgroundColor: Colors.red,
+                              child: Icon(
+                                Icons.close,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
 
-            // সাবমিট বাটন
+            // ৪. টুলস বাটন (অ্যাড ফটো)
+            Row(
+              children: [
+                _actionButton(
+                  Icons.camera_alt_outlined,
+                  "Add Photo",
+                  _pickImage,
+                ),
+                const SizedBox(width: 10),
+                _actionButton(Icons.person_add_alt_1_outlined, "Tag", () {}),
+              ],
+            ),
+
+            const SizedBox(height: 25),
+
+            // ৫. পোস্ট বাটন
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -130,12 +199,14 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
+                  elevation: 5,
                 ),
                 child: const Text(
                   "POST REVIEW",
                   style: TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ),
@@ -146,36 +217,23 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
     );
   }
 
-  // চিপস উইজেট
-  Widget _buildTypeChip(String type, IconData icon) {
-    bool isSelected = _selectedType == type;
+  Widget _actionButton(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
-      onTap: () => setState(() => _selectedType = type),
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? ReviewService.tealColor.withOpacity(0.2)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? ReviewService.tealColor : Colors.white10,
-          ),
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white10),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isSelected ? ReviewService.tealColor : Colors.grey,
-            ),
+            Icon(icon, color: ReviewService.tealColor, size: 18),
             const SizedBox(width: 8),
             Text(
-              type,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey,
-                fontSize: 12,
-              ),
+              label,
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
           ],
         ),
