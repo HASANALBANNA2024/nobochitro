@@ -15,6 +15,7 @@ class _SupportHubState extends State<SupportHub>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   bool _isOpen = false;
+  bool _isChatOpen = false; // chat open and close check
 
   @override
   void initState() {
@@ -31,8 +32,8 @@ class _SupportHubState extends State<SupportHub>
     super.dispose();
   }
 
-  // Toggle menu animation and state
   void _toggleMenu() {
+    if (!mounted) return;
     setState(() {
       _isOpen = !_isOpen;
       _isOpen ? _controller.forward() : _controller.reverse();
@@ -41,6 +42,9 @@ class _SupportHubState extends State<SupportHub>
 
   @override
   Widget build(BuildContext context) {
+    // if chat window open and button hub full hide
+    if (_isChatOpen) return const SizedBox.shrink();
+
     final size = MediaQuery.of(context).size;
     final bool isMobile = size.width < 700;
 
@@ -48,25 +52,26 @@ class _SupportHubState extends State<SupportHub>
       children: [
         Positioned(
           right: 20,
-          bottom: isMobile
-              ? 45
-              : 45, // Set to 110 to stay above the Nav Bar on mobile
+          bottom: 45,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (_isOpen) ...[
-                // Option: WhatsApp
+                // WhatsApp Option
                 _buildOption(
                   Icons.message,
                   const Color(0xFF25D366),
                   "WhatsApp",
                   2,
-                      () {
-                    // সরাসরি context ব্যবহার না করে navigatorKey এর context ব্যবহার করুন
+                      () async {
+                    _toggleMenu(); // আগে মেনু বন্ধ হবে
+
+                    setState(() => _isChatOpen = true); // বাটন হাইড হবে
+
                     final navContext = navigatorKey.currentContext;
                     if (navContext != null) {
-                      showGeneralDialog(
+                      await showGeneralDialog(
                         context: navContext,
                         barrierDismissible: true,
                         barrierLabel: "Chat",
@@ -77,27 +82,34 @@ class _SupportHubState extends State<SupportHub>
                           );
                         },
                       );
+
+                      // চ্যাট উইন্ডো বন্ধ (Pop) হলে কোড এখানে ফিরে আসবে
+                      if (mounted) {
+                        setState(() => _isChatOpen = false); // বাটন আবার দেখাবে
+                      }
                     }
                   },
                 ),
-                // Option: Messenger
+                // Messenger Option
                 _buildOption(
                   Icons.facebook,
                   const Color(0xFF0084FF),
                   "Messenger",
                   1,
-                  () {
+                      () {
+                    _toggleMenu();
                     print("Opening Messenger...");
                   },
                 ),
-                // Option: AI Support
+                // AI Support Option
                 _buildOption(
                   Icons.auto_awesome,
                   widget.primaryAccent,
                   "AI Support",
                   0,
-                  () {
-                   print("Navigating to AI Support Screen...");
+                      () {
+                    _toggleMenu();
+                    print("Navigating to AI Support Screen...");
                   },
                 ),
                 const SizedBox(height: 12),
@@ -113,9 +125,7 @@ class _SupportHubState extends State<SupportHub>
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: _isOpen
-                              ? Colors.redAccent
-                              : widget.primaryAccent,
+                          color: _isOpen ? Colors.redAccent : widget.primaryAccent,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -142,14 +152,7 @@ class _SupportHubState extends State<SupportHub>
     );
   }
 
-  // Updated helper to handle clicks and auto-close the menu
-  Widget _buildOption(
-    IconData icon,
-    Color color,
-    String label,
-    int index,
-    VoidCallback onTap,
-  ) {
+  Widget _buildOption(IconData icon, Color color, String label, int index, VoidCallback onTap) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -160,35 +163,24 @@ class _SupportHubState extends State<SupportHub>
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: GestureDetector(
-                onTap: () {
-                  // Execute the custom logic (Navigate or URL)
-                  onTap();
-                  // Automatically close the options menu after selection
-                  _toggleMenu();
-                },
+                onTap: onTap, // সরাসরি পাস করা হলো কারণ লজিক উপরে হ্যান্ডেল করা হয়েছে
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_isOpen)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        margin: const EdgeInsets.only(right: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
                           color: Colors.black87,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Text(
-                            label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              decoration: TextDecoration.none,
-                            ),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            decoration: TextDecoration.none,
                           ),
                         ),
                       ),

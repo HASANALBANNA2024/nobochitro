@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:nobochitro/main.dart';
 class DynamicChatWindow extends StatefulWidget {
-  final String title; // WhatsApp, Messenger, or Customer Care
+  final String title;
   final Color primaryAccent;
 
   const DynamicChatWindow({
@@ -21,91 +21,140 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
     {"text": "Hello! How can we help you today?", "isMe": false},
   ];
 
+  // position track
+  Offset _position = const Offset(-1, -1);
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final bool isMobile = size.width < 700;
 
-    // ডেস্কটপ ভিউতে সাইজ নির্ধারণ
-    double width = isMobile ? size.width : (_isMaximized ? size.width * 0.8 : 350);
-    double height = isMobile ? size.height : (_isMaximized ? size.height * 0.8 : 500);
+    // ডিফল্ট পজিশন সেট করা (একদম নিচে, ডানে ২৫ পিক্সেল গ্যাপ)
+    if (_position == const Offset(-1, -1)) {
+      _position = Offset(size.width - (isMobile ? size.width : 380) - 25, size.height - (isMobile ? size.height : 550));
+    }
 
-    return Center( // ডেস্কটপে মাঝখানে বা পজিশনড রাখা যায়
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: width,
-        height: height,
-        curve: Curves.easeInOut,
-        margin: isMobile ? EdgeInsets.zero : const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(isMobile ? 0 : 20),
-          boxShadow: [
-            if (!isMobile)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              )
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(isMobile ? 0 : 20),
-          child: Scaffold(
-            appBar: _buildAppBar(isMobile),
-            body: Column(
-              children: [
-                Expanded(child: _buildMessageList()),
-                _buildMessageInput(),
-              ],
+    double width = isMobile ? size.width : (_isMaximized ? size.width * 0.8 : 380);
+    double height = isMobile ? size.height : (_isMaximized ? size.height * 0.8 : 550);
+
+    return Stack(
+      children: [
+        Positioned(
+          left: isMobile ? 0 : _position.dx,
+          top: isMobile ? 0 : _position.dy,
+          child: GestureDetector(
+            // ড্র্যাগিং লজিক
+            onPanUpdate: (details) {
+              if (!isMobile && !_isMaximized) {
+                setState(() {
+                  _position += details.delta;
+                });
+              }
+            },
+            child: Material(
+              color: Colors.transparent,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 100), // ড্র্যাগিং স্মুথ করার জন্য কম সময়
+                width: width,
+                height: height,
+                curve: Curves.easeInOut,
+                // নিচে একদম লেগে থাকবে (Bottom line flush)
+                margin: EdgeInsets.zero,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(isMobile || _isMaximized ? 0 : 20),
+                  boxShadow: [
+                    if (!isMobile)
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, -5),
+                      )
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isMobile || _isMaximized ? 0 : 20),
+                  child: Scaffold(
+                    appBar: _buildAppBar(isMobile),
+                    body: Column(
+                      children: [
+                        Expanded(child: _buildMessageList()),
+                        _buildMessageInput(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // --- AppBar with Maximize/Minimize ---
-  PreferredSizeWidget _buildAppBar(bool isMobile) {
-    return AppBar(
-      backgroundColor: widget.primaryAccent,
-      elevation: 0,
-      automaticallyImplyLeading: isMobile,
-      title: Row(
-        children: [
-          CircleAvatar(
-            radius: 15,
-            backgroundColor: Colors.white24,
-            child: Icon(Icons.person, size: 20, color: Colors.white),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            widget.title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ],
-      ),
-      actions: [
-        if (!isMobile) ...[
-          IconButton(
-            icon: Icon(_isMaximized ? Icons.close_fullscreen : Icons.open_in_full, size: 20, color: Colors.white),
-            onPressed: () => setState(() => _isMaximized = !_isMaximized),
-          ),
-          IconButton(
-            icon: const Icon(Icons.minimize, size: 20, color: Colors.white),
-            onPressed: () => Navigator.pop(context), // মিনিমাইজ মানে এখানে ক্লোজ ধরা হয়েছে
-          ),
-        ],
-        if (isMobile)
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
       ],
     );
   }
 
-  // --- Message List ---
+  // --- AppBar Handler of chat window ---
+  PreferredSizeWidget _buildAppBar(bool isMobile) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: MouseRegion(
+        cursor: !_isMaximized ? SystemMouseCursors.grab : SystemMouseCursors.basic,
+        child: AppBar(
+          backgroundColor: widget.primaryAccent,
+          elevation: 0,
+          // cursor: SystemMouseCursors.grab, // এই লাইনটি এখান থেকে ডিলিট করে দিন
+          automaticallyImplyLeading: isMobile,
+          title: Row(
+            children: [
+              CircleAvatar(
+                radius: 15,
+                backgroundColor: Colors.white24,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/app_icon.png',
+                    width: 26,
+                    height: 26,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.person, size: 20, color: Colors.white);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                widget.title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ],
+          ),
+          actions: [
+            if (!isMobile) ...[
+              IconButton(
+                icon: Icon(_isMaximized ? Icons.close_fullscreen : Icons.open_in_full, size: 20, color: Colors.white),
+                onPressed: () {
+                  setState(() {
+                    _isMaximized = !_isMaximized;
+                    if (_isMaximized) _position = Offset.zero;
+                  });
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.remove, size: 20, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+            if (isMobile)
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Message List এবং Input Area আগের কোডেই থাকবে ---
   Widget _buildMessageList() {
     return ListView.builder(
       padding: const EdgeInsets.all(15),
@@ -134,18 +183,12 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
     );
   }
 
-  // --- Input Area ---
   Widget _buildMessageInput() {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
-            width: 1.0, // আপনি চাইলে উইডথ দিতে পারেন
-          ),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.0)),
       ),
       child: Row(
         children: [
@@ -154,10 +197,7 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
               controller: _messageController,
               decoration: InputDecoration(
                 hintText: "Type a message...",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
                 filled: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
               ),
