@@ -110,7 +110,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                           },
                         ),
 
-                        // ৩. আমার রিভিউ
+                        // My Review screen
                         _buildSingleMenu(
                           isWeb: isWeb,
                           screenWidth: screenWidth,
@@ -122,12 +122,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                           tealColor: tealColor,
                           onTap: () => print("Review Screen-এ যাও"),
                         ),
-
-                        // এভাবে আরও যতগুলো খুশি কার্ড সরাসরি কল করতে পারবেন...
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 32),
 
                   // --- action button ---

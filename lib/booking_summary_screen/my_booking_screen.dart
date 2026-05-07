@@ -26,6 +26,8 @@ class MyBookingScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isWeb = screenWidth > 800;
+    final Color goldColor = const Color(0xFFD4AF37);
+    final Color tealColor = const Color(0xFF008080);
 
     // Sample Data
     final List<Map<String, dynamic>> bookings = [
@@ -101,17 +103,19 @@ class MyBookingScreen extends StatelessWidget {
 
   // বুকিং কার্ড উইজেট
   Widget _buildBookingCard(
-      Map<String, dynamic> booking,
-      bool isDark,
-      bool isCompleted,
-      ThemeData theme,
-      ) {
+    Map<String, dynamic> booking,
+    bool isDark,
+    bool isCompleted,
+    ThemeData theme,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(24), // একটু বেশি রাউন্ড করলে আধুনিক লাগে
+        borderRadius: BorderRadius.circular(
+          24,
+        ), // একটু বেশি রাউন্ড করলে আধুনিক লাগে
         border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
         // ... Shadow logic
       ),
@@ -123,10 +127,17 @@ class MyBookingScreen extends StatelessWidget {
               // বুকিং আইডি যোগ করা
               Text(
                 "#NB-58267",
-                style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold, fontSize: 12),
+                style: TextStyle(
+                  color: primaryAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
               const Spacer(),
-              _statusChip(booking['status'], isCompleted), // স্ট্যাটাস চিপ আলাদা উইজেট
+              _statusChip(
+                booking['status'],
+                isCompleted,
+              ), // স্ট্যাটাস চিপ আলাদা উইজেট
             ],
           ),
           const SizedBox(height: 12),
@@ -141,17 +152,30 @@ class MyBookingScreen extends StatelessWidget {
             children: [
               const Icon(Icons.wallet, size: 16, color: Colors.grey),
               const SizedBox(width: 5),
-              const Text("Payment: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
-              const Text("Partial Paid", style: TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold)),
+              const Text(
+                "Payment: ",
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const Text(
+                "Partial Paid",
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const Spacer(),
               Text(
                 booking['amount'],
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: primaryAccent),
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: primaryAccent,
+                ),
               ),
             ],
           ),
           const Divider(height: 30, thickness: 0.5), // সেপারেশন লাইন
-
           // টাইম এবং লোকেশন ডিটেইলস
           Row(
             children: [
@@ -161,7 +185,11 @@ class MyBookingScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          _infoTile(Icons.location_on_outlined, "Dhanmondi, Dhaka (Studio)", isDark),
+          _infoTile(
+            Icons.location_on_outlined,
+            "Dhanmondi, Dhaka (Studio)",
+            isDark,
+          ),
 
           const SizedBox(height: 20),
 
@@ -173,7 +201,9 @@ class MyBookingScreen extends StatelessWidget {
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: primaryAccent),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: const Text("View Details"),
                 ),
@@ -184,11 +214,18 @@ class MyBookingScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAccent,
+                      backgroundColor:
+                          primaryAccent, // নিশ্চিত করুন primaryAccent ডিফাইন করা আছে
                       foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2, // দেখতে আরও প্রফেশনাল লাগবে
                     ),
-                    child: const Text("Review"),
+                    child: const Text(
+                      "Review",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
             ],
@@ -204,7 +241,13 @@ class MyBookingScreen extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: Colors.grey),
         const SizedBox(width: 6),
-        Text(text, style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87)),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? Colors.white70 : Colors.black87,
+          ),
+        ),
       ],
     );
   }
@@ -213,12 +256,18 @@ class MyBookingScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isCompleted ? Colors.green.withOpacity(0.15) : Colors.orange.withOpacity(0.15),
+        color: isCompleted
+            ? Colors.green.withOpacity(0.15)
+            : Colors.orange.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         status,
-        style: TextStyle(color: isCompleted ? Colors.green : Colors.orange, fontWeight: FontWeight.bold, fontSize: 11),
+        style: TextStyle(
+          color: isCompleted ? Colors.green : Colors.orange,
+          fontWeight: FontWeight.bold,
+          fontSize: 11,
+        ),
       ),
     );
   }
