@@ -6,6 +6,7 @@ import 'package:nobochitro/client_profile/client_profile_screen.dart';
 import 'package:nobochitro/community_gallery/community_gallery.dart';
 import 'package:nobochitro/photographer_section/photographer_section.dart';
 import 'package:nobochitro/photography_package/photography_packages.dart';
+import 'package:nobochitro/responsive_review_list/_review_sheet_widget.dart';
 import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
 import 'package:nobochitro/settings/settings_utils.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
@@ -91,6 +92,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      floatingActionButton: _buildWriteReviewButton(context, primaryAccent),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
 
       bottomNavigationBar: isLargeScreen
           ? null
@@ -126,14 +129,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   );
-                }
-                else if(index == 3){
-                  Navigator.push(context, MaterialPageRoute(builder: (_)=> ClientProfileScreen() ));
-                }
-                else if(index == 0 ){
-                  Navigator.push(context, MaterialPageRoute(builder: (_)=> DashboardScreen(onThemeChanged: widget.onThemeChanged)));
-                }
-                else {
+                } else if (index == 3) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ClientProfileScreen()),
+                  );
+                } else if (index == 0) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DashboardScreen(
+                        onThemeChanged: widget.onThemeChanged,
+                      ),
+                    ),
+                  );
+                } else {
                   // Regular index update for Home and Packages
                   setState(() => _currentIndex = index);
                 }
@@ -199,6 +209,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // review widget of review
+  Widget _buildWriteReviewButton(BuildContext context, Color primaryAccent) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 10,
+      ), // নিচ থেকে একটু উপরে রাখার জন্য
+      child: InkWell(
+        onTap: () => ReviewService.showReviewSheet(context),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: primaryAccent,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.rate_review_rounded, color: Colors.black, size: 20),
+              SizedBox(width: 10),
+              Text(
+                "Write Review",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ),
       ),
