@@ -161,6 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ThemeData theme,
   ) {
     return SafeArea(
+      top: false,
       child: Align(
         alignment: Alignment.topCenter,
         child: Container(
@@ -170,7 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
-                vertical: 20,
+                // vertical: 20,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
