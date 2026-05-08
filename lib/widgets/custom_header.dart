@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/authentication/login_screen.dart';
+import 'package:nobochitro/authentication/registration_modal_sheet.dart';
 import 'package:nobochitro/screens/search_screen.dart';
 import 'package:nobochitro/widgets/custom_search_bar.dart';
 
@@ -17,7 +19,7 @@ class CustomHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
 
-    // ব্রেকপয়েন্ট লজিক
+    //breakpoint
     final bool showSearchBar = screenWidth > 900;
     final bool showLogoText = screenWidth > 600;
     final bool isWebView = screenWidth > 1100;
@@ -35,7 +37,7 @@ class CustomHeader extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          // প্যাডিং কমিয়ে দেওয়া হয়েছে যেন কন্টেন্ট একদম দুই প্রান্তে যেতে পারে
+          // padding
           padding: EdgeInsets.symmetric(
               horizontal: isWebView ? 12 : 8,
               vertical: 12
@@ -108,7 +110,7 @@ class CustomHeader extends StatelessWidget {
                     const SizedBox(width: 15),
                   ],
 
-                  // লগইন ও সাইনআপ বাটন
+                  // login and sigh up
                   _buildActionButtons(context, isWebView),
                 ],
               ),
@@ -124,7 +126,12 @@ class CustomHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            showModalBottomSheet(context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const LoginModalSheet());
+       },
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             minimumSize: Size.zero,
@@ -142,7 +149,12 @@ class CustomHeader extends StatelessWidget {
         if (showSignUp) ...[
           const SizedBox(width: 12),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              showModalBottomSheet(context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context)=> RegistrationModalSheet() );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAccent,
               foregroundColor: Colors.white,
