@@ -1,56 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:nobochitro/authentication/forgot_password_sheet.dart';
 import 'package:nobochitro/authentication/registration_modal_sheet.dart';
+import 'auth_service.dart';
 
-class LoginModalSheet extends StatelessWidget {
+class LoginModalSheet extends StatefulWidget {
   const LoginModalSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<LoginModalSheet> createState() => _LoginModalSheetState();
+}
 
-    //Theme and Dark mode check
+class _LoginModalSheetState extends State<LoginModalSheet> {
+  final _identifierController = TextEditingController();
+  final _passController = TextEditingController();
+  final AuthService _auth = AuthService();
+
+  bool _isLoading = false;
+  bool _isEmailMode = true; // ডিফল্টভাবে ইমেইল মোড থাকবে
+
+  @override
+  void dispose() {
+    _identifierController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
+
+  // টেক্সট কি নম্বর কি না তা চেক করার জন্য
+  bool _isNumeric(String s) => double.tryParse(s) != null;
+
+  @override
+  Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color accent = Theme.of(context).primaryColor;
 
-    // ২. LayoutBuilder
     return LayoutBuilder(
       builder: (context, constraints) {
-        // screen width for
         final bool isWeb = constraints.maxWidth > 700;
-
-        // is web
         double horizontalPadding = isWeb ? constraints.maxWidth * 0.2 : 30;
 
-        // Material
         return Material(
           color: Colors.transparent,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drug Handle
               const SizedBox(height: 10),
               Container(
                 width: 40,
                 height: 5,
-                decoration: BoxDecoration(color: isDark ? Colors.white30 : Colors.black26, borderRadius: BorderRadius.circular(5)),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white30 : Colors.black26,
+                  borderRadius: BorderRadius.circular(5),
+                ),
               ),
               const SizedBox(height: 10),
 
-              //UI Content
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: Container(
                   color: Theme.of(context).scaffoldBackgroundColor,
-
-                  // Center
                   child: Center(
                     child: ConstrainedBox(
-                      // ৪. ConstrainedBox:
                       constraints: BoxConstraints(maxWidth: isWeb ? 500 : double.infinity),
-
-                      // ৫. SingleChildScrollView:
                       child: SingleChildScrollView(
-                        // if keyboard open and against overflow
                         padding: EdgeInsets.fromLTRB(
                           isWeb ? 30 : horizontalPadding,
                           20,
@@ -60,67 +72,148 @@ class LoginModalSheet extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Logo
                             Image.asset('assets/images/app_icon.png', height: isWeb ? 80 : 70),
                             const SizedBox(height: 15),
 
-                            //Title
                             Text("Login", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: accent)),
                             const SizedBox(height: 25),
 
-                            // Email input field
-                            _buildTextField(context, "Email", Icons.email_outlined, isWeb),
+                            // --- প্রফেশনাল টগল বাটন ---
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  _buildToggleButton(context, "Email", _isEmailMode, () {
+                                    setState(() {
+                                      _isEmailMode = true;
+                                      _identifierController.clear();
+                                    });
+                                  }),
+                                  _buildToggleButton(context, "Phone", !_isEmailMode, () {
+                                    setState(() {
+                                      _isEmailMode = false;
+                                      _identifierController.clear();
+                                    });
+                                  }),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // ইমেইল বা ফোন ইনপুট ফিল্ড
+                            _buildTextField(
+                              context,
+                              _isEmailMode ? "Email Address" : "Phone Number",
+                              _isEmailMode ? Icons.email_outlined : Icons.phone_android_outlined,
+                              isWeb,
+                              controller: _identifierController,
+                              keyboardType: _isEmailMode ? TextInputType.emailAddress : TextInputType.phone,
+                            ),
                             const SizedBox(height: 15),
 
-                            // password filed
-                            _buildTextField(context, "Password", Icons.lock_outline, isWeb, isPassword: true),
+                            _buildTextField(
+                              context,
+                              "Password",
+                              Icons.lock_outline,
+                              isWeb,
+                              controller: _passController,
+                              isPassword: true,
+                            ),
 
-                            // Forgot Password
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
-                                  Navigator.pop(context); //
-                                  showModalBottomSheet(context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (context)=> ForgotPasswordModalSheet());
+                                  Navigator.pop(context);
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (context) => const ForgotPasswordModalSheet(),
+                                  );
                                 },
-                                child: Text("Forgot Password?", style: TextStyle(color: accent, fontSize:isWeb ? 14 : 13)),
+                                child: Text("Forgot Password?", style: TextStyle(color: accent, fontSize: isWeb ? 14 : 13)),
                               ),
                             ),
                             const SizedBox(height: 15),
 
-                            // LOGIN Button
-                            ElevatedButton(
+                            // লগইন বাটন লজিক
+                            _isLoading
+                                ? const CircularProgressIndicator()
+                                : ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: accent,
                                 minimumSize: const Size(double.infinity, 50),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 elevation: 0,
                               ),
-                              onPressed: () {
-                                print("clicked on login");
+                              onPressed: () async {
+                                String input = _identifierController.text.trim();
+                                String password = _passController.text.trim();
+
+                                if (input.isEmpty || password.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill all fields!")));
+                                  return;
+                                }
+
+                                setState(() => _isLoading = true);
+
+                                String loginEmail = input;
+
+                                // ফোন নম্বর মোডে থাকলে ইমেইল খুঁজে বের করা
+                                if (!_isEmailMode || _isNumeric(input)) {
+                                  var userQuery = await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .where('phone', isEqualTo: input)
+                                      .limit(1)
+                                      .get();
+
+                                  if (userQuery.docs.isNotEmpty) {
+                                    loginEmail = userQuery.docs.first.get('email');
+                                  } else if (!_isEmailMode) {
+                                    setState(() => _isLoading = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Phone number not found!")));
+                                    return;
+                                  }
+                                }
+
+                                var user = await _auth.logIn(loginEmail, password);
+
+                                setState(() => _isLoading = false);
+
+                                if (user != null) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Login Successful!")));
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Login Failed! Check credentials.")));
+                                }
                               },
-                              child: Text("LOGIN", style: TextStyle(color: isDark ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                              child: Text(
+                                "LOGIN",
+                                style: TextStyle(color: isDark ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
                             ),
                             const SizedBox(height: 20),
 
-                            // Sign Up
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text("Don't have an account? ", style: TextStyle(fontSize:isWeb? 14 : 13)),
+                                Text("Don't have an account? ", style: TextStyle(fontSize: isWeb ? 14 : 13)),
                                 GestureDetector(
                                   onTap: () {
                                     Navigator.pop(context);
-                                    showModalBottomSheet(context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context)=> RegistrationModalSheet() );
-
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => const RegistrationModalSheet(),
+                                    );
                                   },
-                                  child: Text("Sign Up", style: TextStyle(color: accent, fontWeight: FontWeight.bold, fontSize: isWeb? 14 : 13)),
+                                  child: Text("Sign Up", style: TextStyle(color: accent, fontWeight: FontWeight.bold, fontSize: isWeb ? 14 : 13)),
                                 ),
                               ],
                             ),
@@ -139,9 +232,38 @@ class LoginModalSheet extends StatelessWidget {
     );
   }
 
-  /// helper widgets
-  Widget _buildTextField(BuildContext context, String hint, IconData icon, bool isWeb, {bool isPassword = false, TextInputType keyboardType = TextInputType.text}) {
+  // টগল বাটন তৈরির হেল্পার
+  Widget _buildToggleButton(BuildContext context, String title, bool isActive, VoidCallback onTap) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive ? Theme.of(context).primaryColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isActive
+                    ? (isDark ? Colors.black : Colors.white)
+                    : (isDark ? Colors.white70 : Colors.black87),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(BuildContext context, String hint, IconData icon, bool isWeb,
+      {bool isPassword = false, TextInputType keyboardType = TextInputType.text, required TextEditingController controller}) {
     return TextField(
+      controller: controller,
       obscureText: isPassword,
       keyboardType: keyboardType,
       style: TextStyle(fontSize: isWeb ? 16 : 14),
