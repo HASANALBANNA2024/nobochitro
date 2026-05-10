@@ -1,10 +1,20 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:nobochitro/firebase_options.dart';
 import 'package:nobochitro/screens/dashboard_screen.dart';
 import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-void main() {
+void main() async{
+  // flutter engine load
+  WidgetsFlutterBinding.ensureInitialized();
+  // firebase start
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform
+  );
+
+
   runApp(const PhotographyApp());
 }
 
