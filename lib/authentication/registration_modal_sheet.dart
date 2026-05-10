@@ -1,8 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/authentication/login_screen.dart';
+import 'auth_service.dart';
 
-class RegistrationModalSheet extends StatelessWidget {
+class RegistrationModalSheet extends StatefulWidget {
   const RegistrationModalSheet({super.key});
+
+  @override
+  State<RegistrationModalSheet> createState() => _RegistrationModalSheetState();
+}
+
+class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
+  // Controller Create
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passController = TextEditingController();
+  final _confirmPassController = TextEditingController();
+
+  final AuthService _auth = AuthService(); // Service Call
+  bool _isLoading = false; // Loading State
+
+  @override
+  void dispose() {
+    // dispose of memory leak
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passController.dispose();
+    _confirmPassController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,8 +39,8 @@ class RegistrationModalSheet extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth > 700;
-        // mobile and web view two side gap of sheet
         double horizontalPadding = isDesktop ? constraints.maxWidth * 0.2 : 30;
+
         return Material(
           color: Colors.transparent,
           child: Column(
@@ -37,7 +64,6 @@ class RegistrationModalSheet extends StatelessWidget {
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: isDesktop ? 500 : double.infinity),
                       child: SingleChildScrollView(
-                        // key open then padding adjustment
                         padding: EdgeInsets.fromLTRB(
                           isDesktop ? 30 : horizontalPadding,
                           20,
@@ -57,37 +83,56 @@ class RegistrationModalSheet extends StatelessWidget {
                             ),
                             const SizedBox(height: 25),
 
-                            _buildField(context, "Full Name", Icons.person_outline, isDesktop),
+                            // Controller Field
+                            _buildField(context, "Full Name", Icons.person_outline, isDesktop, controller: _nameController),
                             const SizedBox(height: 15),
 
-                            _buildField(context, "Email", Icons.email_outlined, isDesktop),
+                            _buildField(context, "Email", Icons.email_outlined, isDesktop, controller: _emailController, keyboardType: TextInputType.emailAddress),
                             const SizedBox(height: 15),
 
-                            // Mobile number field
-                            _buildField(
-                                context,
-                                "Mobile Number",
-                                Icons.phone_android_outlined,
-                                isDesktop,
-                                keyboardType: TextInputType.phone
-                            ),
+                            _buildField(context, "Mobile Number", Icons.phone_android_outlined, isDesktop, controller: _phoneController, keyboardType: TextInputType.phone),
                             const SizedBox(height: 15),
 
-                            _buildField(context, "Password", Icons.lock_outline, isDesktop, isPass: true),
+                            _buildField(context, "Password", Icons.lock_outline, isDesktop, controller: _passController, isPass: true),
                             const SizedBox(height: 15),
 
-                            _buildField(context, "Confirm Password", Icons.lock_reset, isDesktop, isPass: true),
+                            _buildField(context, "Confirm Password", Icons.lock_reset, isDesktop, controller: _confirmPassController, isPass: true),
                             const SizedBox(height: 30),
 
-                            ElevatedButton(
+                            // Sign up Button and logic connect
+                            _isLoading
+                                ? const CircularProgressIndicator()
+                                : ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: accent,
                                 minimumSize: const Size(double.infinity, 50),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 elevation: 0,
                               ),
-                              onPressed: () {
-                                print("Registration Sheet Clicked");
+                              onPressed: () async {
+                                // Password Matching
+                                if(_passController.text != _confirmPassController.text){
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password and Confirm Password must be same!")));
+                                  return;
+                                }
+
+                                setState(() => _isLoading = true);
+
+                                var user = await _auth.signUp(
+                                  name: _nameController.text.trim(),
+                                  email: _emailController.text.trim(),
+                                  password: _passController.text.trim(),
+                                  phone: _phoneController.text.trim(),
+                                );
+
+                                setState(() => _isLoading = false);
+
+                                if (user != null) {
+                                  Navigator.pop(context); // if success then sheet close
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created Successfully!")));
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Registration Failed. Try again.")));
+                                }
                               },
                               child: Text(
                                 "SIGN UP",
@@ -107,10 +152,12 @@ class RegistrationModalSheet extends StatelessWidget {
                                 GestureDetector(
                                   onTap: () {
                                     Navigator.pop(context);
-                                    showModalBottomSheet(context: context,
+                                    showModalBottomSheet(
+                                        context: context,
                                         isScrollControlled: true,
                                         backgroundColor: Colors.transparent,
-                                        builder: (context)=> LoginModalSheet());
+                                        builder: (context)=> const LoginModalSheet()
+                                    );
                                   },
                                   child: Text(
                                     "Login",
@@ -134,9 +181,11 @@ class RegistrationModalSheet extends StatelessWidget {
     );
   }
 
+  // Build Field TextEditingController to add
   Widget _buildField(BuildContext context, String hint, IconData icon, bool isDesktop,
-      {bool isPass = false, TextInputType keyboardType = TextInputType.text}) {
+      {bool isPass = false, TextInputType keyboardType = TextInputType.text, required TextEditingController controller}) {
     return TextField(
+      controller: controller, // Controller Connect
       obscureText: isPass,
       keyboardType: keyboardType,
       style: TextStyle(fontSize: isDesktop ? 16 : 14),
