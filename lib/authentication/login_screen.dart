@@ -141,7 +141,7 @@ class _LoginModalSheetState extends State<LoginModalSheet> {
                             ),
                             const SizedBox(height: 15),
 
-                            // লগইন বাটন লজিক
+                            // login button logic
                             _isLoading
                                 ? const CircularProgressIndicator()
                                 : ElevatedButton(
