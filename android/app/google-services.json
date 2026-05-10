@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1049538572058",
+    "project_id": "nobochitro-official",
+    "storage_bucket": "nobochitro-official.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049538572058:android:7fa42a0811615ba94cc6a3",
+        "android_client_info": {
+          "package_name": "com.example.nobochitro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSc41OgV8lGoFIbcky0L93I1di3okpPh8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
