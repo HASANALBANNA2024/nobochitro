@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
+import 'package:nobochitro/client_profile/edit_profile_sheet.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -356,7 +357,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
             child: SizedBox(
               height: 50,
               child: ElevatedButton(
-                onPressed: () => print("Edit Profile Tapped"),
+                onPressed: () {
+                  EditProfileSheet.show(context);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: gold,
                   foregroundColor: Colors.black,
