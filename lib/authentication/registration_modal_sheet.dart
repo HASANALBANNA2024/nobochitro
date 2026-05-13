@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:nobochitro/authentication/login_screen.dart';
 import 'auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RegistrationModalSheet extends StatefulWidget {
   const RegistrationModalSheet({super.key});
@@ -109,32 +111,75 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 elevation: 0,
                               ),
-                              onPressed: () async {
-                                // Password Matching
-                                if(_passController.text != _confirmPassController.text){
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password and Confirm Password must be same!")));
-                                  return;
-                                }
+                              onPressed: ()async {
+                                if(_passController.text != _confirmPassController.text)
+                                  {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password and Confirm Password must be same!")));
+                                    return;
+                                  }
+                                setState(() {
+                                  _isLoading = true;
+                                });
 
-                                setState(() => _isLoading = true);
-
-                                var user = await _auth.signUp(
-                                  name: _nameController.text.trim(),
-                                  email: _emailController.text.trim(),
-                                  password: _passController.text.trim(),
-                                  phone: _phoneController.text.trim(),
+                                // user unique identity number
+                                String customId = "N-${Random().nextInt(900000) + 100000}";
+                                // firebase sign up
+                                var user = await _auth.signUp
+                                  (
+                                    name: _nameController.text.trim(),
+                                    email: _emailController.text.trim(),
+                                    password: _passController.text.trim(),
+                                    phone: _phoneController.text.trim(),
+                                    CustomId: customId,
                                 );
 
-                                setState(() => _isLoading = false);
-
-                                if (user != null) {
-                                  Navigator.pop(context); // if success then sheet close
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created Successfully!")));
-                                } else {
+                                if(user != null)
+                                  {
+                                    // formatted Number
+                                    String rawPhone = _phoneController.text.trim();
+                                    String formattedPhone = rawPhone;
+                                    if (!rawPhone.startsWith('+88')) {
+                                      if (rawPhone.startsWith('88')) {
+                                        formattedPhone = '+$rawPhone';
+                                      } else if (rawPhone.startsWith('0')) {
+                                        formattedPhone = '+88$rawPhone';
+                                      } else {
+                                        formattedPhone = '+880$rawPhone';
+                                      }
+                                    }
+                                    // formatted Number of End
+                                    try{
+                                      await Supabase.instance.client.from("users").insert(
+                                          {
+                                            'id': customId,
+                                            'user_id':user.uid,
+                                            'full_name':_nameController.text.trim(),
+                                            'email':_emailController.text.trim(),
+                                            'phone_number': formattedPhone,
+                                            'user_role':'client',
+                                          });
+                                    } catch (e){
+                                      setState(() {
+                                        _isLoading = false;
+                                      });
+                                      // Error
+                                      Navigator.pop(context);
+                                      print("Supabase Sync Error :$e");
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile Created, But profile Sync Failed")));
+                                    }
+                                  }
+                                else {
+                                  setState(() => _isLoading = false);
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Registration Failed. Try again.")));
                                 }
+
+
+                                Navigator.pop(context);
+
+
                               },
                               child: Text(
+
                                 "SIGN UP",
                                 style: TextStyle(
                                   color: isDark ? Colors.black : Colors.white,

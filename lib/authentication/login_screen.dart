@@ -156,7 +156,8 @@ class _LoginModalSheetState extends State<LoginModalSheet> {
                                 String password = _passController.text.trim();
 
                                 if (input.isEmpty || password.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill all fields!")));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Please fill all fields!")));
                                   return;
                                 }
 
@@ -164,32 +165,54 @@ class _LoginModalSheetState extends State<LoginModalSheet> {
 
                                 String loginEmail = input;
 
-                                // ফোন নম্বর মোডে থাকলে ইমেইল খুঁজে বের করা
+                                // ফোন নম্বর মোডে থাকলে বা ইনপুটটি নম্বর হলে ফরম্যাট করে ইমেইল খুঁজে বের করা
                                 if (!_isEmailMode || _isNumeric(input)) {
-                                  var userQuery = await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .where('phone', isEqualTo: input)
-                                      .limit(1)
-                                      .get();
+                                  // এখানে আপনার AuthService এর ফরম্যাটিং লজিক ব্যবহার করা হয়েছে
+                                  String formattedSearchPhone = input;
+                                  if (!formattedSearchPhone.startsWith('+88')) {
+                                    if (formattedSearchPhone.startsWith('88')) {
+                                      formattedSearchPhone = '+$formattedSearchPhone';
+                                    } else if (formattedSearchPhone.startsWith('0')) {
+                                      formattedSearchPhone = '+88$formattedSearchPhone';
+                                    } else {
+                                      formattedSearchPhone = '+880$formattedSearchPhone';
+                                    }
+                                  }
 
-                                  if (userQuery.docs.isNotEmpty) {
-                                    loginEmail = userQuery.docs.first.get('email');
-                                  } else if (!_isEmailMode) {
+                                  try {
+                                    var userQuery = await FirebaseFirestore.instance
+                                        .collection('users')
+                                        .where('phone', isEqualTo: formattedSearchPhone) // +88 সহ সার্চ হবে
+                                        .limit(1)
+                                        .get();
+
+                                    if (userQuery.docs.isNotEmpty) {
+                                      loginEmail = userQuery.docs.first.get('email');
+                                    } else {
+                                      setState(() => _isLoading = false);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Phone number not found!")));
+                                      return;
+                                    }
+                                  } catch (e) {
                                     setState(() => _isLoading = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Phone number not found!")));
+                                    print("Firestore Query Error: $e");
                                     return;
                                   }
                                 }
 
+                                // ইমেইল এবং পাসওয়ার্ড দিয়ে লগইন
                                 var user = await _auth.logIn(loginEmail, password);
 
                                 setState(() => _isLoading = false);
 
                                 if (user != null) {
                                   Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Login Successful!")));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Login Successful!")));
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Login Failed! Check credentials.")));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Login Failed! Check credentials.")));
                                 }
                               },
                               child: Text(

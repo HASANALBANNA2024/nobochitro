@@ -4,15 +4,21 @@ import 'package:nobochitro/firebase_options.dart';
 import 'package:nobochitro/screens/dashboard_screen.dart';
 import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async{
   // flutter engine load
   WidgetsFlutterBinding.ensureInitialized();
+
+
+  await Supabase.initialize(url: "https://whdyselehlvbshnoezgz.supabase.co", anonKey: "sb_publishable_J2XyM8ebvtPM7la-GHbZjg_0aEVlOT0");
   // firebase start
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform
   );
+
+
 
 
   runApp(const PhotographyApp());
