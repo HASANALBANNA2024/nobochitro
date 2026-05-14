@@ -99,7 +99,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 40),
 
-                      // লেআউট লজিক
+                      // Layout Logic
                       screenWidth > 850
                           ? Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +148,7 @@ class PhotographerProfileScreen extends StatelessWidget {
   }
 
   Widget _buildDetailedInfo(Map<String, dynamic> data) {
-    // Technical Arsenal স্ট্রিংকে লিস্টে রূপান্তর
+    // Technical Arsenal স্ট্
     List<String> gearList = (data['technical_arsenal'] ?? "").toString().split(
       ',',
     );

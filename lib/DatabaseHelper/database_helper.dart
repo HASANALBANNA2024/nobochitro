@@ -150,4 +150,13 @@ class DatabaseHelper {
       );
     }
   }
+
+
+
+  // ডাটা রিয়েল-টাইম পাওয়ার জন্য স্ট্রিম মেথড
+  static Stream<List<Map<String, dynamic>>> getPhotographerStream() {
+    return _client
+        .from('photographers')
+        .stream(primaryKey: ['photographer_id']);
+  }
 }

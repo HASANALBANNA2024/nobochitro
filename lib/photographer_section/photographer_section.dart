@@ -1,8 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:nobochitro/photographer_section/photographer_profile_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart'; // আপনার হেল্পার ফাইলের পাথ দিন
 
 class PhotographerSection extends StatefulWidget {
   final Color primaryAccent;
@@ -16,7 +15,6 @@ class PhotographerSection extends StatefulWidget {
 class _PhotographerSectionState extends State<PhotographerSection> {
   late final ScrollController _scrollController;
   Timer? _timer;
-  final supabase = Supabase.instance.client;
 
   @override
   void initState() {
@@ -27,7 +25,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
     });
   }
 
-  // scroll count
+  // অটো স্ক্রলিং লজিক (আপনার আগের কোড অনুযায়ী)
   void _startAutoScroll() {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_scrollController.hasClients) {
@@ -80,7 +78,10 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  // ডেমো ডাটা ইনসার্ট করার জন্য হেল্পার কল করতে পারেন (টেস্টিং এর জন্য)
+                  // DatabaseHelper.insertDemoPhotographers();
+                },
                 child: Text(
                   'See All',
                   style: TextStyle(color: widget.primaryAccent),
@@ -91,18 +92,19 @@ class _PhotographerSectionState extends State<PhotographerSection> {
         ),
 
         SizedBox(
-          height: 380, // card height adjust
+          height: 380,
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            // real string data from database
-            stream: supabase
-                .from('photographers')
-                .stream(primaryKey: ['photographer_id']),
+            // সরাসরি সুপাবেস কল না করে হেল্পার ব্যবহার করা হয়েছে
+            stream: DatabaseHelper.getPhotographerStream(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return const Center(child: Text("Error loading data"));
+                return const Center(child: Text("Error loading data from helper"));
               }
-              if (!snapshot.hasData) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text("No photographers found"));
               }
 
               final photographers = snapshot.data!;
@@ -144,28 +146,21 @@ class _PhotographerSectionState extends State<PhotographerSection> {
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Image.network(
                     data['profile_image_url'] ?? '',
                     width: double.infinity,
-                    fit: BoxFit.contain,
+                    fit: BoxFit.cover, // ডিজাইনের জন্য cover রাখা ভালো
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: theme.colorScheme.onSurface.withOpacity(0.05),
                         child: const Center(
-                          child: Icon(
-                            Icons.person,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
+                          child: Icon(Icons.person, size: 50, color: Colors.grey),
                         ),
                       );
                     },
                   ),
                 ),
-                // badge style
                 if (data['is_available'] == true)
                   Positioned(
                     top: 10,
@@ -197,7 +192,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                   children: [
                     Expanded(
                       child: Text(
-                        data['name'] ?? 'No Name',
+                        data['name'] ?? 'Unknown',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -207,11 +202,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     ),
                     Row(
                       children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          color: Colors.amber,
-                          size: 20,
-                        ),
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
                         Text(
                           data['avg_rating']?.toString() ?? '0.0',
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -222,7 +213,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  data['specialty'] ?? 'Specialist',
+                  data['specialty'] ?? 'Photography Specialist',
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 13,
@@ -244,9 +235,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                       );
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: theme.colorScheme.onSurface.withOpacity(
-                        0.05,
-                      ),
+                      backgroundColor: theme.colorScheme.onSurface.withOpacity(0.05),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
