@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/firebase_options.dart';
 import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
@@ -18,7 +17,7 @@ void main() async {
   // firebase start
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await DatabaseHelper.insertDemoPhotographers();
+  // await DatabaseHelper.insertDemoPhotographers();
 
   runApp(const PhotographyApp());
 }
@@ -81,7 +80,7 @@ class _PhotographyAppState extends State<PhotographyApp> {
         );
       },
 
-      // SplashScreen এ onAppReady ফাংশনটি পাস করে দিন
+      // SplashScreen এ onAppReady
       home: SplashScreen(onThemeChanged: toggleTheme, onAppReady: onAppReady),
     );
   }

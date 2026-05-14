@@ -27,7 +27,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
     });
   }
 
-  // আপনার আগের স্ক্রলিং লজিক (৩ সেকেন্ড পর পর ৩০০ পিক্সেল)
+  // scroll count
   void _startAutoScroll() {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_scrollController.hasClients) {
@@ -91,17 +91,19 @@ class _PhotographerSectionState extends State<PhotographerSection> {
         ),
 
         SizedBox(
-          height: 380, // কার্ডের হাইট অনুযায়ী এডজাস্ট করা হয়েছে
+          height: 380, // card height adjust
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            // ডাটাবেস থেকে রিয়েল টাইম ডাটা স্ট্রিম
+            // real string data from database
             stream: supabase
                 .from('photographers')
                 .stream(primaryKey: ['photographer_id']),
             builder: (context, snapshot) {
-              if (snapshot.hasError)
+              if (snapshot.hasError) {
                 return const Center(child: Text("Error loading data"));
-              if (!snapshot.hasData)
+              }
+              if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
 
               final photographers = snapshot.data!;
 
@@ -148,7 +150,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                   child: Image.network(
                     data['profile_image_url'] ?? '',
                     width: double.infinity,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: theme.colorScheme.onSurface.withOpacity(0.05),
@@ -163,7 +165,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     },
                   ),
                 ),
-                // আপনার আগের ভেরিফাইড ব্যাজ স্টাইল
+                // badge style
                 if (data['is_available'] == true)
                   Positioned(
                     top: 10,
