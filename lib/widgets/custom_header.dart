@@ -1,11 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart'
+    as fb; // Firebase এর জন্য 'fb'
 import 'package:flutter/material.dart';
 import 'package:nobochitro/authentication/login_screen.dart';
 import 'package:nobochitro/authentication/registration_modal_sheet.dart';
 import 'package:nobochitro/client_profile/client_profile_screen.dart';
 import 'package:nobochitro/screens/search_screen.dart';
 import 'package:nobochitro/widgets/custom_search_bar.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    as sb; // Supabase এর জন্য 'sb'
 
 class CustomHeader extends StatelessWidget {
   final Color primaryAccent;
@@ -99,9 +101,9 @@ class CustomHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 15),
                   ],
-                  // এখন এখানে আর লাল দাগ থাকবে না
-                  StreamBuilder<User?>(
-                    stream: FirebaseAuth.instance.authStateChanges(),
+                  // অথেন্টিকেশন স্টেট চেক
+                  StreamBuilder<fb.User?>(
+                    stream: fb.FirebaseAuth.instance.authStateChanges(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData && snapshot.data != null) {
                         return _buildUserGreeting(context, snapshot.data!.uid);
@@ -119,11 +121,11 @@ class CustomHeader extends StatelessWidget {
     );
   }
 
+  // ডাটাবেস থেকে full_name দেখানোর মেথড
   Widget _buildUserGreeting(BuildContext context, String uid) {
     final Color goldColor = const Color(0xFFD4AF37);
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      // এখানে sb.Supabase ব্যবহার করা হয়েছে
       stream: sb.Supabase.instance.client
           .from('users')
           .stream(primaryKey: ["id"])
@@ -134,9 +136,13 @@ class CustomHeader extends StatelessWidget {
 
         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
           final userData = snapshot.data!.first;
-          name = (userData['full_name'] ?? "User").split(' ')[0];
+          name = userData['full_name'] ?? "User";
           imageUrl = userData['profile_image'];
         }
+
+        // নাম থেকে প্রথম শব্দ নেয়া
+        String firstName = name.split(' ')[0];
+
         return PopupMenuButton(
           offset: const Offset(0, 45),
           itemBuilder: (context) => [
@@ -147,11 +153,11 @@ class CustomHeader extends StatelessWidget {
             ),
           ],
           onSelected: (value) async {
-            if (value == 'logout') await FirebaseAuth.instance.signOut();
+            if (value == 'logout') await fb.FirebaseAuth.instance.signOut();
             if (value == 'profile') {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ClientProfileScreen()),
+                MaterialPageRoute(builder: (_) => const ClientProfileScreen()),
               );
             }
           },
@@ -160,7 +166,7 @@ class CustomHeader extends StatelessWidget {
               _buildProfileImage(imageUrl, goldColor),
               const SizedBox(width: 6),
               Text(
-                name,
+                firstName, // ডাটাবেসের full_name এখানে শো হবে
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
