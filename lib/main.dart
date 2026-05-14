@@ -19,8 +19,9 @@ void main() async {
   // firebase start
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await DatabaseHelper.insertDemoPhotographers();
-  await DatabaseHelper.insertDemoPackages();
+  // await DatabaseHelper.insertDemoPhotographers();
+  // await DatabaseHelper.insertDemoPackages();
+  // await DatabaseHelper.instance.insertDummyAddons();
 
   runApp(const PhotographyApp());
 }

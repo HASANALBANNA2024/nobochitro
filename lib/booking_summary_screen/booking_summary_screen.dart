@@ -3,7 +3,9 @@ import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nobochitro/payments/payment_sheet.dart';
+import 'package:nobochitro/widgets/addOns_selector.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
+import 'package:nobochitro/widgets/photographer_selector.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   final Color primaryAccent;
@@ -21,7 +23,11 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   int _selectedDurationHours = 1;
   int _selectedDurationMinutes = 0;
   int _selectedPhotographerIndex = -1;
-  String _selectedPhotographer = "Not Selected";
+  String _selectedPhotographer = "None";
+
+  // getaddons
+  List<Map<String, dynamic>> selectedAddons = [];
+  double totalAddonsPrice = 0.0;
 
   late Future<List<Map<String, dynamic>>> _photographersFuture;
 
@@ -87,7 +93,31 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
                 const SizedBox(height: 25),
                 _buildSectionTitle("Select Professional Photographer", theme),
-                _buildPhotographerList(context, theme, isDark),
+                // photographer call
+                PhotographerSelector(
+                    photographersFuture: _photographersFuture,
+                    onPhotographerSelected: (photographer){
+                      setState(() {
+                        _selectedPhotographer = photographer['name']?? "unknow";
+                      });
+                    }
+                ),
+
+
+                const SizedBox(height: 25,),
+                const Text(
+                  "Extra Service (Exclusive)",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                AddOnsSelector(onSelectionChanged: (newList){
+                  setState(() {
+                    totalAddonsPrice = newList.fold(0, (sum, item)=> sum+ (item['price']?? 0));
+                  });
+                  print("সিলেক্ট করা হয়েছে: ${selectedAddons.length} টি আইটেম");
+                  print("মোট খরচ: ৳$totalAddonsPrice");
+                }),
+
 
                 const SizedBox(height: 25),
                 _buildSectionTitle("Schedule Your Session", theme),
@@ -303,193 +333,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       ),
     );
   }
-
-
-  // photographer card start
-  Widget _buildPhotographerList(
-      BuildContext context,
-      ThemeData theme,
-      bool isDark,
-      ) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _photographersFuture, // এখানে পরিবর্তন: সরাসরি ভেরিয়েবলটি ব্যবহার করুন
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // প্রথমবার লোড হওয়ার সময় এটি দেখাবে
-          return const SizedBox(height: 210, child: Center(child: CircularProgressIndicator()));
-        }
-
-        // বাকি কোড আগের মতোই থাকবে...
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox(height: 210, child: Center(child: Text("No photographers found")));
-        }
-
-        final photographers = snapshot.data!;
-        return SizedBox(
-          height: 210,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            itemCount: photographers.length,
-            itemBuilder: (context, index) {
-              return _buildEnhancedPhotographerCard(
-                photographers[index],
-                theme,
-                isDark,
-                context,
-                index,
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEnhancedPhotographerCard(
-      Map<String, dynamic> photographer,
-      ThemeData theme,
-      bool isDark,
-      BuildContext context,
-      int index,
-      ) {
-    final accentColor = theme.colorScheme.primary;
-    final isSelected = _selectedPhotographerIndex == index;
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 20, bottom: 10), // স্পেসিং বাড়ানো হয়েছে
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedPhotographerIndex = index;
-            _selectedPhotographer = photographer['name'] ?? "Unknown";
-          });
-        },
-        borderRadius: BorderRadius.circular(25),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: 160, // আপনার চাহিদা মতো কার্ডের উইথ বাড়ানো হয়েছে
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? accentColor.withOpacity(isDark ? 0.15 : 0.05)
-                : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
-            borderRadius: BorderRadius.circular(25),
-            border: Border.all(
-              color: isSelected ? accentColor : (isDark ? Colors.white12 : Colors.black.withOpacity(0.08)),
-              width: isSelected ? 2.5 : 1, // সিলেকশনে বর্ডার আরও স্পষ্ট হবে
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isSelected
-                    ? accentColor.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.03),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // প্রোফাইল ইমেজ ও চেক মার্ক
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? accentColor : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 38,
-                      backgroundColor: Colors.grey[300],
-                      backgroundImage: NetworkImage(
-                        photographer['profile_image_url'] ?? "https://via.placeholder.com/150",
-                      ),
-                    ),
-                  ),
-                  if (isSelected)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.check, color: Colors.white, size: 16),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // ফুল নেম (Clear and Bold)
-              Text(
-                photographer['name'] ?? "Unknown Artist",
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              // স্পেশালিটি (Specialty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  photographer['specialty'] ?? "Wedding Expert",
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // পার আওয়ার ফি (Per Hour Fee)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.payments_outlined,
-                      size: 14,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600]
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    "${photographer['per_hours_fee'] ?? '0'} BDT/hr",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white70 : Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // end of photographer card
 
   Widget _buildDateTimeSelector(ThemeData theme, bool isDark) {
     return Column(

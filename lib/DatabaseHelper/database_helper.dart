@@ -236,10 +236,70 @@ class DatabaseHelper {
     }
   }
 
+  Future<void> insertDummyAddons() async {
+    final List<Map<String, dynamic>> dummyAddons = [
+      {
+        "title": "Extra 10 Retouched Photos",
+        "price": 1500,
+        "category": "Deliverables",
+        "iamge_url": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e",
+        "is_active": true,
+      },
+      {
+        "title": "4K Cinematic Video (3 min)",
+        "price": 5000,
+        "category": "Video",
+        "iamge_url": "https://images.unsplash.com/photo-1536240478700-b869070f9279",
+        "is_active": true,
+      },
+      {
+        "title": "Aerial Drone Photography",
+        "price": 3500,
+        "category": "Special",
+        "iamge_url": "https://images.unsplash.com/photo-1508614589041-895b88991e3e",
+        "is_active": true,
+      },
+      {
+        "title": "Premium Photo Album",
+        "price": 4500,
+        "category": "Print",
+        "iamge_url": "https://images.unsplash.com/photo-1544377193-33dcf4d68fb5",
+        "is_active": true,
+      },
+    ];
+
+    try {
+      // একবারে সব ডাটা ইনসার্ট করা হচ্ছে
+      await _client.from('addons').insert(dummyAddons);
+      print("Add-ons dummy data inserted successfully!");
+    } catch (e) {
+      print("Error inserting dummy addons: $e");
+    }
+  }
+
+
+
+
+  // get photographers
   Future<List<Map<String, dynamic>>> getPhotographers() async {
     final response = await _client
         .from('photographers') // আপনার টেবিলের নাম
         .select();
     return List<Map<String, dynamic>>.from(response);
+  }
+
+  // get addons
+  Future<List<Map<String, dynamic>>> getAddons() async {
+    try {
+      final response = await _client
+          .from('addons') // আপনার সুপাবেস টেবিলের নাম
+          .select()
+          .eq('is_active', true); // শুধুমাত্র একটিভ আইটেমগুলো নিতে
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print("Error fetching addons: $e");
+      return [];
+    }
   }
 }
