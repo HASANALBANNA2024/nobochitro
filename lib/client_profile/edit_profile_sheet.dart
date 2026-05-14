@@ -11,15 +11,15 @@ class EditProfileSheet {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color goldColor = const Color(0xFFD4AF37);
 
-    // ১. ভেরিয়েবল সেটআপ
-    XFile? selectedImageFile; // লোকাল ফাইল সেভ রাখার জন্য
-    String? localPreviewPath; // লোকাল প্রিভিউ দেখানোর জন্য
-    bool isProcessing = false; // লোডিং ইন্ডিকেটর
+    // Variable setup
+    XFile? selectedImageFile; // local file save
+    String? localPreviewPath; // local preview
+    bool isProcessing = false; // loading indicator
 
     Map<String, dynamic>? currentUserData;
     final String? firebaseUid = FirebaseAuth.instance.currentUser?.uid;
 
-    // ডাটাবেস থেকে বর্তমান তথ্য আনা (image_bce9a5.png অনুযায়ী)
+    // to receive database present image
     try {
       if (firebaseUid != null) {
         currentUserData = await Supabase.instance.client
@@ -45,7 +45,7 @@ class EditProfileSheet {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            // ২. ইমেজ পিক করার ফাংশন (শুধু প্রিভিউ করবে, আপলোড নয়)
+            // image picture to pickup function
             Future<void> _pickImage() async {
               final ImagePicker picker = ImagePicker();
               final XFile? image = await picker.pickImage(
@@ -56,7 +56,7 @@ class EditProfileSheet {
               if (image != null) {
                 setSheetState(() {
                   selectedImageFile = image;
-                  localPreviewPath = image.path; // লোকাল পাথ স্টোর করা
+                  localPreviewPath = image.path; // local path store
                 });
               }
             }
@@ -95,7 +95,7 @@ class EditProfileSheet {
                     ),
                     const SizedBox(height: 25),
 
-                    // ৩. ইমেজ প্রিভিউ সেকশন
+                    // image preview section
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -168,7 +168,7 @@ class EditProfileSheet {
                     ),
                     const SizedBox(height: 30),
 
-                    // ৪. ফাইনাল সেভ বাটন (এখানেই সব আপলোড এবং ডাটাবেস সেভ হবে)
+                    // final save button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -189,7 +189,7 @@ class EditProfileSheet {
                                     currentUserData?['profile_image'];
 
                                 try {
-                                  // ১. যদি নতুন ইমেজ সিলেক্ট করা থাকে তবেই আপলোড হবে
+                                  // to image select image upload
                                   if (selectedImageFile != null) {
                                     final String fileName =
                                         'profile_${firebaseUid}.jpg';
@@ -199,7 +199,7 @@ class EditProfileSheet {
                                         .storage
                                         .from('user_assets');
 
-                                    // ফাইল আপলোড (Upsert true রাখা হয়েছে যেন পুরনোটা রিপ্লেস হয়)
+                                    // file upload
                                     if (kIsWeb) {
                                       final bytes = await selectedImageFile!
                                           .readAsBytes();
@@ -222,7 +222,7 @@ class EditProfileSheet {
                                       );
                                     }
 
-                                    // ২. আপলোড সফল হলে পাবলিক ইউআরএল জেনারেট করা
+                                    // upload success
                                     finalImageUrl = storage.getPublicUrl(
                                       fileName,
                                     );
@@ -231,7 +231,7 @@ class EditProfileSheet {
                                     );
                                   }
 
-                                  // ৩. ডাটাবেস আপডেট (ইমেজ লিঙ্ক এবং অ্যাড্রেস একসাথে)
+                                  // database update image link and adress
                                   final response = await Supabase
                                       .instance
                                       .client
@@ -240,7 +240,7 @@ class EditProfileSheet {
                                         'address': addressController.text
                                             .trim(),
                                         'profile_image':
-                                            finalImageUrl, // এখানে এখন সঠিক লিঙ্ক যাবে
+                                            finalImageUrl, // right link setup
                                       })
                                       .eq('user_id', firebaseUid!);
 
@@ -250,7 +250,7 @@ class EditProfileSheet {
 
                                   if (context.mounted) {
                                     if (onUpdate != null)
-                                      onUpdate(); // মেইন প্রোফাইল স্ক্রিন রিফ্রেশ
+                                      onUpdate(); // main profile screen refreash
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -261,7 +261,7 @@ class EditProfileSheet {
                                     );
                                   }
                                 } catch (e) {
-                                  // ৪. যদি কোনো এরর হয় তবে তা এখানে দেখাবে
+                                  // to display in error
                                   debugPrint("Final Error Log: $e");
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
