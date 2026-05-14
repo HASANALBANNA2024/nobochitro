@@ -417,8 +417,11 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     context: context,
                     initialTime: TimeOfDay.now(),
                   );
-                  if (t != null)
-                    setState(() => _selectedTime = t.format(context));
+                  if (t != null) {
+                    setState(() {
+                      _selectedTime = t.format(context);
+                    });
+                  }
                 },
               ),
             ],

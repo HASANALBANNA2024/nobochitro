@@ -8,11 +8,35 @@ class DatabaseHelper {
   // ২. instance মেম্বারটি ডিফাইন করুন (এটি না থাকলে রেড লাইন আসবে)
   static final DatabaseHelper instance = DatabaseHelper._();
 
+  // getcategoris of under of banner
+  // database_helper.dart
+  Future<List<String>> getUniqueCategories() async {
+    try {
+      final response = await _client
+          .from('packages')
+          .select('category');
+
+      final List<dynamic> data = response as List;
+      // Set ব্যবহার করে ডুপ্লিকেট নাম বাদ দেওয়া হয়েছে
+      final categories = data
+          .map((item) => item['category'].toString())
+          .where((cat) => cat.isNotEmpty)
+          .toSet()
+          .toList();
+
+      return categories;
+    } catch (e) {
+      debugPrint("Error fetching unique categories: $e");
+      return [];
+    }
+  }
+
+
+
+
+
+
   // ৩. সুপাবেস ক্লায়েন্ট (আপনার আগের কোড অনুযায়ী)
-
-
-
-
   static final _client = Supabase.instance.client;
 
   // ১. ডাটা ইনসার্ট করা (Create)
@@ -108,12 +132,12 @@ class DatabaseHelper {
     final supabase = Supabase.instance.client;
 
     final List<Map<String, dynamic>> demoData = [
+      // --- আপনার আগের ডাটা ---
       {
         'photographer_id': 'N-554433',
         'name': 'Rifat Bin Azad',
         'profile_image_url': 'https://i.pravatar.cc/300?u=rifat',
-        'banner_image_url':
-            'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=1200',
+        'banner_image_url': 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=1200',
         'specialty': 'Wild Life & Nature',
         'technical_arsenal': 'Nikon Z9, 400mm f2.8, Benro Tripod',
         'experience_years': 8,
@@ -125,41 +149,82 @@ class DatabaseHelper {
         'is_available': true,
         'avg_rating': 4.8,
       },
+
+      // --- নতুন ইউনিক ফটোগ্রাফার ডাটা ---
+
       {
-        'photographer_id': 'N-998877',
-        'name': 'Farhana Yeasmin',
-        'profile_image_url': 'https://i.pravatar.cc/300?u=farhana',
-        'banner_image_url':
-            'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1200',
-        'specialty': 'Baby & Maternity',
-        'technical_arsenal': 'Canon EOS R6, 50mm f1.2, Softboxes',
-        'experience_years': 3,
-        'projects_completed': '50+',
-        'delivery_time': '5 Days',
-        'bio': 'Capturing the first precious moments of your little ones.',
-        'location': 'Rajshahi, Bangladesh',
-        'per_hours_fee': 1800,
+        'photographer_id': 'N-223344',
+        'name': 'Tanvir Ahmed',
+        'profile_image_url': 'https://i.pravatar.cc/300?u=tanvir',
+        'banner_image_url': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
+        'specialty': 'Commercial & Product',
+        'technical_arsenal': 'Sony A7R V, 90mm Macro, Godox Lighting',
+        'experience_years': 6,
+        'projects_completed': '150+',
+        'delivery_time': '3 Days',
+        'bio': 'Making products look premium and ready for the global market.',
+        'location': 'Dhaka, Bangladesh',
+        'per_hours_fee': 4000,
         'is_available': true,
-        'avg_rating': 4.6,
+        'avg_rating': 4.9,
+      },
+      {
+        'photographer_id': 'N-112233',
+        'name': 'Sajid Al-Hossain',
+        'profile_image_url': 'https://i.pravatar.cc/300?u=sajid',
+        'banner_image_url': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200',
+        'specialty': 'Architecture & Interior',
+        'technical_arsenal': 'Canon EOS R5, 17mm Tilt-Shift, DJI Mavic 3 Pro',
+        'experience_years': 5,
+        'projects_completed': '80+',
+        'delivery_time': '10 Days',
+        'bio': 'Capturing structures and spaces with precision and HDR depth.',
+        'location': 'Sylhet, Bangladesh',
+        'per_hours_fee': 6000,
+        'is_available': true,
+        'avg_rating': 4.7,
+      },
+      {
+        'photographer_id': 'N-776655',
+        'name': 'Maliha Zaman',
+        'profile_image_url': 'https://i.pravatar.cc/300?u=maliha',
+        'banner_image_url': 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200',
+        'specialty': 'Fashion & Lifestyle',
+        'technical_arsenal': 'Fujifilm GFX 100S, 85mm f1.4, Profoto B10',
+        'experience_years': 4,
+        'projects_completed': '120+',
+        'delivery_time': '7 Days',
+        'bio': 'Combining style and storytelling through high-end fashion photography.',
+        'location': 'Dhaka, Bangladesh',
+        'per_hours_fee': 3500,
+        'is_available': true,
+        'avg_rating': 4.8,
+      },
+      {
+        'photographer_id': 'N-334455',
+        'name': 'Ariful Islam',
+        'profile_image_url': 'https://i.pravatar.cc/300?u=ariful',
+        'banner_image_url': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200',
+        'specialty': 'Food & Culinary',
+        'technical_arsenal': 'Sony A7 IV, 50mm Macro, Scrims & Reflectors',
+        'experience_years': 3,
+        'projects_completed': '60+',
+        'delivery_time': '4 Days',
+        'bio': 'Turning flavors into visuals. Specialist in restaurant menu shoots.',
+        'location': 'Chittagong, Bangladesh',
+        'per_hours_fee': 2500,
+        'is_available': true,
+        'avg_rating': 4.5,
       },
     ];
 
     try {
       for (var data in demoData) {
-        // upsert ব্যবহার করলে একই আইডি বারবার ইনসার্ট হবে না, ডাটা আপডেট হবে
-        await supabase
-            .from('photographers')
-            .upsert(
-              data,
-              onConflict: 'photographer_id', // তোমার টেবিলের প্রাইমারি কি কলাম
-            );
+        await supabase.from('photographers').upsert(data, onConflict: 'photographer_id');
       }
-      print("অভিনন্দন! ডেমো ডাটা সাকসেসফুলি ইনসার্ট/আপডেট হয়েছে।");
+      print("অভিনন্দন! সব স্পেশালিস্ট ফটোগ্রাফারদের ডাটা সাকসেসফুলি আপডেট হয়েছে।");
     } catch (e) {
       print("ডাটা ইনসার্টে এরর: $e");
-      print(
-        "টিপস: সুপাবেস SQL Editor-এ গিয়ে 'photographers' টেবিলের RLS পলিসি চেক করো।",
-      );
     }
   }
   // ডাটা রিয়েল-টাইম পাওয়ার জন্য স্ট্রিম মেথড
@@ -171,50 +236,150 @@ class DatabaseHelper {
 
   // আপনার DatabaseHelper ক্লাসের ভেতরে এটি যোগ করুন
   static Future<void> insertDemoPackages() async {
-    final List<Map<String, dynamic>> demoPackages = [
+    final List<Map<String, dynamic>> expandedPackages = [
+
+      // --- Commercial (Ecommerce & Branding) ---
       {
-        'package_id': 'PKG-WB-001',
-        'title': 'Premium Wedding Bash',
-        'category': 'Wedding',
-        'photographer_id': 'N-554433', // আপনার আগের ডেমো ফটোগ্রাফার আইডি
-        'base_price': 25000,
-        'features': '8 Hours, 2 Photographers, Unlimited Photos, 100 Edited',
-        'image_url': 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc',
-        'is_active': true,
-        'is_customization': true,
-      },
-      {
-        'package_id': 'PKG-EV-002',
-        'title': 'Corporate Event Pro',
-        'category': 'Event',
-        'photographer_id': 'N-554433',
-        'base_price': 15000,
-        'features': '4 Hours, 1 Photographer, High Res Digital Delivery',
-        'image_url': 'https://images.unsplash.com/photo-1511578314322-379afb476865',
+        'package_id': 'PKG-COM-101',
+        'title': 'Starter Product Shoot',
+        'category': 'Commercial',
+        'base_price': 5000,
+        'features': '5 Products, White Background, Basic Editing, 48h Delivery',
+        'image_url': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30',
         'is_active': true,
         'is_customization': false,
       },
       {
-        'package_id': 'PKG-PT-003',
-        'title': 'Outdoor Portrait Solo',
-        'category': 'Portrait',
-        'photographer_id': 'N-554433',
-        'base_price': 5000,
-        'features': '2 Hours, 20 Edited Photos, All RAW files',
-        'image_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
+        'package_id': 'PKG-COM-102',
+        'title': 'Lifestyle Product Branding',
+        'category': 'Commercial',
+        'base_price': 15000,
+        'features': '10 Products, Real-life Context, Professional Props, Social Media Ready',
+        'image_url': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
+        'is_active': true,
+        'is_customization': true,
+      },
+
+      // --- Graduation (Academic) ---
+      {
+        'package_id': 'PKG-GRAD-201',
+        'title': 'Single Graduation Portrait',
+        'category': 'Graduation',
+        'base_price': 2000,
+        'features': '30 Mins, Campus Spot, 5 Retouched Photos, Gown Provided',
+        'image_url': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1',
+        'is_active': true,
+        'is_customization': false,
+      },
+      {
+        'package_id': 'PKG-GRAD-202',
+        'title': 'Squad Graduation Party',
+        'category': 'Graduation',
+        'base_price': 8000,
+        'features': 'Max 10 People, Group Fun Shots, Celebration Clips, All RAW images',
+        'image_url': 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3',
+        'is_active': true,
+        'is_customization': true,
+      },
+
+      // --- Food (Restaurant & Blogs) ---
+      {
+        'package_id': 'PKG-FOOD-301',
+        'title': 'Cafe Menu Teaser',
+        'category': 'Food',
+        'base_price': 4000,
+        'features': '5 Signature Dishes, Natural Lighting, Ideal for Instagram Stories',
+        'image_url': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+        'is_active': true,
+        'is_customization': false,
+      },
+      {
+        'package_id': 'PKG-FOOD-302',
+        'title': 'Fine Dining Commercial',
+        'category': 'Food',
+        'base_price': 20000,
+        'features': 'Full Menu, Chef Portraits, Kitchen Action Shots, 4K Food B-Roll Video',
+        'image_url': 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0',
+        'is_active': true,
+        'is_customization': true,
+      },
+
+      // --- Architecture & Interior ---
+      {
+        'package_id': 'PKG-ARCH-401',
+        'title': 'Airbnb/Rental Basic',
+        'category': 'Architecture',
+        'base_price': 6000,
+        'features': 'Living Room & Bedroom, Optimized for Booking Sites, Basic HDR',
+        'image_url': 'https://images.unsplash.com/photo-1484154218962-a197022b5858',
+        'is_active': true,
+        'is_customization': false,
+      },
+      {
+        'package_id': 'PKG-ARCH-402',
+        'title': 'Corporate Office Showcase',
+        'category': 'Architecture',
+        'base_price': 25000,
+        'features': 'Full Building Exterior, Interior Hubs, Employee in Action, Drone Exterior',
+        'image_url': 'https://images.unsplash.com/photo-1497366216548-37526070297c',
+        'is_active': true,
+        'is_customization': true,
+      },
+
+      // --- Fashion ---
+      {
+        'package_id': 'PKG-FASH-501',
+        'title': 'Street Style Lookbook',
+        'category': 'Fashion',
+        'base_price': 10000,
+        'features': 'Outdoor Session, 2 Outfits, Trendy Edits, Lifestyle Feel',
+        'image_url': 'https://images.unsplash.com/photo-1496747611176-843222e1e57c',
+        'is_active': true,
+        'is_customization': true,
+      },
+      {
+        'package_id': 'PKG-FASH-502',
+        'title': 'Editorial Studio Session',
+        'category': 'Fashion',
+        'base_price': 35000,
+        'features': 'Cyclorama Wall, Pro Lighting Setup, Makeup Artist, Vogue Style Retouching',
+        'image_url': 'https://images.unsplash.com/photo-1509631179647-0177331693ae',
+        'is_active': true,
+        'is_customization': true,
+      },
+
+      // --- Nature & Travel ---
+      {
+        'package_id': 'PKG-NAT-601',
+        'title': 'Traveler Solo Portrait',
+        'category': 'Nature',
+        'base_price': 3000,
+        'features': '1 Scenic Location, Adventure Theme, 10 High-Res Digital Files',
+        'image_url': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
+        'is_active': true,
+        'is_customization': false,
+      },
+
+      // --- Lifestyle (Pets/Family) ---
+      {
+        'package_id': 'PKG-LIFE-701',
+        'title': 'Home Family Session',
+        'category': 'Lifestyle',
+        'base_price': 7000,
+        'features': 'In-home Shoot, Candid Interactions, 2 Hours, All Digital Images',
+        'image_url': 'https://images.unsplash.com/photo-1511895426328-dc8714191300',
         'is_active': true,
         'is_customization': true,
       },
     ];
 
     try {
-      // image_8488d5.png অনুযায়ী টেবিলের নাম 'packages' ধরে নিচ্ছি
-      for (var package in demoPackages) {
+      for (var package in expandedPackages) {
         await _client.from('packages').upsert(package, onConflict: 'package_id');
       }
-      debugPrint("প্যাকেজ ডেমো ডাটা সাকসেসফুলি ইনসার্ট হয়েছে।");
+      debugPrint("বর্ধিত ডেমো প্যাকেজগুলো সফলভাবে ইনসার্ট হয়েছে।");
     } catch (e) {
-      debugPrint("প্যাকেজ ইনসার্টে এরর: $e");
+      debugPrint("ইনসার্টে এরর: $e");
     }
   }
 
@@ -238,6 +403,7 @@ class DatabaseHelper {
 
   Future<void> insertDummyAddons() async {
     final List<Map<String, dynamic>> dummyAddons = [
+      // --- আপনার আগের ডাটা ---
       {
         "title": "Extra 10 Retouched Photos",
         "price": 1500,
@@ -252,18 +418,70 @@ class DatabaseHelper {
         "iamge_url": "https://images.unsplash.com/photo-1536240478700-b869070f9279",
         "is_active": true,
       },
+
+      // --- নতুন এবং ইউনিক অ্যাড-অনসমূহ ---
+
       {
-        "title": "Aerial Drone Photography",
-        "price": 3500,
-        "category": "Special",
-        "iamge_url": "https://images.unsplash.com/photo-1508614589041-895b88991e3e",
+        "title": "Same Day Edit (Teaser)",
+        "price": 2500,
+        "category": "Video",
+        "iamge_url": "https://images.unsplash.com/photo-1535016120720-40c646bebbfc",
         "is_active": true,
       },
       {
-        "title": "Premium Photo Album",
-        "price": 4500,
+        "title": "Canvas Wall Frame (20x30)",
+        "price": 3000,
         "category": "Print",
-        "iamge_url": "https://images.unsplash.com/photo-1544377193-33dcf4d68fb5",
+        "iamge_url": "https://images.unsplash.com/photo-1583847268964-b28dc2f51ac9",
+        "is_active": true,
+      },
+      {
+        "title": "Additional Hour of Coverage",
+        "price": 2000,
+        "category": "Service",
+        "iamge_url": "https://images.unsplash.com/photo-1509048191080-d2984bad6ae5",
+        "is_active": true,
+      },
+      {
+        "title": "Professional Hair & Makeup",
+        "price": 4000,
+        "category": "Styling",
+        "iamge_url": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f",
+        "is_active": true,
+      },
+      {
+        "title": "Express Delivery (48 Hours)",
+        "price": 2000,
+        "category": "Service",
+        "iamge_url": "https://images.unsplash.com/photo-1566576721346-d4a3b4eaad55",
+        "is_active": true,
+      },
+      {
+        "title": "Pocket Photo Book (Set of 2)",
+        "price": 1800,
+        "category": "Print",
+        "iamge_url": "https://images.unsplash.com/photo-1532153322651-14f88dc39b56",
+        "is_active": true,
+      },
+      {
+        "title": "Instagram Reels / TikTok Video",
+        "price": 1200,
+        "category": "Social Media",
+        "iamge_url": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7",
+        "is_active": true,
+      },
+      {
+        "title": "Black & White Classic Set",
+        "price": 800,
+        "category": "Deliverables",
+        "iamge_url": "https://images.unsplash.com/photo-1502919280275-1bed9aec359e",
+        "is_active": true,
+      },
+      {
+        "title": "Luxury Photo Box (Wooden)",
+        "price": 3500,
+        "category": "Print",
+        "iamge_url": "https://images.unsplash.com/photo-1531346878377-a5be20888e57",
         "is_active": true,
       },
     ];
@@ -271,7 +489,7 @@ class DatabaseHelper {
     try {
       // একবারে সব ডাটা ইনসার্ট করা হচ্ছে
       await _client.from('addons').insert(dummyAddons);
-      print("Add-ons dummy data inserted successfully!");
+      print("${dummyAddons.length} টি অ্যাড-অন সফলভাবে ইনসার্ট করা হয়েছে!");
     } catch (e) {
       print("Error inserting dummy addons: $e");
     }
@@ -301,5 +519,15 @@ class DatabaseHelper {
       print("Error fetching addons: $e");
       return [];
     }
+  }
+
+
+  // result screen for cateogry by use packages
+  Future<List<Map<String, dynamic>>> getPackagesByCategory(String categoryName) async {
+    final response = await _client
+        .from('packages')
+        .select()
+        .eq('category', categoryName);
+    return List<Map<String, dynamic>>.from(response);
   }
 }

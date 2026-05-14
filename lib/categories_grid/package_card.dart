@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart';
+import 'dart:async';
+
+import '../photography_package/package_details_screen.dart';
+
+class PackageCard extends StatefulWidget {
+  final Map<String, dynamic> pkg;
+  final bool isDark;
+  final Color accent;
+  const PackageCard({required this.pkg, required this.isDark, required this.accent});
+
+  @override
+  State<PackageCard> createState() => _PackageCardState();
+}
+
+class _PackageCardState extends State<PackageCard> {
+  int _imgIndex = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // এখানে স্লাইড হবে। যদি ডাটাবেসে মাল্টিপল ইমেজ থাকতো তবে ভালো হতো।
+    // আপাতত একটি ইমেজই ফেইড এফেক্ট দিবে অথবা আপনি চাইলে ওই ক্যাটাগরির অন্য ইমেজ রেন্ডমলি দেখাতে পারেন।
+    _timer = Timer.periodic(const Duration(seconds: 3), (t) {
+      if (mounted) setState(() => _imgIndex++);
+    });
+  }
+
+  @override
+  void dispose() { _timer?.cancel(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    final features = (widget.pkg['features'] as String).split(',');
+
+    return Container(
+      width: 350, // Responsive layout অনুযায়ী width এডজাস্ট হবে
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: widget.isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: widget.isDark ? Colors.white10 : Colors.black12),
+      ),
+      child: Column(
+        children: [
+          // ইমেজ স্লাইডার/লুপ
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child: Image.network(
+              widget.pkg['image_url'], // এখানে রিয়েল লুপ লজিক বসবে
+              key: ValueKey<int>(_imgIndex),
+              height: 180, width: double.infinity, fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: Text(widget.pkg['title'], style: const TextStyle(fontWeight: FontWeight.bold))),
+                    Text("৳${widget.pkg['base_price']}", style: TextStyle(color: widget.accent, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  children: features.take(3).map((f) => Chip(
+                    label: Text(f.trim(), style: TextStyle(fontSize: 10, color: widget.accent)),
+                    backgroundColor: widget.accent.withOpacity(0.1),
+                    padding: EdgeInsets.zero,
+                  )).toList(),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PackageDetailsScreen(
+                          primaryAccent: widget.accent,
+                          packageData: widget.pkg,
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: widget.accent, minimumSize: const Size(double.infinity, 40)),
+                  child: const Text("View Details & Book", style: TextStyle(color: Colors.white)),
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}

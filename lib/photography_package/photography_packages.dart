@@ -241,11 +241,11 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            // Booking Screen এ ডেটা পাঠানো
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => BookingSummaryScreen(
+                                builder: (_) => PackageDetailsScreen(
                                   primaryAccent: primaryAccent,
                                   packageData: package,
                                 ),

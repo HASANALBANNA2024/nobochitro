@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-// আপনার প্রোজেক্টের সঠিক পাথ অনুযায়ী এটি ইম্পোর্ট নিশ্চিত করুন
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/categories_grid/package_result_screen.dart';
 
-class CategoriesGrid extends StatelessWidget {
+class CategoriesGrid extends StatefulWidget {
   final Color primaryAccent;
 
   const CategoriesGrid({
@@ -11,79 +11,112 @@ class CategoriesGrid extends StatelessWidget {
   });
 
   @override
+  State<CategoriesGrid> createState() => _CategoriesGridState();
+}
+
+class _CategoriesGridState extends State<CategoriesGrid> {
+  late Future<List<String>> _categoriesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoriesFuture = DatabaseHelper.instance.getUniqueCategories();
+  }
+
+  // ক্যাটাগরি অনুযায়ী আইকন সিলেক্ট করার লজিক
+  IconData _getIconForCategory(String category) {
+    String name = category.toLowerCase();
+    if (name.contains('wedding')) return Icons.favorite_rounded;
+    if (name.contains('birth')) return Icons.cake_rounded;
+    if (name.contains('portrait')) return Icons.portrait_rounded;
+    if (name.contains('event')) return Icons.theater_comedy_rounded;
+    if (name.contains('nature') || name.contains('wild')) return Icons.terrain_rounded;
+    if (name.contains('product') || name.contains('commercial')) return Icons.business_center_rounded;
+    if (name.contains('fashion')) return Icons.checkroom_rounded;
+    if (name.contains('food')) return Icons.restaurant_rounded;
+    return Icons.grid_view_rounded; // ডিফল্ট আইকন
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // --- DATA SECTION ---
-    final List<Map<String, dynamic>> categories = [
-      {'name': 'Wedding', 'icon': Icons.favorite_rounded},
-      {'name': 'Newborn', 'icon': Icons.child_care_rounded},
-      {'name': 'Birthday', 'icon': Icons.cake_rounded},
-      {'name': 'Travel', 'icon': Icons.terrain_rounded},
-      {'name': 'Event', 'icon': Icons.theater_comedy_rounded},
-      {'name': 'Portrait', 'icon': Icons.portrait_rounded},
-    ];
-
-    return SizedBox(
-      height: 110, // টেক্সট যেন কেটে না যায় তাই উচ্চতা সামান্য বাড়ানো হয়েছে
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20), // দুই পাশে সামান্য প্যাডিং
-        physics: const BouncingScrollPhysics(),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final cat = categories[index];
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 25),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PackageResultScreen(
-                      categoryName: cat['name'],
-                      primaryAccent: primaryAccent,
-                      // 'package' প্যারামিটারটি আপনার স্ক্রিনে রিকোয়ার্ড ছিল, তাই এটি যোগ করা হলো
-                      package: cat['name'],
-                    ),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Icon Circle
-                  CircleAvatar(
-                    backgroundColor: isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : primaryAccent.withOpacity(0.1),
-                    radius: 30,
-                    child: Icon(
-                        cat['icon'],
-                        color: primaryAccent,
-                        size: 28
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Category Name
-                  Text(
-                    cat['name'],
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return FutureBuilder<List<String>>(
+      future: _categoriesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 110,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           );
-        },
-      ),
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final categories = snapshot.data!;
+
+        return SizedBox(
+          height: 110,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            physics: const BouncingScrollPhysics(),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final String categoryName = categories[index];
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 25),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PackageResultScreen(
+                          categoryName: categoryName,
+                          primaryAccent: widget.primaryAccent,
+                          package: categoryName,
+                        ),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(30),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // আইকন সার্কেল (ডার্ক মোড মেইনটেইন করা হয়েছে)
+                      CircleAvatar(
+                        backgroundColor: isDark
+                            ? Colors.white.withOpacity(0.08) // ডার্ক মোডে হালকা সাদাটে ভাব
+                            : widget.primaryAccent.withOpacity(0.1), // লাইট মোডে অ্যাকসেন্ট কালার
+                        radius: 30,
+                        child: Icon(
+                          _getIconForCategory(categoryName),
+                          color: isDark ? Colors.white : widget.primaryAccent,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // ক্যাটাগরি নাম
+                      Text(
+                        categoryName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

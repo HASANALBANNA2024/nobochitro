@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/booking_summary_screen/booking_summary_screen.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:nobochitro/widgets/addOns_selector.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 
-// এখান থেকে StatefulWidget শুরু
 class PackageDetailsScreen extends StatefulWidget {
   final Color primaryAccent;
-  final Map<String, dynamic> packageData;
+  final Map<String, dynamic> packageData; // ডাটাবেস থেকে আসা মেইন ডাটা
 
   const PackageDetailsScreen({
     super.key,
@@ -18,79 +19,95 @@ class PackageDetailsScreen extends StatefulWidget {
 }
 
 class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
-  // লজিক এবং স্টেট ভেরিয়েবল এখানে থাকবে
   List<Map<String, dynamic>> selectedAddons = [];
   double totalAddonsPrice = 0.0;
+  List<Map<String, dynamic>> comparisonPackages = [];
+  bool isCompLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadComparisonData();
+  }
+
+  // একই ক্যাটাগরির Min, Mid, Max প্রাইসের প্যাকেজগুলো লোড করা
+  Future<void> _loadComparisonData() async {
+    try {
+      final String category = widget.packageData['category'] ?? "";
+      // ডাটাবেস থেকে ওই ক্যাটাগরির সব ডাটা নিয়ে আসা
+      final allInCategory = await DatabaseHelper.instance.getPackagesByCategory(category);
+
+      if (allInCategory.isNotEmpty) {
+        // দাম অনুযায়ী ছোট থেকে বড় সর্ট করা
+        allInCategory.sort((a, b) =>
+            (double.tryParse(a['base_price'].toString()) ?? 0)
+                .compareTo(double.tryParse(b['base_price'].toString()) ?? 0));
+
+        List<Map<String, dynamic>> temp = [];
+
+        if (allInCategory.length >= 3) {
+          temp.add(allInCategory.first); // সর্বনিম্ন (Min)
+          temp.add(allInCategory[allInCategory.length ~/ 2]); // মাঝারি (Mid)
+          temp.add(allInCategory.last); // সর্বোচ্চ (Max)
+        } else {
+          temp = allInCategory; // ৩টির কম থাকলে যা আছে তাই
+        }
+
+        setState(() {
+          comparisonPackages = temp;
+          isCompLoading = false; // লোডিং শেষ
+        });
+      } else {
+        setState(() => isCompLoading = false);
+      }
+    } catch (e) {
+      print("Error: $e");
+      setState(() => isCompLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF252525) : Colors.white;
+    final pkg = widget.packageData;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8F9FA),
       appBar: buildCustomAppBar(context, widget.primaryAccent, "Package Details"),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800),
+            padding: const EdgeInsets.all(15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero Section
-                _buildHeroCard(widget.primaryAccent),
+                // ১. ডাইনামিক হিরো সেকশন (রিয়েল ইমেজ ও প্রাইস)
+                _buildDynamicHero(pkg),
 
                 const SizedBox(height: 25),
-                const Text(
-                  "Infographic Checklist",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                _buildSectionTitle("Package Includes"),
                 const SizedBox(height: 15),
 
-                // Checklist Section
-                _buildDetailedChecklist(isDark, cardColor, widget.primaryAccent),
+                // ২. সিম্পল টেক্সট চেকলিস্ট (ফিচার কলাম থেকে)
+                _buildSimpleChecklist(pkg['features'] ?? "", isDark, widget.primaryAccent),
 
                 const SizedBox(height: 30),
-                const Text(
-                  "Package Comparison Table",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                _buildSectionTitle("Compare with Others"),
                 const SizedBox(height: 15),
 
-                // Comparison Table
-                _buildComparisonCard(isDark, cardColor, widget.primaryAccent),
+                // ৩. ডাইনামিক কম্প্যারিশন টেবিল
+                isCompLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildComparisonTable(isDark, cardColor),
 
-                const SizedBox(height: 15),
-
-                // Add ons Section
-                const Text(
-                  "Extra Service (Exclusive)",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                const SizedBox(height: 30),
+                _buildSectionTitle("Add Extra Services"),
                 const SizedBox(height: 10),
-
-                // AddOnsSelector Call
-                AddOnsSelector(
-                  onSelectionChanged: (newList) {
-                    setState(() {
-                      selectedAddons = newList; // লিস্টটি আপডেট করা হচ্ছে
-                      totalAddonsPrice = newList.fold(
-                          0.0,
-                              (sum, item) => sum + (double.tryParse(item['price'].toString()) ?? 0.0)
-                      );
-                    });
-                    print("সিলেক্ট করা হয়েছে: ${selectedAddons.length} টি আইটেম");
-                    print("মোট খরচ: ৳$totalAddonsPrice");
-                  },
-                ),
-
-                const SizedBox(height: 40),
-
-                // Book Now Button
-                _buildBookButton(widget.primaryAccent),
+                _buildBookButton(pkg),
                 const SizedBox(height: 20),
               ],
             ),
@@ -100,17 +117,19 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     );
   }
 
-  // --- হিরো কার্ড ---
-  Widget _buildHeroCard(Color accent) {
+  Widget _buildSectionTitle(String title) {
+    return Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold));
+  }
+
+  // ডাইনামিক হিরো কার্ড
+  Widget _buildDynamicHero(Map<String, dynamic> pkg) {
     return Container(
-      height: 220,
+      height: 250,
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        image: const DecorationImage(
-          image: NetworkImage(
-            "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800",
-          ),
+        image: DecorationImage(
+          image: NetworkImage(pkg['image_url'] ?? "https://via.placeholder.com/800"),
           fit: BoxFit.cover,
         ),
       ),
@@ -120,158 +139,145 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+            colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
           ),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Royal Wedding Package",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              "৳95,000",
-              style: TextStyle(
-                color: accent,
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+            Text(pkg['title'] ?? "Package Details",
+                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 5),
+            Text("৳${pkg['base_price']}",
+                style: TextStyle(color: widget.primaryAccent, fontSize: 28, fontWeight: FontWeight.w900)),
           ],
         ),
       ),
     );
   }
 
-  // --- Checklist Section ---
-  Widget _buildDetailedChecklist(bool isDark, Color cardColor, Color accent) {
-    final List<Map<String, dynamic>> items = [
-      {"icon": Icons.camera_alt_rounded, "label": "100+ High-Res Retouched Photos", "color": Colors.deepPurple},
-      {"icon": Icons.videocam_rounded, "label": "4K Video Highlights (5 mins)", "color": Colors.indigo},
-      {"icon": Icons.hourglass_bottom_rounded, "label": "8 Hours Coverage Album", "color": Colors.orange},
-      {"icon": Icons.calendar_month_rounded, "label": "Complimentary Pre-Wedding Session", "color": Colors.pink},
-      {"icon": Icons.menu_book_rounded, "label": "Premium Wedding Album", "color": Colors.red},
-    ];
+  // সিম্পল লিস্ট স্টাইল চেকলিস্ট
+  Widget _buildSimpleChecklist(String features, bool isDark, Color accent) {
+    final List<String> items = features.split(',');
+    return Column(
+      children: items.map((item) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_outline_rounded, color: accent, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(item.trim(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
+          ],
+        ),
+      )).toList(),
+    );
+  }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isWideScreen = constraints.maxWidth > 600;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isWideScreen ? 2 : 1,
-            crossAxisSpacing: 15,
-            mainAxisSpacing: 12,
-            mainAxisExtent: 75,
+
+  Widget _buildBookButton(Map<String, dynamic> pkg) {
+    double finalPrice = (double.tryParse(pkg['base_price'].toString()) ?? 0) + totalAddonsPrice;
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text("Total Estimate:", style: TextStyle(fontSize: 16, color: Colors.grey)),
+            Text("৳$finalPrice", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: widget.primaryAccent)),
+          ],
+        ),
+        const SizedBox(height: 15),
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: () {
+
+              Navigator.push(context, MaterialPageRoute(builder: (_)=> BookingSummaryScreen(primaryAccent: widget.primaryAccent, packageData: widget.packageData) ));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6342E8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            child: const Text("Book Now", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: item['color'].withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(item['icon'], color: item['color'], size: 20),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Text(
-                      item['label'],
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
-                  ),
-                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // --- Comparison Table ---
-  Widget _buildComparisonCard(bool isDark, Color cardColor, Color accent) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: DataTable(
-          headingRowHeight: 60,
-          horizontalMargin: 15,
-          columnSpacing: 20,
-          headingRowColor: WidgetStateProperty.all(isDark ? Colors.white.withOpacity(0.02) : Colors.grey[50]),
-          columns: const [
-            DataColumn(label: Text('')),
-            DataColumn(label: Text('Royal\nWedding', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Silver\nPackage', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
-            DataColumn(label: Text('Gold\nPackage', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
-          ],
-          rows: [
-            _buildDataRow('Photos', '100+', '200+', '100+', true, isDark),
-            _buildDataRow('8 Hours', '8', '5', '8', false, isDark),
-            _buildDataRow('Video', '4K', 'Medium', 'High', false, isDark),
-          ],
         ),
-      ),
-    );
-  }
-
-  DataRow _buildDataRow(String feature, String v1, String v2, String v3, bool isFirst, bool isDark) {
-    return DataRow(
-      cells: [
-        DataCell(Text(feature, style: const TextStyle(fontSize: 13, color: Colors.grey))),
-        DataCell(Container(
-          alignment: Alignment.center,
-          color: isDark ? Colors.deepPurple.withOpacity(0.1) : Colors.deepPurple.withOpacity(0.05),
-          child: Text(v1, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-        )),
-        DataCell(Center(child: Text(v2, style: const TextStyle(fontSize: 13)))),
-        DataCell(Center(child: Text(v3, style: const TextStyle(fontSize: 13)))),
       ],
     );
   }
 
-  // --- Book Now Button ---
-  Widget _buildBookButton(Color accent) {
-    return SizedBox(
+// ২. সুন্দর ডাইনামিক টেবিল উইজেট
+  Widget _buildComparisonTable(bool isDark, Color cardColor) {
+    // যদি লোডিং হয় তবে সার্কেল দেখাবে
+    if (isCompLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // যদি ডাটা না থাকে
+    if (comparisonPackages.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Text("No other packages to compare in this category."),
+      );
+    }
+
+    return Container(
       width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: () {
-          // এখানে selectedAddons এবং totalAddonsPrice ব্যবহার করে পরবর্তী ধাপে যেতে পারবেন
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6342E8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          elevation: 0,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: DataTable(
+          columnSpacing: 10,
+          horizontalMargin: 10,
+          headingRowColor: WidgetStateProperty.all(widget.primaryAccent.withOpacity(0.1)),
+          columns: [
+            const DataColumn(label: Text('Feature', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+            ...comparisonPackages.map((pkg) => DataColumn(
+              label: Expanded(
+                child: Text(
+                  pkg['title'].toString().split(' ')[0], // ছোট নাম
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )),
+          ],
+          rows: [
+            // রো ১: প্রাইস
+            DataRow(cells: [
+              const DataCell(Text("Price", style: TextStyle(fontSize: 11, color: Colors.grey))),
+              ...comparisonPackages.map((pkg) => DataCell(
+                Text("৳${pkg['base_price']}", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: widget.primaryAccent)),
+              )),
+            ]),
+            // রো ২: ফিচারের সংখ্যা (সিম্পল করার জন্য)
+            DataRow(cells: [
+              const DataCell(Text("Extras", style: TextStyle(fontSize: 11, color: Colors.grey))),
+              ...comparisonPackages.map((pkg) {
+                int count = pkg['features'].toString().split(',').length;
+                return DataCell(Text("$count Features", style: const TextStyle(fontSize: 11)));
+              }),
+            ]),
+            // রো ৩: স্ট্যাটাস
+            DataRow(cells: [
+              const DataCell(Text("Level", style: TextStyle(fontSize: 11, color: Colors.grey))),
+              ...List.generate(comparisonPackages.length, (index) {
+                return DataCell(
+                    Icon(
+                        index == 0 ? Icons.trending_up : (index == 1 ? Icons.auto_awesome : Icons.workspace_premium),
+                        size: 16,
+                        color: widget.primaryAccent.withOpacity(0.7)
+                    )
+                );
+              }),
+            ]),
+          ],
         ),
-        child: const Text("Book Now", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
       ),
     );
   }
