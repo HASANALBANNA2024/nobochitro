@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 class EditProfileSheet {
-  static void show(BuildContext context) async {
+  static void show(BuildContext context, {VoidCallback? onUpdate}) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color goldColor = const Color(0xFFD4AF37);
 
@@ -41,11 +41,11 @@ class EditProfileSheet {
         return StatefulBuilder(
           builder: (context, setSheetState) {
 
-            // ২. ইমেজ পিক এবং আপলোড লজিক
-            Future<void> _pickAndUpload(ImageSource source) async {
+            // ২. ইমেজ পিক এবং আপলোড ফাংশন
+            Future<void> _handleImageAction() async {
               final ImagePicker picker = ImagePicker();
               final XFile? image = await picker.pickImage(
-                source: source,
+                source: ImageSource.gallery,
                 imageQuality: 35,
                 maxWidth: 500,
               );
@@ -53,7 +53,6 @@ class EditProfileSheet {
               if (image != null) {
                 setSheetState(() => isUploading = true);
                 try {
-                  // আপনার নতুন পলিসি অনুযায়ী ফাইল পাথ (private/ বাদ দেওয়া হয়েছে)
                   final String filePath = 'profile_$firebaseUid.jpg';
                   final storage = Supabase.instance.client.storage.from('user_assets');
 
@@ -73,22 +72,16 @@ class EditProfileSheet {
                     );
                   }
 
-                  // পাবলিক ইউআরএল জেনারেট
+                  // ৩. প্রিভিউ আপডেট: ক্যাশ এড়াতে টাইমস্ট্যাম্প যোগ করা হয়েছে
                   final String rawUrl = storage.getPublicUrl(filePath);
-
                   setSheetState(() {
-                    // ক্যাশ রিফ্রেশ করতে টাইমস্ট্যাম্প যোগ করা হয়েছে যাতে স্ক্রিনে সাথে সাথে পরিবর্তন দেখা যায়
                     localPreviewUrl = "$rawUrl?v=${DateTime.now().millisecondsSinceEpoch}";
                     isUploading = false;
                   });
 
-                  debugPrint("Success: Image uploaded to user_assets bucket.");
                 } catch (e) {
                   setSheetState(() => isUploading = false);
-                  debugPrint("Detailed Upload Error: $e");
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Upload Error: $e")),
-                  );
+                  debugPrint("Upload Error: $e");
                 }
               }
             }
@@ -116,20 +109,28 @@ class EditProfileSheet {
                         CircleAvatar(
                           radius: 55,
                           backgroundColor: goldColor.withOpacity(0.1),
-                          backgroundImage: localPreviewUrl != null
-                              ? NetworkImage(localPreviewUrl!)
-                              : (currentUserData?['profile_image'] != null && currentUserData?['profile_image'] != ""
-                              ? NetworkImage(currentUserData!['profile_image'])
-                              : null),
-                          child: (localPreviewUrl == null && (currentUserData?['profile_image'] == null || currentUserData?['profile_image'] == ""))
-                              ? Icon(Icons.person, size: 55, color: goldColor)
-                              : null,
+                          child: ClipOval(
+                            child: (localPreviewUrl != null || (currentUserData?['profile_image'] != null && currentUserData?['profile_image'] != ""))
+                                ? Image.network(
+                              localPreviewUrl ?? currentUserData!['profile_image'],
+                              width: 110,
+                              height: 110,
+                              fit: BoxFit.cover,
+                              key: ValueKey(localPreviewUrl), // এই Key-টি প্রিভিউ নিশ্চিত করে
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const CircularProgressIndicator();
+                              },
+                              errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 55, color: goldColor),
+                            )
+                                : Icon(Icons.person, size: 55, color: goldColor),
+                          ),
                         ),
                         if (isUploading) CircularProgressIndicator(color: goldColor),
                         Positioned(
                           bottom: 0, right: 0,
                           child: GestureDetector(
-                            onTap: () => _pickAndUpload(ImageSource.gallery),
+                            onTap: _handleImageAction,
                             child: CircleAvatar(
                                 radius: 18,
                                 backgroundColor: goldColor,
@@ -147,14 +148,7 @@ class EditProfileSheet {
                       decoration: InputDecoration(
                         labelText: "Address",
                         labelStyle: TextStyle(color: goldColor),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: goldColor.withOpacity(0.5)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: goldColor),
-                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -167,11 +161,13 @@ class EditProfileSheet {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
                         ),
                         onPressed: isUploading ? null : () async {
-                          // টাইমস্ট্যাম্প বাদে শুধু মূল লিঙ্কটি ডাটাবেসে সেভ করা হচ্ছে
+                          // ডাটাবেসে সেভ করার সময় টাইমস্ট্যাম্প বাদে মূল লিঙ্ক রাখা হচ্ছে
                           final String? finalImageUrl = localPreviewUrl?.split('?').first ?? currentUserData?['profile_image'];
 
                           await _saveToDB(addressController.text.trim(), finalImageUrl);
+
                           if (context.mounted) {
+                            if (onUpdate != null) onUpdate(); // মেইন স্ক্রিন রিফ্রেশ করবে
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text("Profile Updated Successfully!")),
@@ -191,7 +187,6 @@ class EditProfileSheet {
     );
   }
 
-  // ৩. ডাটাবেস আপডেট লজিক
   static Future<void> _saveToDB(String address, String? imageUrl) async {
     try {
       final String? uid = FirebaseAuth.instance.currentUser?.uid;
@@ -200,7 +195,6 @@ class EditProfileSheet {
           'address': address,
           'profile_image': imageUrl,
         }).eq('user_id', uid);
-        debugPrint("Database sync successful!");
       }
     } catch (e) {
       debugPrint("Update Error: $e");
