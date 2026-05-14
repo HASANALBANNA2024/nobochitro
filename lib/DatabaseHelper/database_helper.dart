@@ -1,6 +1,18 @@
+import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DatabaseHelper {
+
+  DatabaseHelper._();
+
+  // ২. instance মেম্বারটি ডিফাইন করুন (এটি না থাকলে রেড লাইন আসবে)
+  static final DatabaseHelper instance = DatabaseHelper._();
+
+  // ৩. সুপাবেস ক্লায়েন্ট (আপনার আগের কোড অনুযায়ী)
+
+
+
+
   static final _client = Supabase.instance.client;
 
   // ১. ডাটা ইনসার্ট করা (Create)
@@ -150,13 +162,84 @@ class DatabaseHelper {
       );
     }
   }
-
-
-
   // ডাটা রিয়েল-টাইম পাওয়ার জন্য স্ট্রিম মেথড
   static Stream<List<Map<String, dynamic>>> getPhotographerStream() {
     return _client
         .from('photographers')
         .stream(primaryKey: ['photographer_id']);
+  }
+
+  // আপনার DatabaseHelper ক্লাসের ভেতরে এটি যোগ করুন
+  static Future<void> insertDemoPackages() async {
+    final List<Map<String, dynamic>> demoPackages = [
+      {
+        'package_id': 'PKG-WB-001',
+        'title': 'Premium Wedding Bash',
+        'category': 'Wedding',
+        'photographer_id': 'N-554433', // আপনার আগের ডেমো ফটোগ্রাফার আইডি
+        'base_price': 25000,
+        'features': '8 Hours, 2 Photographers, Unlimited Photos, 100 Edited',
+        'image_url': 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc',
+        'is_active': true,
+        'is_customization': true,
+      },
+      {
+        'package_id': 'PKG-EV-002',
+        'title': 'Corporate Event Pro',
+        'category': 'Event',
+        'photographer_id': 'N-554433',
+        'base_price': 15000,
+        'features': '4 Hours, 1 Photographer, High Res Digital Delivery',
+        'image_url': 'https://images.unsplash.com/photo-1511578314322-379afb476865',
+        'is_active': true,
+        'is_customization': false,
+      },
+      {
+        'package_id': 'PKG-PT-003',
+        'title': 'Outdoor Portrait Solo',
+        'category': 'Portrait',
+        'photographer_id': 'N-554433',
+        'base_price': 5000,
+        'features': '2 Hours, 20 Edited Photos, All RAW files',
+        'image_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
+        'is_active': true,
+        'is_customization': true,
+      },
+    ];
+
+    try {
+      // image_8488d5.png অনুযায়ী টেবিলের নাম 'packages' ধরে নিচ্ছি
+      for (var package in demoPackages) {
+        await _client.from('packages').upsert(package, onConflict: 'package_id');
+      }
+      debugPrint("প্যাকেজ ডেমো ডাটা সাকসেসফুলি ইনসার্ট হয়েছে।");
+    } catch (e) {
+      debugPrint("প্যাকেজ ইনসার্টে এরর: $e");
+    }
+  }
+
+
+// database_helper.dart ফাইলের ভেতরে এটি যোগ করুন
+  Future<List<Map<String, dynamic>>> getPackages() async {
+    try {
+      // Supabase বা SQLite থেকে packages টেবিলের সব ডাটা আনা হচ্ছে
+      final response = await _client
+          .from('packages') // আপনার টেবিল নাম
+          .select()         // সব কলাম সিলেক্ট করা হচ্ছে
+          .order('id', ascending: true); // ক্রমানুসারে সাজানোর জন্য (ঐচ্ছিক)
+
+      // ডাটাগুলোকে লিস্ট হিসেবে রিটার্ন করা
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint("Error fetching packages: $e");
+      return []; // কোনো এরর হলে খালি লিস্ট রিটার্ন করবে যাতে অ্যাপ ক্র্যাশ না করে
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPhotographers() async {
+    final response = await _client
+        .from('photographers') // আপনার টেবিলের নাম
+        .select();
+    return List<Map<String, dynamic>>.from(response);
   }
 }

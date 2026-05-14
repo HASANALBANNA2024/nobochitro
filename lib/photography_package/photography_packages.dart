@@ -1,22 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:nobochitro/booking_summary_screen/booking_summary_screen.dart';
 import 'package:nobochitro/photography_package/package_details_screen.dart';
-
-class PackageModel {
-  final String title;
-  final String subtitle;
-  final String price;
-  final String imageUrl;
-
-  PackageModel({
-    required this.title,
-    required this.subtitle,
-    required this.price,
-    required this.imageUrl,
-  });
-}
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 
 class PhotographyPackages extends StatefulWidget {
   final Color primaryAccent;
@@ -32,106 +18,39 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
   Timer? _autoScrollTimer;
   int _currentPage = 0;
 
-  final List<PackageModel> packages = [
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-    PackageModel(
-      title: "Cinematic Wedding",
-      subtitle:
-          "Premier album & 4K video included with professional lighting and drone shots for your special day.",
-      price: "\$499",
-      imageUrl:
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400",
-    ),
-  ];
+  // রিয়েল ডেটা রাখার জন্য লিস্ট
+  List<Map<String, dynamic>> packages = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // initial controller
+    // ইনিশিয়াল কন্ট্রোলার ভিউপোর্ট ফ্র্যাকশন সেট করা
     _pageController = PageController(viewportFraction: 0.8, initialPage: 0);
-    _startAutoScroll();
+    _loadPackages();
+  }
+
+  // ডেটাবেস থেকে প্যাকেজ নিয়ে আসা
+  Future<void> _loadPackages() async {
+    try {
+      // DatabaseHelper এর মেথড কল করা (নিশ্চিত করুন এই মেথডটি আপনার হেল্পার ফাইলে আছে)
+      final data = await DatabaseHelper.instance.getPackages();
+      if (mounted) {
+        setState(() {
+          packages = data;
+          isLoading = false;
+        });
+        _startAutoScroll();
+      }
+    } catch (e) {
+      debugPrint("Error loading packages: $e");
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   void _startAutoScroll() {
+    if (packages.isEmpty) return;
+    _autoScrollTimer?.cancel();
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_pageController.hasClients) {
         if (_currentPage < packages.length - 1) {
@@ -159,17 +78,17 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final double screenWidth = MediaQuery.of(context).size.width;
-    //Responsive Fraction set
-    double fraction = screenWidth > 1200
-        ? 0.35
-        : (screenWidth > 800 ? 0.55 : 0.8);
 
-    // page controller
+    // রেসপনসিভ ভিউপোর্ট সেটআপ
+    double fraction = screenWidth > 1200 ? 0.35 : (screenWidth > 800 ? 0.55 : 0.8);
+
+    // স্ক্রিন সাইজ চেঞ্জ হলে কন্ট্রোলার আপডেট করা
     if (_pageController.viewportFraction != fraction) {
-      _pageController.dispose(); //previous controller dispose
+      final oldPage = _currentPage;
+      _pageController.dispose();
       _pageController = PageController(
         viewportFraction: fraction,
-        initialPage: _currentPage,
+        initialPage: oldPage,
       );
     }
 
@@ -183,18 +102,13 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
             children: [
               Text(
                 'Exclusive Packages',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               TextButton(
                 onPressed: () {
-                  // View All function for future used
+                  // View All লজিক এখানে দিতে পারেন
                 },
-                child: Text(
-                  'View All',
-                  style: TextStyle(color: widget.primaryAccent),
-                ),
+                child: Text('View All', style: TextStyle(color: widget.primaryAccent)),
               ),
             ],
           ),
@@ -203,10 +117,13 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
 
         SizedBox(
           height: 380,
-          child: PageView.builder(
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : packages.isEmpty
+              ? const Center(child: Text("No packages available"))
+              : PageView.builder(
             controller: _pageController,
             itemCount: packages.length,
-            // left start for card scroll
             padEnds: false,
             physics: const BouncingScrollPhysics(),
             onPageChanged: (index) => _currentPage = index,
@@ -215,23 +132,16 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                 animation: _pageController,
                 builder: (context, child) {
                   double value = 1.0;
-                  // slide animation logic
                   if (_pageController.position.hasContentDimensions) {
                     value = (_pageController.page ?? 0) - index;
                     value = (1 - (value.abs() * 0.06)).clamp(0.0, 1.0);
                   }
-                  return Center(
-                    child: Transform.scale(scale: value, child: child),
-                  );
+                  return Center(child: Transform.scale(scale: value, child: child));
                 },
-                // to passed context
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   child: _buildPackageCard(
-                    context, // context add
+                    context,
                     packages[index],
                     theme.colorScheme,
                     theme.textTheme,
@@ -247,12 +157,12 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
   }
 
   Widget _buildPackageCard(
-    BuildContext context,
-    PackageModel package,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-    Color primaryAccent,
-  ) {
+      BuildContext context,
+      Map<String, dynamic> package,
+      ColorScheme colorScheme,
+      TextTheme textTheme,
+      Color primaryAccent,
+      ) {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -268,15 +178,14 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
         ],
       ),
       child: InkWell(
-        // full card tape option and ripple effect
         onTap: () {
-          //to Navigator details screen
-
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-                  PackageDetailsScreen(primaryAccent: primaryAccent),
+              builder: (_) => PackageDetailsScreen(
+                primaryAccent: primaryAccent,
+                packageData: package,
+              ),
             ),
           );
         },
@@ -286,9 +195,11 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
             Expanded(
               flex: 5,
               child: Image.network(
-                package.imageUrl,
+                package['image_url'] ?? "https://via.placeholder.com/400",
                 fit: BoxFit.cover,
                 width: double.infinity,
+                errorBuilder: (context, error, stackTrace) =>
+                const Center(child: Icon(Icons.broken_image, size: 50)),
               ),
             ),
             Expanded(
@@ -299,24 +210,19 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      package.title,
+                      package['title'] ?? "No Title",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const SizedBox(height: 5),
                     Expanded(
                       child: SingleChildScrollView(
                         child: Text(
-                          package.subtitle,
+                          package['features'] ?? "No features listed.",
                           style: TextStyle(
                             fontSize: 13,
-                            color: textTheme.bodyMedium?.color?.withOpacity(
-                              0.7,
-                            ),
+                            color: textTheme.bodyMedium?.color?.withOpacity(0.7),
                           ),
                         ),
                       ),
@@ -326,7 +232,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          package.price,
+                          "৳${package['base_price']}",
                           style: TextStyle(
                             color: primaryAccent,
                             fontWeight: FontWeight.bold,
@@ -335,12 +241,13 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            // book button
+                            // Booking Screen এ ডেটা পাঠানো
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => BookingSummaryScreen(
                                   primaryAccent: primaryAccent,
+                                  packageData: package,
                                 ),
                               ),
                             );
@@ -349,9 +256,7 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
                             backgroundColor: primaryAccent,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           child: const Text('Book'),
                         ),

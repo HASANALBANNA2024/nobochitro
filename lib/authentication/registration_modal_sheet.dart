@@ -122,7 +122,7 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
                                 });
 
                                 // user unique identity number
-                                String customId = "N-${Random().nextInt(900000) + 100000}";
+                                String customId = "NSR-${Random().nextInt(900000) + 100000}";
                                 // firebase sign up
                                 var user = await _auth.signUp
                                   (

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// ১. আপনার প্রোজেক্টের সঠিক পাথ অনুযায়ী এটি ইম্পোর্ট করুন
+// আপনার প্রোজেক্টের সঠিক পাথ অনুযায়ী এটি ইম্পোর্ট নিশ্চিত করুন
 import 'package:nobochitro/categories_grid/package_result_screen.dart';
 
 class CategoriesGrid extends StatelessWidget {
@@ -17,7 +17,6 @@ class CategoriesGrid extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // --- DATA SECTION ---
-    // এই লিস্টটি এখন ডাইনামিক। ভবিষ্যতে Firebase থেকে ডাটা আনলে জাস্ট এই লিস্টটি আপডেট করলেই হবে।
     final List<Map<String, dynamic>> categories = [
       {'name': 'Wedding', 'icon': Icons.favorite_rounded},
       {'name': 'Newborn', 'icon': Icons.child_care_rounded},
@@ -28,10 +27,11 @@ class CategoriesGrid extends StatelessWidget {
     ];
 
     return SizedBox(
-      height: 100, // উচ্চতা প্রয়োজন অনুযায়ী ঠিক করে নিন
+      height: 110, // টেক্সট যেন কেটে না যায় তাই উচ্চতা সামান্য বাড়ানো হয়েছে
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(), // স্মুথ স্ক্রলিং
+        padding: const EdgeInsets.symmetric(horizontal: 20), // দুই পাশে সামান্য প্যাডিং
+        physics: const BouncingScrollPhysics(),
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final cat = categories[index];
@@ -39,42 +39,43 @@ class CategoriesGrid extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(right: 25),
             child: InkWell(
-              // ২. ডাইনামিক নেভিগেশন logic
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => PackageResultScreen(
-                      // ভুলটি এখানে ছিল: 'categoryName' এর বদলে 'cat['name']' হবে
                       categoryName: cat['name'],
                       primaryAccent: primaryAccent,
+                      // 'package' প্যারামিটারটি আপনার স্ক্রিনে রিকোয়ার্ড ছিল, তাই এটি যোগ করা হলো
+                      package: cat['name'],
                     ),
                   ),
                 );
               },
-              borderRadius: BorderRadius.circular(30), // Ripple effect circular
+              borderRadius: BorderRadius.circular(30),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Icon Circle (ইমেজের ডিজাইনের মতো)
+                  // Icon Circle
                   CircleAvatar(
                     backgroundColor: isDark
-                        ? Colors.white.withOpacity(0.05) // ডার্ক মোডে হালকা সাদা
-                        : primaryAccent.withOpacity(0.1), // লাইট মোডে এক্সেন্ট কালার
+                        ? Colors.white.withOpacity(0.05)
+                        : primaryAccent.withOpacity(0.1),
                     radius: 30,
                     child: Icon(
                         cat['icon'],
-                        color: primaryAccent, // আইকন কালার সবসময় এক্সেন্ট থাকবে
+                        color: primaryAccent,
                         size: 28
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   // Category Name
                   Text(
-                    cat['name'], // ডাইনামিক নাম
+                    cat['name'],
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface, // ডার্ক/লাইটে অটো অ্যাডজাস্ট হবে
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],

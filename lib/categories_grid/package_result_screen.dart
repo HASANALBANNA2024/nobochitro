@@ -6,11 +6,13 @@ import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
 class PackageResultScreen extends StatefulWidget {
   final String categoryName;
   final Color primaryAccent;
+  final String package;
 
   const PackageResultScreen({
     super.key,
     required this.categoryName,
     required this.primaryAccent,
+    required this.package,
   });
 
   @override
@@ -32,7 +34,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
   final List<Map<String, dynamic>> packages = [
     {
       'title': 'Royal Wedding Collection with Cinematic Video & Drone',
-      'price': '৳95,000',
+      'price': '95,000',
       'rating': 4.9,
       'reviews': 120,
       'image': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
@@ -40,7 +42,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
     },
     {
       'title': 'Standard Engagement Session',
-      'price': '৳30,000',
+      'price': '30,000',
       'rating': 4.7,
       'reviews': 85,
       'image': 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400',
@@ -201,11 +203,8 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // ওয়েব, ট্যাবলেট এবং মোবাইলের জন্য ডাইনামিক কলাম নির্ধারণ
           int crossAxisCount = isWeb ? 3 : (isTablet ? 2 : 1);
           double spacing = 15.0;
-
-          // প্রতিটি কার্ডের প্রস্থ (Width) ক্যালকুলেশন
           double itemWidth = (constraints.maxWidth - (spacing * (crossAxisCount - 1))) / crossAxisCount;
 
           return Wrap(
@@ -231,30 +230,25 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                     ],
                   ),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, // এটি কার্ডকে কন্টেন্ট অনুযায়ী বড় হতে দিবে
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ১. ইমেজ সেকশন (ফিক্সড হাইট, কোনো ফ্লেক্স নেই)
                       Image.network(
                         pkg['image'],
                         height: 160,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        // ইমেজ লোড না হলে এরর হ্যান্ডলিং
                         errorBuilder: (context, error, stackTrace) => Container(
                           height: 160,
                           color: Colors.grey[300],
                           child: const Icon(Icons.broken_image),
                         ),
                       ),
-
-                      // ২. ডিটেইলস সেকশন
                       Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // টাইটেল এবং প্রাইস
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -265,13 +259,13 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                     ),
-                                    maxLines: 2, // ২ লাইন পর্যন্ত টাইটেল নিবে
+                                    maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  pkg['price'],
+                                  "৳${pkg['price']}",
                                   style: TextStyle(
                                     color: accent,
                                     fontWeight: FontWeight.bold,
@@ -281,8 +275,6 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                               ],
                             ),
                             const SizedBox(height: 8),
-
-                            // রেটিং
                             Row(
                               children: [
                                 const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
@@ -294,8 +286,6 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-
-                            // ফিচার চিপস (অটোমেটিক নিচের লাইনে নামবে)
                             Wrap(
                               spacing: 6,
                               runSpacing: 6,
@@ -316,8 +306,6 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                               )).toList(),
                             ),
                             const SizedBox(height: 16),
-
-                            // বাটন (ফিক্সড হাইট)
                             SizedBox(
                               width: double.infinity,
                               height: 40,
@@ -326,7 +314,10 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => PackageDetailsScreen(primaryAccent: widget.primaryAccent),
+                                      builder: (_) => PackageDetailsScreen(
+                                        primaryAccent: widget.primaryAccent,
+                                        packageData: pkg, // এখানে pkg (Map) পাস করা হয়েছে
+                                      ),
                                     ),
                                   );
                                 },
@@ -362,10 +353,14 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: SizedBox(
-        width: double.infinity, height: 50,
+        width: double.infinity,
+        height: 50,
         child: ElevatedButton(
           onPressed: () {},
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6342E8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6342E8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
           child: const Text("Request Custom Quote", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ),

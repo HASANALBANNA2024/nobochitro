@@ -3,7 +3,8 @@ import 'package:nobochitro/widgets/custom_appbar.dart';
 
 class PackageDetailsScreen extends StatelessWidget {
   final Color primaryAccent;
-  const PackageDetailsScreen({super.key, required this.primaryAccent});
+  final Map<String, dynamic> packageData;
+  const PackageDetailsScreen({super.key, required this.primaryAccent, required this.packageData});
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,5 @@
 import 'dart:ui';
-
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nobochitro/payments/payment_sheet.dart';
@@ -7,7 +7,8 @@ import 'package:nobochitro/widgets/custom_appbar.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   final Color primaryAccent;
-  const BookingSummaryScreen({super.key, required this.primaryAccent});
+  final Map<String, dynamic> packageData;
+  const BookingSummaryScreen({super.key, required this.primaryAccent, required this.packageData});
 
   @override
   State<BookingSummaryScreen> createState() => _BookingSummaryScreenState();
@@ -19,26 +20,17 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   String _selectedLocationType = "Studio";
   int _selectedDurationHours = 1;
   int _selectedDurationMinutes = 0;
-  int _selectedPhotographerIndex = 0;
+  int _selectedPhotographerIndex = -1;
+  String _selectedPhotographer = "Not Selected";
 
-  final List<Map<String, dynamic>> _photographers = [
-    {
-      "name": "Ayesha Rahman",
-      "image": "https://i.pravatar.cc/150?u=1",
-      "badge": "Pro",
-      "rating": "4.9",
-      "reviews": "124",
-      "specialty": "Portrait & Wedding",
-    },
-    {
-      "name": "Rahat Khan",
-      "image": "https://i.pravatar.cc/150?u=2",
-      "badge": "Elite",
-      "rating": "4.8",
-      "reviews": "89",
-      "specialty": "Event & Fashion",
-    },
-  ];
+  late Future<List<Map<String, dynamic>>> _photographersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // database call
+    _photographersFuture = DatabaseHelper.instance.getPhotographers();
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -216,27 +208,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     );
   }
 
-  Widget _buildPhotographerList(
-    BuildContext context,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    return ScrollConfiguration(
-      behavior: ScrollConfiguration.of(context).copyWith(
-        dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
-      ),
-      child: SizedBox(
-        height: 130,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: _photographers.length,
-          itemBuilder: (context, index) =>
-              _buildEnhancedPhotographerCard(index, theme, isDark),
-        ),
-      ),
-    );
-  }
-
   Widget _buildDurationSelector(ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -333,78 +304,192 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     );
   }
 
-  Widget _buildEnhancedPhotographerCard(
-    int index,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    bool isSelected = _selectedPhotographerIndex == index;
-    var p = _photographers[index];
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPhotographerIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 240,
-        margin: const EdgeInsets.only(right: 15),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? widget.primaryAccent.withOpacity(0.1)
-              : (isDark ? Colors.grey[900] : Colors.white),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? widget.primaryAccent
-                : (isDark ? Colors.white10 : Colors.black12),
-            width: 2,
+
+  // photographer card start
+  Widget _buildPhotographerList(
+      BuildContext context,
+      ThemeData theme,
+      bool isDark,
+      ) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _photographersFuture, // এখানে পরিবর্তন: সরাসরি ভেরিয়েবলটি ব্যবহার করুন
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // প্রথমবার লোড হওয়ার সময় এটি দেখাবে
+          return const SizedBox(height: 210, child: Center(child: CircularProgressIndicator()));
+        }
+
+        // বাকি কোড আগের মতোই থাকবে...
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox(height: 210, child: Center(child: Text("No photographers found")));
+        }
+
+        final photographers = snapshot.data!;
+        return SizedBox(
+          height: 210,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            itemCount: photographers.length,
+            itemBuilder: (context, index) {
+              return _buildEnhancedPhotographerCard(
+                photographers[index],
+                theme,
+                isDark,
+                context,
+                index,
+              );
+            },
           ),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 35,
-              backgroundImage: NetworkImage(p['image']!),
+        );
+      },
+    );
+  }
+
+  Widget _buildEnhancedPhotographerCard(
+      Map<String, dynamic> photographer,
+      ThemeData theme,
+      bool isDark,
+      BuildContext context,
+      int index,
+      ) {
+    final accentColor = theme.colorScheme.primary;
+    final isSelected = _selectedPhotographerIndex == index;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 20, bottom: 10), // স্পেসিং বাড়ানো হয়েছে
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedPhotographerIndex = index;
+            _selectedPhotographer = photographer['name'] ?? "Unknown";
+          });
+        },
+        borderRadius: BorderRadius.circular(25),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 160, // আপনার চাহিদা মতো কার্ডের উইথ বাড়ানো হয়েছে
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? accentColor.withOpacity(isDark ? 0.15 : 0.05)
+                : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(
+              color: isSelected ? accentColor : (isDark ? Colors.white12 : Colors.black.withOpacity(0.08)),
+              width: isSelected ? 2.5 : 1, // সিলেকশনে বর্ডার আরও স্পষ্ট হবে
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
+            boxShadow: [
+              BoxShadow(
+                color: isSelected
+                    ? accentColor.withOpacity(0.2)
+                    : Colors.black.withOpacity(0.03),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // প্রোফাইল ইমেজ ও চেক মার্ক
+              Stack(
+                alignment: Alignment.center,
                 children: [
-                  Text(
-                    p['name']!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                    maxLines: 1,
-                  ),
-                  Text(
-                    p['specialty']!,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    maxLines: 1,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 14),
-                      Text(
-                        " ${p['rating']} ",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? accentColor : Colors.transparent,
+                        width: 2,
                       ),
-                    ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 38,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: NetworkImage(
+                        photographer['profile_image_url'] ?? "https://via.placeholder.com/150",
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check, color: Colors.white, size: 16),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // ফুল নেম (Clear and Bold)
+              Text(
+                photographer['name'] ?? "Unknown Artist",
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              // স্পেশালিটি (Specialty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  photographer['specialty'] ?? "Wedding Expert",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // পার আওয়ার ফি (Per Hour Fee)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.payments_outlined,
+                      size: 14,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600]
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${photographer['per_hours_fee'] ?? '0'} BDT/hr",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+  // end of photographer card
 
   Widget _buildDateTimeSelector(ThemeData theme, bool isDark) {
     return Column(
