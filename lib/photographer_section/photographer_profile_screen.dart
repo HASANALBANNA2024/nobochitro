@@ -5,7 +5,13 @@ import 'package:nobochitro/widgets/custom_appbar.dart';
 
 class PhotographerProfileScreen extends StatelessWidget {
   final Color primaryAccent;
-  const PhotographerProfileScreen({super.key, required this.primaryAccent});
+  final Map<String, dynamic> photographerData; // Data Receive
+
+  const PhotographerProfileScreen({
+    super.key,
+    required this.primaryAccent,
+    required this.photographerData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,29 +20,26 @@ class PhotographerProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      // custom appbar
       appBar: buildCustomAppBar(context, primaryAccent, "Photographer Profile"),
-
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1100),
           child: SingleChildScrollView(
-            // sliver appbar
             child: Column(
               children: [
-                // face image profile icon style
+                // কভার এবং প্রোফাইল ইমেজ
                 Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.centerLeft,
                   children: [
-                    // cover photo
                     Container(
                       height: 250,
                       width: double.infinity,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         image: DecorationImage(
                           image: NetworkImage(
-                            "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?fit=crop&w=1200",
+                            photographerData['banner_image_url'] ??
+                                "https://via.placeholder.com/1200x250",
                           ),
                           fit: BoxFit.cover,
                         ),
@@ -53,9 +56,8 @@ class PhotographerProfileScreen extends StatelessWidget {
                         ),
                         child: CircleAvatar(
                           radius: 75,
-                          backgroundColor: Colors.grey[300],
-                          backgroundImage: const NetworkImage(
-                            "https://i.pravatar.cc/300",
+                          backgroundImage: NetworkImage(
+                            photographerData['profile_image_url'] ?? "",
                           ),
                         ),
                       ),
@@ -63,8 +65,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 70), // প্রোফাইল পিকচারের নিচের স্পেস
-                //photographer information name and designation
+                const SizedBox(height: 70),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -72,24 +73,25 @@ class PhotographerProfileScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Text(
-                            "Alex Rivera",
-                            style: TextStyle(
+                          Text(
+                            photographerData['name'] ?? "User",
+                            style: const TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(
-                            Icons.verified,
-                            color: Colors.blue[600],
-                            size: 24,
-                          ),
+                          if (photographerData['is_available'] == true)
+                            Icon(
+                              Icons.verified,
+                              color: Colors.blue[600],
+                              size: 24,
+                            ),
                         ],
                       ),
-                      const Text(
-                        "Professional Photographer",
-                        style: TextStyle(
+                      Text(
+                        photographerData['specialty'] ?? "Photographer",
+                        style: const TextStyle(
                           fontSize: 18,
                           color: Colors.grey,
                           fontWeight: FontWeight.w500,
@@ -97,29 +99,32 @@ class PhotographerProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 40),
 
-                      // ৩. বিস্তারিত তথ্য (রেসপনসিভ লেআউট)
+                      // লেআউট লজিক
                       screenWidth > 850
                           ? Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   flex: 2,
-                                  child: _buildDetailedInfo(theme),
+                                  child: _buildDetailedInfo(photographerData),
                                 ),
                                 const SizedBox(width: 40),
                                 Expanded(
                                   flex: 1,
-                                  child: _buildExpertiseSideBar(theme),
+                                  child: _buildExpertiseSideBar(
+                                    photographerData,
+                                  ),
                                 ),
                               ],
                             )
                           : Column(
                               children: [
-                                _buildDetailedInfo(theme),
+                                _buildDetailedInfo(photographerData),
                                 const SizedBox(height: 30),
-                                _buildExpertiseSideBar(theme),
+                                _buildExpertiseSideBar(photographerData),
                               ],
                             ),
+
                       const SizedBox(height: 15),
                       CommunityGallery(
                         primaryAccent: primaryAccent,
@@ -128,7 +133,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                       const SizedBox(height: 15),
                       ResponsiveReviewList(
                         primaryAccent: primaryAccent,
-                        sectionTitle: "Client Say about photographer!",
+                        sectionTitle: "Client Reviews",
                       ),
                       const SizedBox(height: 40),
                     ],
@@ -142,8 +147,12 @@ class PhotographerProfileScreen extends StatelessWidget {
     );
   }
 
-  // informative build Widgets...
-  Widget _buildDetailedInfo(ThemeData theme) {
+  Widget _buildDetailedInfo(Map<String, dynamic> data) {
+    // Technical Arsenal স্ট্রিংকে লিস্টে রূপান্তর
+    List<String> gearList = (data['technical_arsenal'] ?? "").toString().split(
+      ',',
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -152,9 +161,9 @@ class PhotographerProfileScreen extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
-        const Text(
-          "With over a decade of experience, Alex specializes in high-fashion editorial and cinematic wedding storytelling. His work has been featured in international magazines.",
-          style: TextStyle(fontSize: 15, height: 1.6),
+        Text(
+          data['bio'] ?? "No bio available.",
+          style: const TextStyle(fontSize: 15, height: 1.6),
         ),
         const SizedBox(height: 30),
         const Text(
@@ -165,12 +174,10 @@ class PhotographerProfileScreen extends StatelessWidget {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: [
-            _gearChip("Sony A1"),
-            _gearChip("Nikon Z9"),
-            _gearChip("35mm f/1.4"),
-            _gearChip("Lightroom"),
-          ],
+          children: gearList
+              .where((gear) => gear.trim().isNotEmpty)
+              .map((gear) => _gearChip(gear.trim()))
+              .toList(),
         ),
       ],
     );
@@ -183,7 +190,7 @@ class PhotographerProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExpertiseSideBar(ThemeData theme) {
+  Widget _buildExpertiseSideBar(Map<String, dynamic> data) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -192,9 +199,23 @@ class PhotographerProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _statRow(Icons.event_available, "450+ Projects"),
-          _statRow(Icons.timer_outlined, "3-5 Days Delivery"),
-          _statRow(Icons.workspace_premium, "8 Years Exp."),
+          _statRow(
+            Icons.event_available,
+            "${data['projects_completed'] ?? '0'} Projects",
+          ),
+          _statRow(
+            Icons.timer_outlined,
+            "${data['delivery_time'] ?? 'N/A'} Delivery",
+          ),
+          _statRow(
+            Icons.workspace_premium,
+            "${data['experience_years'] ?? '0'} Years Exp.",
+          ),
+          _statRow(Icons.location_on, data['location'] ?? "Not Specified"),
+          _statRow(
+            Icons.monetization_on,
+            "৳${data['per_hours_fee'] ?? '0'} / hr",
+          ),
         ],
       ),
     );

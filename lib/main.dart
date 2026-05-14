@@ -1,25 +1,24 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/firebase_options.dart';
-import 'package:nobochitro/screens/dashboard_screen.dart';
 import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-void main() async{
+void main() async {
   // flutter engine load
   WidgetsFlutterBinding.ensureInitialized();
 
-
-  await Supabase.initialize(url: "https://whdyselehlvbshnoezgz.supabase.co", anonKey: "sb_publishable_J2XyM8ebvtPM7la-GHbZjg_0aEVlOT0");
-  // firebase start
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
+  await Supabase.initialize(
+    url: "https://whdyselehlvbshnoezgz.supabase.co",
+    anonKey: "sb_publishable_J2XyM8ebvtPM7la-GHbZjg_0aEVlOT0",
   );
+  // firebase start
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-
-
+  await DatabaseHelper.insertDemoPhotographers();
 
   runApp(const PhotographyApp());
 }
@@ -68,7 +67,9 @@ class _PhotographyAppState extends State<PhotographyApp> {
 
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final primaryAccent = isDark ? const Color(0xFFD4AF37) : const Color(0xFF008080);
+        final primaryAccent = isDark
+            ? const Color(0xFFD4AF37)
+            : const Color(0xFF008080);
 
         return Scaffold(
           body: child,
@@ -81,10 +82,7 @@ class _PhotographyAppState extends State<PhotographyApp> {
       },
 
       // SplashScreen এ onAppReady ফাংশনটি পাস করে দিন
-      home: SplashScreen(
-        onThemeChanged: toggleTheme,
-        onAppReady: onAppReady,
-      ),
+      home: SplashScreen(onThemeChanged: toggleTheme, onAppReady: onAppReady),
     );
   }
 }

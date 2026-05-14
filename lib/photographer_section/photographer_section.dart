@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:nobochitro/photographer_section/photographer_profile_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PhotographerSection extends StatefulWidget {
   final Color primaryAccent;
@@ -15,56 +16,24 @@ class PhotographerSection extends StatefulWidget {
 class _PhotographerSectionState extends State<PhotographerSection> {
   late final ScrollController _scrollController;
   Timer? _timer;
-
-  final List<Map<String, String>> photographers = [
-    {
-      'name': 'Hasan Al Banna',
-      'expert': 'Wedding Specialist',
-      'image': 'https://i.pravatar.cc/300?u=1',
-      'rating': '4.9',
-    },
-    {
-      'name': 'Sabbir Ahmed',
-      'expert': 'Portrait Expert',
-      'image': 'https://i.pravatar.cc/300?u=2',
-      'rating': '4.8',
-    },
-    {
-      'name': 'Tanvir Hossain',
-      'expert': 'Event Photographer',
-      'image': 'https://i.pravatar.cc/300?u=3',
-      'rating': '4.7',
-    },
-    {
-      'name': 'Rifat Khan',
-      'expert': 'Fashion & Model',
-      'image': 'https://i.pravatar.cc/300?u=4',
-      'rating': '5.0',
-    },
-    {
-      'name': 'Mehedi Hasan',
-      'expert': 'Cinematographer',
-      'image': 'https://i.pravatar.cc/300?u=5',
-      'rating': '4.9',
-    },
-  ];
+  final supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    // web auto scrolling logic
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startAutoScroll();
     });
   }
 
+  // আপনার আগের স্ক্রলিং লজিক (৩ সেকেন্ড পর পর ৩০০ পিক্সেল)
   void _startAutoScroll() {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_scrollController.hasClients) {
         double maxScroll = _scrollController.position.maxScrollExtent;
         double currentScroll = _scrollController.position.pixels;
-        double delta = 300.0; // how much scrolling in  3 second
+        double delta = 300.0;
 
         if (currentScroll >= maxScroll) {
           _scrollController.animateTo(
@@ -122,17 +91,33 @@ class _PhotographerSectionState extends State<PhotographerSection> {
         ),
 
         SizedBox(
-          height: 350,
-          child: ListView.builder(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: photographers.length,
-            itemBuilder: (context, index) {
-              return Container(
-                width: isMobile ? screenWidth * 0.75 : 320,
-                margin: const EdgeInsets.only(right: 16, bottom: 10),
-                child: _buildPhotographerCard(photographers[index], theme),
+          height: 380, // কার্ডের হাইট অনুযায়ী এডজাস্ট করা হয়েছে
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            // ডাটাবেস থেকে রিয়েল টাইম ডাটা স্ট্রিম
+            stream: supabase
+                .from('photographers')
+                .stream(primaryKey: ['photographer_id']),
+            builder: (context, snapshot) {
+              if (snapshot.hasError)
+                return const Center(child: Text("Error loading data"));
+              if (!snapshot.hasData)
+                return const Center(child: CircularProgressIndicator());
+
+              final photographers = snapshot.data!;
+
+              return ListView.builder(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: photographers.length,
+                itemBuilder: (context, index) {
+                  final data = photographers[index];
+                  return Container(
+                    width: isMobile ? screenWidth * 0.75 : 320,
+                    margin: const EdgeInsets.only(right: 16, bottom: 10),
+                    child: _buildPhotographerCard(data, theme),
+                  );
+                },
               );
             },
           ),
@@ -141,7 +126,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
     );
   }
 
-  Widget _buildPhotographerCard(Map<String, String> data, ThemeData theme) {
+  Widget _buildPhotographerCard(Map<String, dynamic> data, ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -153,7 +138,6 @@ class _PhotographerSectionState extends State<PhotographerSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // image section
           Expanded(
             child: Stack(
               children: [
@@ -162,10 +146,9 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     top: Radius.circular(16),
                   ),
                   child: Image.network(
-                    data['image']!,
+                    data['profile_image_url'] ?? '',
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    // icon setup for no loading image
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: theme.colorScheme.onSurface.withOpacity(0.05),
@@ -180,22 +163,24 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     },
                   ),
                 ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: widget.primaryAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.verified,
-                      color: Colors.white,
-                      size: 16,
+                // আপনার আগের ভেরিফাইড ব্যাজ স্টাইল
+                if (data['is_available'] == true)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: widget.primaryAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.verified,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -210,7 +195,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                   children: [
                     Expanded(
                       child: Text(
-                        data['name']!,
+                        data['name'] ?? 'No Name',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -226,7 +211,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                           size: 20,
                         ),
                         Text(
-                          data['rating']!,
+                          data['avg_rating']?.toString() ?? '0.0',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -235,7 +220,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  data['expert']!,
+                  data['specialty'] ?? 'Specialist',
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 13,
@@ -246,12 +231,12 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () {
-                      // call to profile section
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => PhotographerProfileScreen(
-                            primaryAccent: Color(0xFF6200EE), // app color
+                            primaryAccent: widget.primaryAccent,
+                            photographerData: data,
                           ),
                         ),
                       );
