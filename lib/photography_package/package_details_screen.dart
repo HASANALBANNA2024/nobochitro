@@ -1,8 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/booking_summary_screen/booking_summary_screen.dart';
 import 'package:nobochitro/photography_package/package_comparison_table.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
+
+import '../authentication/login_screen.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final Color primaryAccent;
@@ -250,15 +253,26 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           height: 56,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BookingSummaryScreen(
-                    primaryAccent: widget.primaryAccent,
-                    packageData: widget.packageData,
-                  ),
-                ),
-              );
+             if(FirebaseAuth.instance.currentUser!=null)
+               {
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(
+                     builder: (_) => BookingSummaryScreen(
+                       primaryAccent: widget.primaryAccent,
+                       packageData: widget.packageData,
+                     ),
+                   ),
+                 );
+               }
+             else{
+               showModalBottomSheet(
+                 context: context,
+                 isScrollControlled: true,
+                 backgroundColor: Colors.transparent,
+                 builder: (context) => const LoginModalSheet(),
+               );
+             }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6342E8),

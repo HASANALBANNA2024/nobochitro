@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/client_profile/client_profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:nobochitro/photographer_section/photographer_profile_screen.dart';
+
+import '../authentication/login_screen.dart';
 
 class CustomSideNavigation extends StatelessWidget {
   final int selectedIndex;
@@ -67,18 +70,31 @@ class CustomSideNavigation extends StatelessWidget {
                   primaryAccent: primaryAccent,
                   onTap: () {
                     onDestinationSelected(2);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MyBookingScreen(
-                          primaryAccent: primaryAccent,
-                          selectedIndex: selectedIndex,
-                          onDestinationSelected: onDestinationSelected,
-                          onThemeChanged: onThemeChanged,
-                          onSettingsPressed: onSettingsPressed,
-                        ),
-                      ),
-                    );
+                    if(FirebaseAuth.instance.currentUser != null)
+                      {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MyBookingScreen(
+                              primaryAccent: primaryAccent,
+                              selectedIndex: selectedIndex,
+                              onDestinationSelected: onDestinationSelected,
+                              onThemeChanged: onThemeChanged,
+                              onSettingsPressed: onSettingsPressed,
+                            ),
+                          ),
+                        );
+                      }
+                    else{
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const LoginModalSheet(),
+                      );
+                    }
+
+
                   },
                 ),
                 // Account
@@ -91,9 +107,20 @@ class CustomSideNavigation extends StatelessWidget {
                   primaryAccent: primaryAccent,
                  onTap: (){
                     onDestinationSelected(3);
-                    Navigator.push(context, MaterialPageRoute(builder: (_)=>
-                    ClientProfileScreen()
-                    ));
+                    if(FirebaseAuth.instance.currentUser!=null)
+                      {
+                        Navigator.push(context, MaterialPageRoute(builder: (_)=>
+                            ClientProfileScreen()
+                        ));
+                      }
+                    else{
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const LoginModalSheet(),
+                      );
+                    }
                  }
                 ),
 

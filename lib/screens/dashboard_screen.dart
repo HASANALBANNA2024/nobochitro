@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/campaign_banner/n8n_dynamic_banner.dart';
@@ -14,6 +15,8 @@ import 'package:nobochitro/settings/settings_utils.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
 import 'package:nobochitro/widgets/custom_header.dart';
 import 'package:nobochitro/widgets/custom_side_navigation.dart';
+
+import '../authentication/login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(bool) onThemeChanged;
@@ -109,31 +112,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 } else if (index == 2) {
                   // Direct navigation to My Booking Screen
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => MyBookingScreen(
-                        primaryAccent: primaryAccent,
-                        selectedIndex: _currentIndex, // Pass current state
-                        onDestinationSelected: (idx) {
-                          setState(() => _currentIndex = idx);
-                        },
-                        onThemeChanged: widget.onThemeChanged,
-                        onSettingsPressed: () {
-                          SettingsUtils.showSettings(
-                            context,
-                            primaryAccent,
-                            widget.onThemeChanged,
-                          );
-                        },
-                      ),
-                    ),
-                  );
+                  if(FirebaseAuth.instance.currentUser!=null)
+                    {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MyBookingScreen(
+                            primaryAccent: primaryAccent,
+                            selectedIndex: _currentIndex, // Pass current state
+                            onDestinationSelected: (idx) {
+                              setState(() => _currentIndex = idx);
+                            },
+                            onThemeChanged: widget.onThemeChanged,
+                            onSettingsPressed: () {
+                              SettingsUtils.showSettings(
+                                context,
+                                primaryAccent,
+                                widget.onThemeChanged,
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                  else{
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => const LoginModalSheet(),
+                    );
+                  }
                 } else if (index == 3) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => ClientProfileScreen()),
-                  );
+                 if(FirebaseAuth.instance.currentUser!=null)
+                   {
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(builder: (_) => ClientProfileScreen()),
+                     );
+                   }
+                 else{
+                   showModalBottomSheet(
+                     context: context,
+                     isScrollControlled: true,
+                     backgroundColor: Colors.transparent,
+                     builder: (context) => const LoginModalSheet(),
+                   );
+                 }
                 } else if (index == 0) {
                   Navigator.push(
                     context,
