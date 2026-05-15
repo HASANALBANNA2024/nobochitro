@@ -232,7 +232,10 @@ class PhotographerProfileScreen extends StatelessWidget {
           const SizedBox(height: 20),
           // আপনার Nobochitro প্রজেক্টের জন্য বুকিং বাটন (প্রয়োজনীয়)
           ElevatedButton(
-            onPressed: () {},
+            // আপনার প্রোফাইল স্ক্রিনের 'Book Now' বাটনে জাস্ট এইটুকু লিখুন
+            onPressed: () {
+
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAccent,
               minimumSize: const Size(double.infinity, 45),
@@ -244,6 +247,9 @@ class PhotographerProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+  // BuildContext context যোগ করা হয়েছে
+
 
   Widget _statRow(IconData icon, String text) {
     return Padding(
