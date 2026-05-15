@@ -118,6 +118,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     ),
                     const SizedBox(height: 10),
                     AddOnsSelector(
+                      // এখানে প্যাকেজের ক্যাটেগরি পাস করুন (যেমন: 'Wedding' বা 'Event')
+                      selectedCategory:
+                          widget.packageData['category'] ?? "Not available",
                       onSelectionChanged: (newList) {
                         setState(() {
                           totalAddonsPrice = newList.fold(

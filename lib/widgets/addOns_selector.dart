@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 
 class AddOnsSelector extends StatefulWidget {
+  final String selectedCategory; // প্যাকেজের ক্যাটেগরি (যেমন: Wedding বা Event)
   final Function(List<Map<String, dynamic>>) onSelectionChanged;
 
   const AddOnsSelector({
     super.key,
+    required this.selectedCategory,
     required this.onSelectionChanged,
   });
 
@@ -20,12 +22,25 @@ class _AddOnsSelectorState extends State<AddOnsSelector> {
   @override
   void initState() {
     super.initState();
-    _addonsFuture = DatabaseHelper.instance.getAddons();
+    // এখানে ক্যাটেগরি অনুযায়ী ডাটা ফিল্টার করে আনা হচ্ছে
+    _addonsFuture = _getFilteredAddons();
+  }
+
+  // ক্যাটেগরি অনুযায়ী ফিল্টার করার লজিক
+  Future<List<Map<String, dynamic>>> _getFilteredAddons() async {
+    final allAddons = await DatabaseHelper.instance.getAddons();
+    // প্যাকেজের ক্যাটেগরির সাথে অ্যাড-অনের ক্যাটেগরি মিলিয়ে ফিল্টার করা হচ্ছে
+    return allAddons
+        .where(
+          (addon) =>
+              addon['category'].toString().toLowerCase() ==
+              widget.selectedCategory.toLowerCase(),
+        )
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    // স্ক্রিন সাইজ অনুযায়ী রেসপনসিভ করার জন্য MediaQuery ব্যবহার
     final screenWidth = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -42,26 +57,38 @@ class _AddOnsSelectorState extends State<AddOnsSelector> {
           );
         }
 
+        // যদি ওই ক্যাটেগরিতে কোনো অ্যাড-অন না থাকে
         if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              "No specific add-ons for ${widget.selectedCategory}",
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          );
         }
 
         final addons = snapshot.data!;
 
         return Container(
           width: double.infinity,
-          alignment: Alignment.centerLeft, // সব সাইজের স্ক্রিনে বাম দিক থেকে সাজানো থাকবে
+          alignment: Alignment.centerLeft,
           child: Wrap(
-            spacing: 12, // পাশাপাশি গ্যাপ
-            runSpacing: 12, // উপর-নিচ গ্যাপ
+            spacing: 12,
+            runSpacing: 12,
             children: addons.map((addon) {
-              final isSelected = _selectedAddons.contains(addon);
+              // সিলেকশন চেক করার জন্য title বা id ব্যবহার করা নিরাপদ
+              final isSelected = _selectedAddons.any(
+                (item) => item['title'] == addon['title'],
+              );
 
               return InkWell(
                 onTap: () {
                   setState(() {
                     if (isSelected) {
-                      _selectedAddons.remove(addon);
+                      _selectedAddons.removeWhere(
+                        (item) => item['title'] == addon['title'],
+                      );
                     } else {
                       _selectedAddons.add(addon);
                     }
@@ -72,32 +99,26 @@ class _AddOnsSelectorState extends State<AddOnsSelector> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
-                  // ছোট স্ক্রিনে যেন টেক্সট ওভারফ্লো না হয় তার জন্য constraints
-                  constraints: BoxConstraints(
-                    maxWidth: screenWidth * 0.9, // স্ক্রিনের ৯০% এর বেশি বড় হবে না
+                  constraints: BoxConstraints(maxWidth: screenWidth * 0.9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? theme.primaryColor.withOpacity(isDark ? 0.2 : 0.1)
-                        : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                        : (isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.grey[100]),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
                           ? theme.primaryColor
-                          : (isDark ? Colors.white12 : Colors.black.withOpacity(0.05)),
+                          : (isDark
+                                ? Colors.white12
+                                : Colors.black.withOpacity(0.05)),
                       width: isSelected ? 1.5 : 1,
                     ),
-                    // ডার্ক মোডে হালকা শ্যাডো যাতে কার্ডটি ফুটে ওঠে
-                    boxShadow: isSelected && !isDark
-                        ? [
-                      BoxShadow(
-                        color: theme.primaryColor.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ]
-                        : null,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -112,20 +133,25 @@ class _AddOnsSelectorState extends State<AddOnsSelector> {
                               width: 24,
                               height: 24,
                               fit: BoxFit.cover,
-                              // ইমেজ লোড হতে দেরি হলে বা এরর দিলে ব্যাকআপ
                               errorBuilder: (context, error, stackTrace) =>
-                                  Icon(Icons.add_circle_outline, size: 20, color: theme.primaryColor),
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    size: 20,
+                                    color: theme.primaryColor,
+                                  ),
                             ),
                           ),
                         ),
-                      Flexible( // লম্বা টেক্সট হলেও স্ক্রিন ফেটে যাবে না
+                      Flexible(
                         child: Text(
                           "${addon['title']} +৳${addon['price']}",
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.2,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
                             color: isSelected
                                 ? (isDark ? Colors.white : theme.primaryColor)
                                 : (isDark ? Colors.white70 : Colors.black87),
