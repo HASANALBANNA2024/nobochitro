@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+// আপনার প্রজেক্টের সঠিক পাথ অনুযায়ী ইমপোর্ট করুন
+import 'package:nobochitro/utilities/package_standard.dart';
 
 class PackageComparisonTable extends StatelessWidget {
   final List<Map<String, dynamic>> comparisonPackages;
@@ -16,29 +18,15 @@ class PackageComparisonTable extends StatelessWidget {
     required this.primaryAccent,
   });
 
-  // প্রাইস অনুযায়ী লেভেল বা ব্যাজ নাম পাওয়ার লজিক
-  String _getBadgeLabel(dynamic rawPrice) {
-    double price = 0.0;
-    if (rawPrice is num) price = rawPrice.toDouble();
-    else if (rawPrice is String) price = double.tryParse(rawPrice) ?? 0.0;
-
-    if (price < 8000) return 'Budget';
-    if (price < 15000) return 'Standard';
-    if (price < 25000) return 'Gold';
-    if (price < 40000) return 'Platinum';
-    if (price < 60000) return 'Diamond';
-    return 'Premium';
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // --- লজিক পরিবর্তন: যদি ১টি বা তার কম প্যাকেজ থাকে তবে কিছুই দেখাবে না ---
+    // ১টি বা তার কম প্যাকেজ থাকলে টেবিল দেখাবে না
     if (comparisonPackages.length <= 1) {
-      return const SizedBox.shrink(); // এটি টেবিলটিকে পুরোপুরি হাইড করে দিবে
+      return const SizedBox.shrink();
     }
 
     return Container(
@@ -57,7 +45,6 @@ class PackageComparisonTable extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: BoxConstraints(minWidth: constraints.maxWidth),
                 child: DataTable(
-                  // কলাম স্পেসিং ডাইনামিক যাতে স্ক্রিন জুড়ে ছড়িয়ে থাকে
                   columnSpacing: comparisonPackages.length == 2
                       ? (constraints.maxWidth / 3.5)
                       : 25,
@@ -69,34 +56,66 @@ class PackageComparisonTable extends StatelessWidget {
                     const DataColumn(
                       label: Text(
                         'Comparison',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     ...comparisonPackages.map(
-                          (pkg) => DataColumn(
+                      (pkg) => DataColumn(
                         label: Text(
-                          _getBadgeLabel(pkg['base_price']),
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          // Utility ক্লাস থেকে লেবেল কল করা হচ্ছে
+                          PackageStandard.getBadgeLabel(pkg['base_price']),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ],
                   rows: [
-                    _buildRow("Package", (pkg) => pkg['title'] ?? "N/A", isBold: true),
-                    _buildRow("Price", (pkg) => "৳${pkg['base_price']}", color: primaryAccent, isBold: true),
+                    _buildRow(
+                      "Package",
+                      (pkg) => pkg['title'] ?? "N/A",
+                      isBold: true,
+                    ),
+                    _buildRow(
+                      "Price",
+                      (pkg) => "৳${pkg['base_price']}",
+                      color: primaryAccent,
+                      isBold: true,
+                    ),
                     _buildRow("Extras", (pkg) {
-                      int count = (pkg['features']?.toString().split(',') ?? []).length;
+                      int count =
+                          (pkg['features']?.toString().split(',') ?? []).length;
                       return "$count Items";
                     }),
-                    _buildRow("Duration", (pkg) => "${pkg['base_hours'] ?? 0} hrs"),
+                    _buildRow(
+                      "Duration",
+                      (pkg) => "${pkg['base_hours'] ?? 0} hrs",
+                    ),
                     DataRow(
                       cells: [
-                        const DataCell(Text("Level", style: TextStyle(fontSize: 11, color: Colors.grey))),
+                        const DataCell(
+                          Text(
+                            "Level",
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                        ),
                         ...comparisonPackages.map((pkg) {
-                          String label = _getBadgeLabel(pkg['base_price']);
+                          // Utility ক্লাস থেকে লেবেল নিয়ে আইকন সেট করা
+                          String label = PackageStandard.getBadgeLabel(
+                            pkg['base_price'],
+                          );
                           return DataCell(
                             Icon(
-                              label == 'Budget' ? Icons.trending_up : label == 'Standard' ? Icons.auto_awesome : Icons.workspace_premium,
+                              label == 'Budget'
+                                  ? Icons.trending_up
+                                  : label == 'Standard'
+                                  ? Icons.auto_awesome
+                                  : Icons.workspace_premium,
                               size: 16,
                               color: primaryAccent.withOpacity(0.7),
                             ),
@@ -114,13 +133,19 @@ class PackageComparisonTable extends StatelessWidget {
     );
   }
 
-  // হেল্পার মেথড রো তৈরির জন্য
-  DataRow _buildRow(String label, String Function(Map<String, dynamic>) valueExtractor, {Color? color, bool isBold = false}) {
+  DataRow _buildRow(
+    String label,
+    String Function(Map<String, dynamic>) valueExtractor, {
+    Color? color,
+    bool isBold = false,
+  }) {
     return DataRow(
       cells: [
-        DataCell(Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey))),
+        DataCell(
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        ),
         ...comparisonPackages.map(
-              (pkg) => DataCell(
+          (pkg) => DataCell(
             Text(
               valueExtractor(pkg),
               style: TextStyle(

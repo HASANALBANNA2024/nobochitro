@@ -94,25 +94,23 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ১. ডাইনামিক হিরো সেকশন (রিয়েল ইমেজ ও প্রাইস)
+                // dynamic hero
                 _buildDynamicHero(pkg),
 
                 const SizedBox(height: 25),
                 _buildSectionTitle("Package Includes"),
                 const SizedBox(height: 15),
 
-                // ২. সিম্পল টেক্সট চেকলিস্ট (ফিচার কলাম থেকে)
+                // simple check list of features
                 _buildSimpleChecklist(
                   pkg['features'] ?? "",
                   isDark,
                   widget.primaryAccent,
                 ),
 
-                const SizedBox(height: 30),
-                _buildSectionTitle("Compare with Others"),
                 const SizedBox(height: 15),
 
-                // ৩. ডাইনামিক কম্প্যারিশন টেবিল
+                //
                 PackageComparisonTable(
                   comparisonPackages: comparisonPackages,
                   isLoading: isCompLoading,
@@ -121,9 +119,8 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   primaryAccent: widget.primaryAccent,
                 ),
 
-                const SizedBox(height: 30),
-                _buildSectionTitle("Add Extra Services"),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
+
                 _buildBookButton(pkg),
                 const SizedBox(height: 20),
               ],

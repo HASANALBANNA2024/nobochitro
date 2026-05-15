@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:nobochitro/utilities/package_standard.dart';
 
 import '../photography_package/package_details_screen.dart';
 
@@ -38,31 +39,17 @@ class _PackageCardState extends State<PackageCard> {
     super.dispose();
   }
 
-  // প্রাইস অনুযায়ী ব্যাজ এর নাম এবং কালার (Safety logic)
-  Map<String, dynamic> _getBadgeInfo(dynamic rawPrice) {
-    double price = 0.0;
-    if (rawPrice is num)
-      price = rawPrice.toDouble();
-    else if (rawPrice is String)
-      price = double.tryParse(rawPrice) ?? 0.0;
-
-    if (price < 8000)
-      return {'label': 'Budget-friendly', 'color': Colors.green};
-    if (price < 15000) return {'label': 'Standard', 'color': Colors.blue};
-    if (price < 25000)
-      return {'label': 'Gold', 'color': const Color(0xFFFFD700)};
-    if (price < 40000)
-      return {'label': 'Platinum', 'color': const Color(0xFFE5E4E2)};
-    if (price < 60000) return {'label': 'Diamond', 'color': Colors.cyanAccent};
-    return {'label': 'Premium', 'color': Colors.orangeAccent};
-  }
-
   @override
   Widget build(BuildContext context) {
     // ফিচারগুলোকে নিরাপদে লিস্টে রূপান্তর
     final List<String> features = (widget.pkg['features'] as String? ?? "")
         .split(',');
-    final badge = _getBadgeInfo(widget.pkg['base_price']);
+
+    // AppUtils ব্যবহার করে লেবেল এবং কালার নেওয়া হচ্ছে
+    final String badgeLabel = PackageStandard.getBadgeLabel(
+      widget.pkg['base_price'],
+    );
+    final Color badgeColor = PackageStandard.getBadgeColor(badgeLabel);
 
     return Container(
       width: 320,
@@ -86,7 +73,7 @@ class _PackageCardState extends State<PackageCard> {
         children: [
           // উপরের অংশ: ইমেজ এবং ব্যাজ
           Expanded(
-            flex: 5, // ইমেজ সেকশন ৫ ভাগ জায়গা নিবে
+            flex: 5,
             child: Stack(
               children: [
                 AnimatedSwitcher(
@@ -103,14 +90,14 @@ class _PackageCardState extends State<PackageCard> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: badge['color'],
+                      color: badgeColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: const [
                         BoxShadow(color: Colors.black26, blurRadius: 4),
                       ],
                     ),
                     child: Text(
-                      badge['label'],
+                      badgeLabel,
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 10,
@@ -125,7 +112,7 @@ class _PackageCardState extends State<PackageCard> {
 
           // নিচের অংশ: টাইটেল, ফিচার এবং বাটন
           Expanded(
-            flex: 5, // টেক্সট সেকশন বাকি ৫ ভাগ জায়গা নিবে
+            flex: 5,
             child: Padding(
               padding: const EdgeInsets.all(15),
               child: Column(
@@ -157,7 +144,7 @@ class _PackageCardState extends State<PackageCard> {
                   ),
                   const SizedBox(height: 10),
 
-                  // ফিচারস এরিয়া (যাতে টাইটেল বড় হলেও বাটন নিচে না নেমে যায়)
+                  // ফিচারস এরিয়া
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -173,7 +160,7 @@ class _PackageCardState extends State<PackageCard> {
                   ),
 
                   const SizedBox(height: 10),
-                  // বুক বাটন - এটি সব কার্ডে একই জায়গায় থাকবে (Fixed at bottom)
+                  // বুক বাটন
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -209,7 +196,6 @@ class _PackageCardState extends State<PackageCard> {
     );
   }
 
-  // ইমেজের জন্য সেফ মেথড (যাতে ইমেজ না থাকলেও অ্যাপ ক্রাশ না করে)
   Widget _buildImage(String? url) {
     if (url == null || url.isEmpty) {
       return Container(
@@ -240,7 +226,6 @@ class _PackageCardState extends State<PackageCard> {
     );
   }
 
-  // ফিচার চিপস ডিজাইন
   Widget _buildChip(String label) {
     if (label.isEmpty) return const SizedBox.shrink();
     return Container(
