@@ -5,8 +5,6 @@ import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'DatabaseHelper/database_helper.dart';
-
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   // flutter engine load
@@ -21,7 +19,7 @@ void main() async {
 
   // await DatabaseHelper.insertDemoPhotographers();
   // await DatabaseHelper.insertDemoPackages();
-  await DatabaseHelper.instance.insertAddons();
+  // await DatabaseHelper.instance.insertAddons();
 
   runApp(const PhotographyApp());
 }

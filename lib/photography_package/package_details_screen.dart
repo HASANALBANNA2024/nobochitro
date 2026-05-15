@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/booking_summary_screen/booking_summary_screen.dart';
+import 'package:nobochitro/photography_package/package_comparison_table.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
@@ -112,9 +113,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 const SizedBox(height: 15),
 
                 // ৩. ডাইনামিক কম্প্যারিশন টেবিল
-                isCompLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildComparisonTable(isDark, cardColor),
+                PackageComparisonTable(
+                  comparisonPackages: comparisonPackages,
+                  isLoading: isCompLoading,
+                  isDark: isDark,
+                  cardColor: cardColor,
+                  primaryAccent: widget.primaryAccent,
+                ),
 
                 const SizedBox(height: 30),
                 _buildSectionTitle("Add Extra Services"),
@@ -274,149 +279,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  // ২. সুন্দর ডাইনামিক টেবিল উইজেট
-  Widget _buildComparisonTable(bool isDark, Color cardColor) {
-    // যদি লোডিং হয় তবে সার্কেল দেখাবে
-    if (isCompLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    // যদি ডাটা না থাকে
-    if (comparisonPackages.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(20),
-        child: Text("No other packages to compare in this category."),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: DataTable(
-          columnSpacing: 10,
-          horizontalMargin: 10,
-          headingRowColor: WidgetStateProperty.all(
-            widget.primaryAccent.withOpacity(0.1),
-          ),
-          columns: [
-            const DataColumn(
-              label: Text(
-                'Feature',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            ),
-            ...comparisonPackages.map(
-              (pkg) => DataColumn(
-                label: Expanded(
-                  child: Text(
-                    pkg['title'].toString().split(' ')[0], // ছোট নাম
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ),
-          ],
-          rows: [
-            // রো ১: প্রাইস
-            DataRow(
-              cells: [
-                const DataCell(
-                  Text(
-                    "Price",
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ),
-                ...comparisonPackages.map(
-                  (pkg) => DataCell(
-                    Text(
-                      "৳${pkg['base_price']}",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: widget.primaryAccent,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // রো ২: ফিচারের সংখ্যা (সিম্পল করার জন্য)
-            DataRow(
-              cells: [
-                const DataCell(
-                  Text(
-                    "Extras",
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ),
-                ...comparisonPackages.map((pkg) {
-                  int count = pkg['features'].toString().split(',').length;
-                  return DataCell(
-                    Text(
-                      "$count Features",
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  );
-                }),
-              ],
-            ),
-            // base hours
-            DataRow(
-              cells: [
-                const DataCell(
-                  Text(
-                    "Time",
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ),
-                ...comparisonPackages.map((pkg) {
-                  int count = pkg['base_hours'].toString().split(',').length;
-                  return DataCell(
-                    Text("$count hours", style: const TextStyle(fontSize: 11)),
-                  );
-                }),
-              ],
-            ),
-            // রো ৩: স্ট্যাটাস
-            DataRow(
-              cells: [
-                const DataCell(
-                  Text(
-                    "Level",
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ),
-                ...List.generate(comparisonPackages.length, (index) {
-                  return DataCell(
-                    Icon(
-                      index == 0
-                          ? Icons.trending_up
-                          : (index == 1
-                                ? Icons.auto_awesome
-                                : Icons.workspace_premium),
-                      size: 16,
-                      color: widget.primaryAccent.withOpacity(0.7),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
