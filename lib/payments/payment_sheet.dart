@@ -1,13 +1,22 @@
+import 'dart:io';
+import 'dart:typed_data'; // ইউনিভার্সাল বাইটস হ্যান্ডল করার জন্য যুক্ত করা হলো
+import 'package:flutter/foundation.dart'; // kIsWeb কন্ডিশন চেক করার জন্য
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 class PaymentSheet extends StatefulWidget {
   final Color primaryAccent;
   final double amount;
 
+  // জাস্ট এই একটি ম্যাপের ভেতরেই সব ডাটা (package_id, photographer_id, date, time, addons, location) চলে আসবে
+  final Map<String, dynamic> bookingData;
+
   const PaymentSheet({
     super.key,
     required this.primaryAccent,
     required this.amount,
+    required this.bookingData, // মাত্র ৩টি প্যারামিটারে চলে আসলো
   });
 
   @override
@@ -18,14 +27,40 @@ class _PaymentSheetState extends State<PaymentSheet> {
   String _selectedMethod = "bKash";
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _numberController =
-      TextEditingController(); // Number or Bank Name
-  final TextEditingController _trxController =
-      TextEditingController(); // TrxID or Reference
-  final TextEditingController _extraController =
-      TextEditingController(); // Extra info (Branch/Name)
+  final TextEditingController _numberController = TextEditingController();
+  final TextEditingController _trxController = TextEditingController();
+  final TextEditingController _extraController = TextEditingController();
 
-  // মেথড অনুযায়ী আমাদের অ্যাকাউন্ট ডিটেইলস
+  // ক্রস-প্ল্যাটফর্ম ইমেজ সিলেকশন ভ্যারিয়েবলসমূহ
+  File? _selectedImageFile; // মোবাইলের লোকাল ফাইল অবজেক্ট ব্যাকআপ
+  Uint8List? _selectedImageBytes; // অ্যান্ড্রয়েড, আইওএস এবং ওয়েব সব জায়গায় প্রিভিউ দেখানোর ইউনিভার্সাল ডাটা
+  String _imageName = ""; // ইমেজের নাম দেখানোর জন্য
+
+  final ImagePicker _picker = ImagePicker();
+
+  // ইউনিভার্সাল ImagePicker ফাংশন (Web + Mobile ফ্রেন্ডলি)
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      // ইমেজ ফাইল থেকে ডিরেক্ট বাইটস রিড করা হলো
+      final Uint8List bytes = await pickedFile.readAsBytes();
+
+      setState(() {
+        _selectedImageBytes = bytes;
+        _imageName = pickedFile.name;
+        // ওয়েব প্ল্যাটফর্মে ডিরেক্ট লোকাল ফাইল পাথ এক্সিস্ট করে না, তাই কন্ডিশনাল অ্যাসাইনমেন্ট
+        if (!kIsWeb) {
+          _selectedImageFile = File(pickedFile.path);
+        }
+      });
+    }
+  }
+
+  // মেথড অনুযায়ী আমাদের অ্যাকাউন্ট ডিটেইলস
   Map<String, String> get _ourAccountDetails {
     switch (_selectedMethod) {
       case "Nagad":
@@ -52,7 +87,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
+      height: MediaQuery.of(context).size.height * 0.82,
       padding: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
@@ -115,47 +150,47 @@ class _PaymentSheetState extends State<PaymentSheet> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children:
-                            [
-                              "bKash",
-                              "Nagad",
-                              "Visa Card",
-                              "Bank Transfer",
-                            ].map((method) {
-                              bool isSelected = _selectedMethod == method;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: ChoiceChip(
-                                  label: Text(method),
-                                  selected: isSelected,
-                                  selectedColor: widget.primaryAccent,
-                                  onSelected: (val) {
-                                    setState(() {
-                                      _selectedMethod = method;
-                                      _numberController.clear();
-                                      _trxController.clear();
-                                      _extraController.clear();
-                                    });
-                                  },
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? Colors.black
-                                        : (isDark
-                                              ? Colors.white
-                                              : Colors.black),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                        [
+                          "bKash",
+                          "Nagad",
+                          "Visa Card",
+                          "Bank Transfer",
+                        ].map((method) {
+                          bool isSelected = _selectedMethod == method;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: ChoiceChip(
+                              label: Text(method),
+                              selected: isSelected,
+                              selectedColor: widget.primaryAccent,
+                              onSelected: (val) {
+                                setState(() {
+                                  _selectedMethod = method;
+                                  _numberController.clear();
+                                  _trxController.clear();
+                                  _extraController.clear();
+                                });
+                              },
+                              labelStyle: TextStyle(
+                                color: isSelected
+                                    ? Colors.black
+                                    : (isDark
+                                    ? Colors.white
+                                    : Colors.black),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
 
                     const SizedBox(height: 25),
 
-                    // আমাদের পেমেন্ট রিসিভিং ইনফো কার্ড
+                    // Payment Receiving info card
                     _buildInfoCard(isDark),
 
                     const SizedBox(height: 25),
@@ -163,13 +198,13 @@ class _PaymentSheetState extends State<PaymentSheet> {
                     // ইনপুট ফিল্ড ১: ইউজার অ্যাকাউন্ট বা ব্যাংক নাম
                     _buildInputField(
                       label:
-                          (_selectedMethod == "Bank Transfer" ||
-                              _selectedMethod == "Visa Card")
+                      (_selectedMethod == "Bank Transfer" ||
+                          _selectedMethod == "Visa Card")
                           ? "Your Bank Name"
                           : "Your $_selectedMethod Number",
                       hint:
-                          (_selectedMethod == "Bank Transfer" ||
-                              _selectedMethod == "Visa Card")
+                      (_selectedMethod == "Bank Transfer" ||
+                          _selectedMethod == "Visa Card")
                           ? "e.g. Dutch Bangla Bank"
                           : "e.g. 01XXXXXXXXX",
                       controller: _numberController,
@@ -182,8 +217,8 @@ class _PaymentSheetState extends State<PaymentSheet> {
                     // ইনপুট ফিল্ড ২: TrxID বা রেফারেন্স
                     _buildInputField(
                       label:
-                          (_selectedMethod == "Bank Transfer" ||
-                              _selectedMethod == "Visa Card")
+                      (_selectedMethod == "Bank Transfer" ||
+                          _selectedMethod == "Visa Card")
                           ? "Reference / Account No"
                           : "Transaction ID (TrxID)",
                       hint: "Enter TrxID or Reference",
@@ -206,6 +241,104 @@ class _PaymentSheetState extends State<PaymentSheet> {
                     ],
 
                     const SizedBox(height: 20),
+
+                    // Image picker of transaction
+                    const Text(
+                      "Transaction Image:",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(height: 10),
+
+                    _selectedImageBytes == null ?
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: widget.primaryAccent.withOpacity(0.3), style: BorderStyle.solid),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add, color: widget.primaryAccent, size: 28),
+                            const SizedBox(height: 5),
+                            const Text("ADD IMAGE", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    )
+                        : Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                              ),
+                              // Image.memory ব্যবহার করায় এখন Web, Android, iOS সব প্ল্যাটফর্মে প্রিভিউ পারফেক্টলি আসবে
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(15),
+                                child: Image.memory(
+                                  _selectedImageBytes!,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: -8,
+                              right: -8,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedImageBytes = null;
+                                    _selectedImageFile = null;
+                                    _imageName = "";
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                "Selected:",
+                                style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                _imageName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    // end of transaction
+
+                    const SizedBox(height: 20),
                     _buildStatusAlert(),
                     const SizedBox(height: 30),
                   ],
@@ -221,8 +354,40 @@ class _PaymentSheetState extends State<PaymentSheet> {
               width: double.infinity,
               height: 58,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+
+                    // -------------------------------------------------------------
+                    // ডাটাবেসে ডেটা পাঠানোর কমপ্লিট অবজেক্ট স্ট্রাকচার
+                    // -------------------------------------------------------------
+                    final Map<String, dynamic> finalPaymentAndBookingData = {
+                      // ১. Booking Summary Screen থেকে আসা সমস্ত প্রিভিয়াস ডাটা
+                      ...widget.bookingData,
+
+                      // ২. এই শীট থেকে ইউজার ইনপুট করা পেমেন্ট ভেরিফিকেশন ডাটা
+                      'payment_method': _selectedMethod,
+                      'sender_account_or_number': _numberController.text.trim(),
+                      'transaction_id': _trxController.text.trim(),
+                      'extra_bank_info': _extraController.text.trim(),
+                      'payment_amount': widget.amount,
+                      'payment_status': 'Pending', // অ্যাডমিন ভেরিফাই করার আগ পর্যন্ত পেন্ডিং থাকবে
+                      'submitted_at': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+
+                      // ৩. সিলেক্টেড ট্রানজেকশন ডাটা (মোবাইলের জন্য File অবজেক্ট, আর ওয়েবের জন্য ডিরেক্ট Bytes অবজেক্ট)
+                      'transaction_image_file': kIsWeb ? _selectedImageBytes : _selectedImageFile,
+                      'transaction_image_name': _imageName,
+                    };
+
+                    // TODO: এখানে আপনার DatabaseHelper বা Supabase/Firebase এর ইনসার্ট ফাংশনটি কল করবেন।
+                    // উদাহরণ: await DatabaseHelper.instance.insertBooking(finalPaymentAndBookingData);
+
+                    //  ঠিক এইখানে এই প্রিন্ট কোডটুকু পেস্ট করে দিন!
+                    // -----------------------------------------------------------------
+                    print("=================== 📸 NOBOCHITRO APP DATA CHECK ===================");
+                    finalPaymentAndBookingData.forEach((key, value) {
+                      print("🔑 $key : 🔴 $value");
+                    });
+                    print("====================================================================");
                     Navigator.pop(context);
                     _showSuccessSnack(context);
                   }
