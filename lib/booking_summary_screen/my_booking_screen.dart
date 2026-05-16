@@ -87,14 +87,17 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                     : FutureBuilder<List<Map<String, dynamic>>>(
                   future: _bookingsFuture,
                   builder: (context, snapshot) {
-                    int total = snapshot.hasData ? snapshot.data!.length : 0;
-                    int upcoming = snapshot.hasData ? snapshot.data!.where((b) => (b['payment_status'] ?? '').toString().toLowerCase() != 'completed').length : 0;
-                    int completed = total - upcoming;
-
                     return CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
-                        SliverToBoxAdapter(child: _buildVisualGlanceRow(isDark, total, upcoming, completed, isWeb)),
+                        // 📊 🎯 ১. আপডেট পার্ট: গ্ল্যান্স কার্ড এখন সরাসরি নিচের স্ট্যাটাস বার ও ডেটাবেজ মেইনটেইন করবে
+                        SliverToBoxAdapter(
+                          child: _buildVisualGlanceSection(
+                            snapshot: snapshot,
+                            isDark: isDark,
+                            isWeb: isWeb,
+                          ),
+                        ),
 
                         SliverToBoxAdapter(child: _buildTabButtons(isDark)),
 
@@ -123,50 +126,38 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
     );
   }
 
-  // 🟢 ওয়েব এবং মোবাইলের জন্য কাস্টমাইজড গ্ল্যান্স লেআউট
-// 🎯 ১. এই উইজেটটি আপনার স্ক্রিনের বডিতে (যেমন: SliverToBoxAdapter এর ভেতর) কল করবেন
+  // 🎯 ২. গ্ল্যান্স সেকশন মেইনটেইনার উইজেট যা ডেটাবেজের রিয়েল `booking_status` থেকে কাউন্ট ফিল্টার করবে
   Widget _buildVisualGlanceSection({
-    required String userId,
+    required AsyncSnapshot<List<Map<String, dynamic>>> snapshot,
     required bool isDark,
     required bool isWeb
   }) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      // ইউজারের আইডি দিয়ে সরাসরি ডেটাবেজ থেকে রিয়েল-টাইমে বুকিং লিস্ট আনা হচ্ছে
-      future: Supabase.instance.client
-          .from('bookings')
-          .select()
-          .eq('user_id', userId), // 🎯 নির্দিষ্ট ইউজারের আইডি দিয়ে ফিল্টার
-      builder: (context, snapshot) {
-        // ডেটা লোড হওয়ার আগ পর্যন্ত সেফ ফলব্যাক হিসেবে ০ কাউন্ট দিয়ে আপনার অরিজিনাল UI-টিই দেখাবে
-        if (!snapshot.hasData) {
-          return _buildVisualGlanceRow(isDark, 0, 0, 0, isWeb);
-        }
+    if (!snapshot.hasData || snapshot.data == null) {
+      return _buildVisualGlanceRow(isDark, 0, 0, 0, isWeb);
+    }
 
-        final List<Map<String, dynamic>> databaseBookings = List<Map<String, dynamic>>.from(snapshot.data!);
+    final List<Map<String, dynamic>> databaseBookings = snapshot.data!;
 
-        // রিয়েল-টাইমে ডেটাবেজ স্ট্যাটাস ফিল্টার করে সংখ্যাগুলো বের করা হচ্ছে
-        int totalCount = databaseBookings.length;
-        int upcomingCount = 0;
-        int completedCount = 0;
+    int totalCount = databaseBookings.length;
+    int upcomingCount = 0;
+    int completedCount = 0;
 
-        for (var booking in databaseBookings) {
-          String bookingStatus = (booking['booking_status'] ?? 'pending').toString().trim().toLowerCase();
+    // 🎯 লুপ চালিয়ে booking_status এর রিয়েল ডেটা কাউন্ট করা হচ্ছে (Handover/Delivered/Completed হলে কমপ্লিট হবে)
+    for (var booking in databaseBookings) {
+      String bookingStatus = (booking['booking_status'] ?? 'pending').toString().trim().toLowerCase();
 
-          if (bookingStatus == 'completed' || bookingStatus == 'delivered' || bookingStatus == 'handover') {
-            completedCount++;
-          } else if (bookingStatus != 'cancelled') {
-            // cancelled বাদে বাকি সব অ্যাক্টিভ বুকিং (Pending, Approved, Shooting ইত্যাদি) হলো Upcoming
-            upcomingCount++;
-          }
-        }
+      if (bookingStatus == 'completed' || bookingStatus == 'delivered' || bookingStatus == 'handover') {
+        completedCount++;
+      } else if (bookingStatus != 'cancelled') {
+        upcomingCount++;
+      }
+    }
 
-        // 🎯 আপনার অরিজিনাল উইজেটে রিয়েল ডেটাবেজ কাউন্ট পাস করা হচ্ছে
-        return _buildVisualGlanceRow(isDark, totalCount, upcomingCount, completedCount, isWeb);
-      },
-    );
+    // আপনার অরিজিনাল উইজেটে রিয়েল ডেটা রিটার্ন করা হচ্ছে
+    return _buildVisualGlanceRow(isDark, totalCount, upcomingCount, completedCount, isWeb);
   }
 
-// 🎯 ২. আপনার মূল ফাংশন (UI এবং লজিক ১০০% অপরিবর্তিত)
+  // 🎯 ৩. আপনার মূল ফাংশন (UI এবং লজিক ১০০% অপরিবর্তিত)
   Widget _buildVisualGlanceRow(bool isDark, int total, int upcoming, int completed, bool isWeb) {
     final List<Widget> cards = [
       _glanceCard("Total Bookings", "$total", Icons.grid_view_rounded, Colors.blue, isDark, isWeb),
@@ -175,7 +166,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
     ];
 
     if (isWeb) {
-      // 🎯 ওয়েবে কার্ডগুলো সমান চওড়া হয়ে পুরো ১১০০ উইডথ কাভার করবে, দেখতে বেমানান লাগবে না
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -184,7 +174,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       );
     }
 
-    // মোবাইলে আগের মতোই সুইফট স্ক্রোলিং থাকবে
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -290,7 +279,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
           crossAxisCount: isWeb ? 2 : 1,
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          // 🎯 ক্র্যাশ-সেফটি রেশিও: মোবাইলের জন্য রেশিও কমানো হয়েছে যাতে বেশি ভার্টিকাল স্পেস পায়
           childAspectRatio: isWeb ? 1.4 : 1.15,
         ),
         delegate: SliverChildBuilderDelegate(
@@ -350,20 +338,16 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
     String amountStr = "${booking['total_amount']?.toString() ?? '0'} BDT";
     String photographerName = booking['photographer_name'] ?? "Not Assigned";
 
-    // 🎯 রিয়েল পেমেন্ট স্ট্যাটাস (টপ কর্নার চিপের জন্য) এবং বুকিং স্ট্যাটাস (নিচের টাইমলাইনের জন্য)
     String paymentStatus = booking['payment_status'] ?? "Pending";
     String bookingStatus = booking['booking_status'] ?? "pending";
 
-    // 🎯 রিয়েল-টাইম দিন ও সময় কাউন্টডাউন লজিক (লাইভ কতক্ষণ বাকি আছে)
     String daysToGoStr = "Upcoming";
     try {
       if (booking['event_date'] != null) {
         String fullDateTimeStr = booking['event_date'].toString();
 
-        // যদি টাইম আলাদা থাকে তবে ডেটের সাথে যুক্ত করে নিখুঁত ডিফারেন্স বের করা হচ্ছে
         if (booking['event_time'] != null && !fullDateTimeStr.contains(':')) {
           String rawTime = booking['event_time'].toString().trim();
-          // AM/PM থাকলে সেটাকে সহ বা নরমাল ফরম্যাট কম্বাইন করা হচ্ছে
           fullDateTimeStr = "${booking['event_date']} $rawTime";
         }
 
@@ -386,7 +370,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
         }
       }
     } catch (_) {
-      // পার্সিং ফেইল হলে সেফ ফলব্যাক হিসেবে ইভেন্ট ডেট চেক
       try {
         DateTime eventDate = DateTime.parse(booking['event_date'].toString());
         int diffDays = eventDate.difference(DateTime.now()).inDays;
@@ -402,7 +385,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       }
     }
 
-    // 🎯 টাইমলাইন চেকমার্ক লজিক: কারেন্ট বুকিং স্ট্যাটাস এবং তার আগের সব স্টেপ ট্রু (True) হবে
     int currentStep = 0;
     String cleanedBookingStatus = bookingStatus.trim().toLowerCase();
 
@@ -419,8 +401,8 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16), // 🎯 আপনার ফিক্সড মার্জিন গ্যাপ
-      padding: const EdgeInsets.all(18), // 🎯 আপনার ফিক্সড প্যাডিং
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -428,9 +410,8 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // 🎯 অতিরিক্ত ফাঁকা হাইট বন্ধ
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // 🔹 টপ সেকশন (আইডি, ডেজ লেফট, রিয়েল পেমেন্ট স্ট্যাটাস চিপ)
           Row(
             children: [
               Text("#$bookingId", style: TextStyle(color: widget.primaryAccent, fontWeight: FontWeight.bold, fontSize: 12)),
@@ -442,7 +423,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                   decoration: BoxDecoration(color: Colors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
                   child: Text(daysToGoStr, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11)),
                 ),
-              // 🎯 কর্নারে এখন সরাসরি ডেটাবেজের রিয়েল payment_status টেক্সট রেন্ডার করবে
               _statusChip(paymentStatus, isCompleted),
             ],
           ),
@@ -465,7 +445,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
 
           const Divider(height: 30, thickness: 0.5),
 
-          // 🔹 Mid সেকশন (ডেট, টাইম, ফটোগ্রাফার, লোকেশন)
           Row(
             children: [
               _infoTile(Icons.calendar_today, dateStr, isDark),
@@ -480,7 +459,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
 
           const Divider(height: 30, thickness: 0.5),
 
-          // 🔹 টাইমলাইন স্টেপার সেকশন (আপনার ৫টি স্টেপ বিশিষ্ট স্ট্রাকচার - যা বুকিং স্ট্যাটাস রিড করে)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 2.0),
             child: Row(
@@ -499,9 +477,8 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
             ),
           ),
 
-          const SizedBox(height: 20), // বাটনগুলোর উপরে পারফেক্ট গ্যাপ
+          const SizedBox(height: 20),
 
-          // 🔹 বটম অ্যাকশন বাটন গ্রুপ
           Row(
             children: [
               Expanded(
@@ -545,6 +522,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       ),
     );
   }
+
   Widget _buildTimelineStep(String label, bool isActive, bool isDark) {
     return Column(
       mainAxisSize: MainAxisSize.min,
