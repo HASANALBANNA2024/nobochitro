@@ -93,7 +93,9 @@ class _PaymentSheetState extends State<PaymentSheet> {
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 80,
+      maxHeight: 200,
+      maxWidth: 200,
+      imageQuality: 40,
     );
 
     if (pickedFile != null) {

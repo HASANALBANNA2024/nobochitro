@@ -50,7 +50,9 @@ class EditProfileSheet {
               final ImagePicker picker = ImagePicker();
               final XFile? image = await picker.pickImage(
                 source: ImageSource.gallery,
-                imageQuality: 50,
+                maxHeight: 100,
+                maxWidth: 100,
+                imageQuality: 20,
               );
 
               if (image != null) {
@@ -192,7 +194,7 @@ class EditProfileSheet {
                                   // to image select image upload
                                   if (selectedImageFile != null) {
                                     final String fileName =
-                                        'profile_${firebaseUid}.jpg';
+                                        'profile_user_image/profile_${firebaseUid}.jpg';
                                     final storage = Supabase
                                         .instance
                                         .client
