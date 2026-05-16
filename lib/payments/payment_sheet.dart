@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:math'; // র্যান্ডম আইডি জেনারেট করার জন্য যুক্ত করা হলো
-import 'dart:typed_data'; // ইউনিভার্সাল বাইটস হ্যান্ডল করার জন্য যুক্ত করা হলো
-import 'package:flutter/foundation.dart'; // kIsWeb কন্ডিশন চেক করার জন্য
+import 'dart:math';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -11,14 +11,14 @@ class PaymentSheet extends StatefulWidget {
   final Color primaryAccent;
   final double amount;
 
-  // জাস্ট এই একটি ম্যাপের ভেতরেই সব ডাটা (package_id, photographer_id, date, time, addons, location) চলে আসবে
+
   final Map<String, dynamic> bookingData;
 
   const PaymentSheet({
     super.key,
     required this.primaryAccent,
     required this.amount,
-    required this.bookingData, // মাত্র ৩টি প্যারামিটারে চলে আসলো
+    required this.bookingData,
   });
 
   @override
@@ -33,31 +33,31 @@ class _PaymentSheetState extends State<PaymentSheet> {
   final TextEditingController _trxController = TextEditingController();
   final TextEditingController _extraController = TextEditingController();
 
-  // ক্রস-প্ল্যাটফর্ম ইমেজ সিলেকশন ভ্যারিয়েবলসমূহ
-  File? _selectedImageFile; // মোবাইলের লোকাল ফাইল অবজেক্ট ব্যাকআপ
-  Uint8List? _selectedImageBytes; // অ্যান্ড্রয়েড, আইওএস এবং ওয়েব সব জায়গায় প্রিভিউ দেখানোর ইউনিভার্সাল ডাটা
-  String _imageName = ""; // ইমেজের নাম দেখানোর জন্য
+  // cross platform image selection
+  File? _selectedImageFile; // mobile local file object
+  Uint8List? _selectedImageBytes; // preview
+  String _imageName = ""; // display image name
 
   final ImagePicker _picker = ImagePicker();
 
   // boolean
   bool _isLoading = false;
 
-  // 🔴 ১০ ডিজিটের মিক্সড অলমেলো বুকিং আইডি জেনারেট করার অ্যালগরিদম ফাংশন
+  // 10 digit unique booking id generate
   String _generateMixedBookingId() {
-    // আগের স্ক্রিন থেকে আসা নাম ও ইমেইল ক্যাচ করা (ডিফল্ট ব্যাকআপসহ)
+    // name and email catch
     String name = (widget.bookingData['user_name'] ?? 'USER').toString().replaceAll(' ', '').toUpperCase();
     String email = (widget.bookingData['user_email'] ?? 'APP').toString().split('@')[0].toUpperCase();
 
-    // মিক্স করার বেস সোর্স তৈরি
-    String baseSource = "$name$email" "NC2026";
-    // যদি সোর্স টেক্সট ছোট হয়, তবে ক্যারেক্টার পুল দিয়ে ব্যাকআপ দেওয়া
-    const String pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    // Source of Mixed
+    String baseSource = "$name$email" "NC202634587697609487346364878457645";
+    // backup SOURCE
+    const String pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789HSHEING769i487309873";
 
     final random = Random();
     List<String> idChars = [];
 
-    // ১. নামের প্রথম থেকে বা র্যান্ডম ২ ক্যারেক্টার নেওয়া
+    // username first 2 name Character
     if (name.length >= 2) {
       idChars.add(name[random.nextInt(name.length)]);
       idChars.add(name[random.nextInt(name.length)]);
@@ -66,7 +66,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
       idChars.add(pool[random.nextInt(pool.length)]);
     }
 
-    // ২. ইমেইল থেকে ২ ক্যারেক্টার নেওয়া
+    // Email Character
     if (email.length >= 2) {
       idChars.add(email[random.nextInt(email.length)]);
       idChars.add(email[random.nextInt(email.length)]);
@@ -75,7 +75,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
       idChars.add(pool[random.nextInt(pool.length)]);
     }
 
-    // ৩. বাকি ৬ ডিজিট র্যান্ডম ক্যারেক্টার ও টাইমস্ট্যাম্প দিয়ে ১০ ডিজিট পূরণ করা
+    // 6 digit random
     while (idChars.length < 10) {
       if (random.nextBool() && baseSource.isNotEmpty) {
         idChars.add(baseSource[random.nextInt(baseSource.length)]);
@@ -84,12 +84,12 @@ class _PaymentSheetState extends State<PaymentSheet> {
       }
     }
 
-    // সবকিছুকে এলোমেলো (Shuffle) করে ১০ ডিজিটের স্ট্রিং বানানো
+    // all thing mixed
     idChars.shuffle(random);
     return idChars.join().substring(0, 10);
   }
 
-  // ইউনিভার্সাল ImagePicker ফাংশন (Web + Mobile ফ্রেন্ডলি)
+  // Universal image picker
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -97,13 +97,13 @@ class _PaymentSheetState extends State<PaymentSheet> {
     );
 
     if (pickedFile != null) {
-      // ইমেজ ফাইল থেকে ডিরেক্ট বাইটস রিড করা হলো
+      // Image file director
       final Uint8List bytes = await pickedFile.readAsBytes();
 
       setState(() {
         _selectedImageBytes = bytes;
         _imageName = pickedFile.name;
-        // ওয়েব প্ল্যাটফর্মে ডিরেক্ট লোকাল ফাইল পাথ এক্সিস্ট করে না, তাই কন্ডিশনাল অ্যাসাইনমেন্ট
+        // Web platform
         if (!kIsWeb) {
           _selectedImageFile = File(pickedFile.path);
         }
@@ -111,7 +111,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
     }
   }
 
-  // মেথড অনুযায়ী আমাদের অ্যাকাউন্ট ডিটেইলস
+  // Account Details
   Map<String, String> get _ourAccountDetails {
     switch (_selectedMethod) {
       case "Nagad":
@@ -196,7 +196,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
                     ),
                     const SizedBox(height: 20),
 
-                    // পেমেন্ট মেথড সিলেক্টর
+                    // Payment Metohod select
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -246,7 +246,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
 
                     const SizedBox(height: 25),
 
-                    // ইনপুট ফিল্ড ১: ইউজার অ্যাকাউন্ট বা ব্যাংক নাম
+                    // Input field user account
                     _buildInputField(
                       label:
                       (_selectedMethod == "Bank Transfer" ||
@@ -265,7 +265,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
 
                     const SizedBox(height: 20),
 
-                    // ইনপুট ফিল্ড ২: TrxID বা রেফারেন্স
+                    // Txrd id
                     _buildInputField(
                       label:
                       (_selectedMethod == "Bank Transfer" ||
@@ -278,7 +278,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
                       isDark: isDark,
                     ),
 
-                    // ব্যাংক বা কার্ডের জন্য অতিরিক্ত ফিল্ড (অ্যাকাউন্ট হোল্ডার নাম)
+                    // Bank or card field
                     if (_selectedMethod == "Bank Transfer" ||
                         _selectedMethod == "Visa Card") ...[
                       const SizedBox(height: 20),
@@ -334,7 +334,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
                                 borderRadius: BorderRadius.circular(15),
                                 border: Border.all(color: Colors.grey.withOpacity(0.3)),
                               ),
-                              // Image.memory ব্যবহার করায় এখন Web, Android, iOS সব প্ল্যাটফর্মে প্রিভিউ পারফেক্টলি আসবে
+                              // Image.memory
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(15),
                                 child: Image.memory(
@@ -411,30 +411,19 @@ class _PaymentSheetState extends State<PaymentSheet> {
                     setState(() {
                       _isLoading = true;
                     });
-
-                    // 🔴 ১০ ডিজিটের কাস্টম মিক্সড অলমেলো আইডি জেনারেট করা হলো
                     final String generatedBookingId = _generateMixedBookingId();
-
-                    // -------------------------------------------------------------
-                    // ডাটাবেসে ডেটা পাঠানোর কমপ্লিট অবজেক্ট স্ট্রাকচার
-                    // -------------------------------------------------------------
                     final Map<String, dynamic> finalPaymentAndBookingData = {
-                      // 🔴 কাস্টম জেনারেটেড আইডিটি 'booking_id' কলামের জন্য ম্যাপের প্রথমে পুশ করা হলো
                       'booking_id': generatedBookingId,
 
-                      // ১. Booking Summary Screen থেকে আসা সমস্ত প্রিভিয়াস ডাটা
+                      // ১. Booking Summary Screen
                       ...widget.bookingData,
-
-                      // ২. এই শীট থেকে ইউজার ইনপুট করা পেমেন্ট ভেরিфикации ডাটা
                       'payment_method': _selectedMethod,
                       'sender_account_or_number': _numberController.text.trim(),
                       'transaction_id': _trxController.text.trim(),
                       'extra_bank_info': _extraController.text.trim(),
                       'payment_amount': widget.amount,
-                      'payment_status': 'Pending', // অ্যাডমিন ভেরিফাই করার আগ পর্যন্ত পেন্ডিং থাকবে
+                      'payment_status': 'Pending',
                       'submitted_at': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
-
-                      // ৩. সিলেক্টেড ট্রানজেকশন ডাটা (মোবাইলের জন্য File অবজেক্ট, আর ওয়েবের জন্য ডিরেক্ট Bytes অবজেক্ট)
                       'transaction_image_file': kIsWeb ? _selectedImageBytes : _selectedImageFile,
                       'transaction_image_name': _imageName,
                     };
