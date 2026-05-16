@@ -4,6 +4,7 @@ import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/responsive_review_list/_review_sheet_widget.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyBookingScreen extends StatefulWidget {
   final Color primaryAccent;
@@ -93,7 +94,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                     return CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
-                        // 📊 ১. রেস্পন্সিভ ভিজ্যুয়াল গ্ল্যান্স রো (ওয়েবে ছড়ানো, মোবাইলে স্ক্রোলযোগ্য)
                         SliverToBoxAdapter(child: _buildVisualGlanceRow(isDark, total, upcoming, completed, isWeb)),
 
                         SliverToBoxAdapter(child: _buildTabButtons(isDark)),
@@ -124,6 +124,49 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
   }
 
   // 🟢 ওয়েব এবং মোবাইলের জন্য কাস্টমাইজড গ্ল্যান্স লেআউট
+// 🎯 ১. এই উইজেটটি আপনার স্ক্রিনের বডিতে (যেমন: SliverToBoxAdapter এর ভেতর) কল করবেন
+  Widget _buildVisualGlanceSection({
+    required String userId,
+    required bool isDark,
+    required bool isWeb
+  }) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      // ইউজারের আইডি দিয়ে সরাসরি ডেটাবেজ থেকে রিয়েল-টাইমে বুকিং লিস্ট আনা হচ্ছে
+      future: Supabase.instance.client
+          .from('bookings')
+          .select()
+          .eq('user_id', userId), // 🎯 নির্দিষ্ট ইউজারের আইডি দিয়ে ফিল্টার
+      builder: (context, snapshot) {
+        // ডেটা লোড হওয়ার আগ পর্যন্ত সেফ ফলব্যাক হিসেবে ০ কাউন্ট দিয়ে আপনার অরিজিনাল UI-টিই দেখাবে
+        if (!snapshot.hasData) {
+          return _buildVisualGlanceRow(isDark, 0, 0, 0, isWeb);
+        }
+
+        final List<Map<String, dynamic>> databaseBookings = List<Map<String, dynamic>>.from(snapshot.data!);
+
+        // রিয়েল-টাইমে ডেটাবেজ স্ট্যাটাস ফিল্টার করে সংখ্যাগুলো বের করা হচ্ছে
+        int totalCount = databaseBookings.length;
+        int upcomingCount = 0;
+        int completedCount = 0;
+
+        for (var booking in databaseBookings) {
+          String bookingStatus = (booking['booking_status'] ?? 'pending').toString().trim().toLowerCase();
+
+          if (bookingStatus == 'completed' || bookingStatus == 'delivered' || bookingStatus == 'handover') {
+            completedCount++;
+          } else if (bookingStatus != 'cancelled') {
+            // cancelled বাদে বাকি সব অ্যাক্টিভ বুকিং (Pending, Approved, Shooting ইত্যাদি) হলো Upcoming
+            upcomingCount++;
+          }
+        }
+
+        // 🎯 আপনার অরিজিনাল উইজেটে রিয়েল ডেটাবেজ কাউন্ট পাস করা হচ্ছে
+        return _buildVisualGlanceRow(isDark, totalCount, upcomingCount, completedCount, isWeb);
+      },
+    );
+  }
+
+// 🎯 ২. আপনার মূল ফাংশন (UI এবং লজিক ১০০% অপরিবর্তিত)
   Widget _buildVisualGlanceRow(bool isDark, int total, int upcoming, int completed, bool isWeb) {
     final List<Widget> cards = [
       _glanceCard("Total Bookings", "$total", Icons.grid_view_rounded, Colors.blue, isDark, isWeb),
@@ -305,39 +348,79 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
     String timeStr = booking['event_time'] ?? "N/A";
     String locationStr = booking['event_location'] ?? "N/A";
     String amountStr = "${booking['total_amount']?.toString() ?? '0'} BDT";
-    String status = booking['payment_status'] ?? "Pending";
     String photographerName = booking['photographer_name'] ?? "Not Assigned";
 
+    // 🎯 রিয়েল পেমেন্ট স্ট্যাটাস (টপ কর্নার চিপের জন্য) এবং বুকিং স্ট্যাটাস (নিচের টাইমলাইনের জন্য)
+    String paymentStatus = booking['payment_status'] ?? "Pending";
+    String bookingStatus = booking['booking_status'] ?? "pending";
+
+    // 🎯 রিয়েল-টাইম দিন ও সময় কাউন্টডাউন লজিক (লাইভ কতক্ষণ বাকি আছে)
     String daysToGoStr = "Upcoming";
     try {
       if (booking['event_date'] != null) {
+        String fullDateTimeStr = booking['event_date'].toString();
+
+        // যদি টাইম আলাদা থাকে তবে ডেটের সাথে যুক্ত করে নিখুঁত ডিফারেন্স বের করা হচ্ছে
+        if (booking['event_time'] != null && !fullDateTimeStr.contains(':')) {
+          String rawTime = booking['event_time'].toString().trim();
+          // AM/PM থাকলে সেটাকে সহ বা নরমাল ফরম্যাট কম্বাইন করা হচ্ছে
+          fullDateTimeStr = "${booking['event_date']} $rawTime";
+        }
+
+        DateTime eventDateTime = DateTime.parse(fullDateTimeStr);
+        DateTime now = DateTime.now();
+        Duration difference = eventDateTime.difference(now);
+
+        if (difference.isNegative) {
+          daysToGoStr = "Passed";
+        } else {
+          if (difference.inDays > 0) {
+            daysToGoStr = "${difference.inDays} Days to Go";
+          } else if (difference.inHours > 0) {
+            daysToGoStr = "${difference.inHours} Hours to Go";
+          } else if (difference.inMinutes > 0) {
+            daysToGoStr = "${difference.inMinutes} Mins to Go";
+          } else {
+            daysToGoStr = "Today";
+          }
+        }
+      }
+    } catch (_) {
+      // পার্সিং ফেইল হলে সেফ ফলব্যাক হিসেবে ইভেন্ট ডেট চেক
+      try {
         DateTime eventDate = DateTime.parse(booking['event_date'].toString());
-        int difference = eventDate.difference(DateTime.now()).inDays;
-        if (difference > 0) {
-          daysToGoStr = "$difference Days to Go";
-        } else if (difference == 0) {
+        int diffDays = eventDate.difference(DateTime.now()).inDays;
+        if (diffDays > 0) {
+          daysToGoStr = "$diffDays Days to Go";
+        } else if (diffDays == 0) {
           daysToGoStr = "Today";
         } else {
           daysToGoStr = "Passed";
         }
+      } catch (__) {
+        daysToGoStr = "Upcoming";
       }
-    } catch (_) {
-      daysToGoStr = "3 Days to Go";
     }
 
+    // 🎯 টাইমলাইন চেকমার্ক লজিক: কারেন্ট বুকিং স্ট্যাটাস এবং তার আগের সব স্টেপ ট্রু (True) হবে
     int currentStep = 0;
-    String cleanedStatus = status.trim().toLowerCase();
-    if (cleanedStatus == "approved" || cleanedStatus == "completed") {
+    String cleanedBookingStatus = bookingStatus.trim().toLowerCase();
+
+    if (cleanedBookingStatus == "pending") {
+      currentStep = 0;
+    } else if (cleanedBookingStatus == "approved") {
       currentStep = 1;
-    } else if (cleanedStatus == "shooting") {
+    } else if (cleanedBookingStatus == "shooting") {
       currentStep = 2;
-    } else if (cleanedStatus == "handover" || cleanedStatus == "delivered") {
+    } else if (cleanedBookingStatus == "final draft" || cleanedBookingStatus == "draft") {
       currentStep = 3;
+    } else if (cleanedBookingStatus == "handover" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "completed") {
+      currentStep = 4;
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16), // 🎯 উদাহরণটার মতো নিচে একটা সুন্দর ফিক্সড মার্জিন গ্যাপ রাখার জন্য
-      padding: const EdgeInsets.all(18), // 🎯 উদাহরণটার মতো একটু আরামদায়ক এবং মার্জিত প্যাডিং
+      margin: const EdgeInsets.only(bottom: 16), // 🎯 আপনার ফিক্সড মার্জিন গ্যাপ
+      padding: const EdgeInsets.all(18), // 🎯 আপনার ফিক্সড প্যাডিং
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -345,21 +428,22 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // 🎯 কার্ডের নিচের অতিরিক্ত ফাঁকা হাইট চিরতরে বন্ধ
+        mainAxisSize: MainAxisSize.min, // 🎯 অতিরিক্ত ফাঁকা হাইট বন্ধ
         children: [
-          // 🔹 টপ সেকশন (আইডি, ডেজ লেফট, স্ট্যাটাস চিপ)
+          // 🔹 টপ সেকশন (আইডি, ডেজ লেফট, রিয়েল পেমেন্ট স্ট্যাটাস চিপ)
           Row(
             children: [
               Text("#$bookingId", style: TextStyle(color: widget.primaryAccent, fontWeight: FontWeight.bold, fontSize: 12)),
               const Spacer(),
-              if (!isCompleted && daysToGoStr != "Passed")
+              if (cleanedBookingStatus != "cancelled" && cleanedBookingStatus != "completed" && daysToGoStr != "Passed")
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(color: Colors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
                   child: Text(daysToGoStr, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11)),
                 ),
-              _statusChip(status, isCompleted),
+              // 🎯 কর্নারে এখন সরাসরি ডেটাবেজের রিয়েল payment_status টেক্সট রেন্ডার করবে
+              _statusChip(paymentStatus, isCompleted),
             ],
           ),
           const SizedBox(height: 12),
@@ -381,7 +465,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
 
           const Divider(height: 30, thickness: 0.5),
 
-          // 🔹 মিডল সেকশন (ডেট, টাইম, ফটোগ্রাফার, লোকেশন)
+          // 🔹 Mid সেকশন (ডেট, টাইম, ফটোগ্রাফার, লোকেশন)
           Row(
             children: [
               _infoTile(Icons.calendar_today, dateStr, isDark),
@@ -396,7 +480,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
 
           const Divider(height: 30, thickness: 0.5),
 
-          // 🔹 টাইমলাইন স্টেপার সেকশন
+          // 🔹 টাইমলাইন স্টেপার সেকশন (আপনার ৫টি স্টেপ বিশিষ্ট স্ট্রাকচার - যা বুকিং স্ট্যাটাস রিড করে)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 2.0),
             child: Row(
@@ -408,7 +492,9 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                 _buildTimelineArrow(currentStep >= 2),
                 _buildTimelineStep("Shooting", currentStep >= 2, isDark),
                 _buildTimelineArrow(currentStep >= 3),
-                _buildTimelineStep("Handover", currentStep >= 3, isDark),
+                _buildTimelineStep("Final Draft", currentStep >= 3, isDark),
+                _buildTimelineArrow(currentStep >= 4),
+                _buildTimelineStep("Handover", currentStep >= 4, isDark),
               ],
             ),
           ),
@@ -431,7 +517,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: isCompleted
+                child: cleanedBookingStatus == "completed" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "handover"
                     ? ElevatedButton(
                   onPressed: () => ReviewService.showReviewSheet(context),
                   style: ElevatedButton.styleFrom(
