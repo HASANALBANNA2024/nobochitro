@@ -21,6 +21,7 @@ class BookingCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 📦 ডেটা এক্সট্র্যাক্ট করা হচ্ছে
     String bookingId = booking['booking_id'] ?? "NB-00000";
     String packageTitle = booking['package_name'] ?? "Photography Session";
     String dateStr = booking['event_date'] ?? "N/A";
@@ -31,65 +32,88 @@ class BookingCardWidget extends StatelessWidget {
 
     String paymentStatus = booking['payment_status'] ?? "Pending";
     String bookingStatus = booking['booking_status'] ?? "pending";
-
-    String daysToGoStr = "Upcoming";
-    try {
-      if (booking['event_date'] != null) {
-        String fullDateTimeStr = booking['event_date'].toString();
-
-        if (booking['event_time'] != null && !fullDateTimeStr.contains(':')) {
-          String rawTime = booking['event_time'].toString().trim();
-          fullDateTimeStr = "${booking['event_date']} $rawTime";
-        }
-
-        DateTime eventDateTime = DateTime.parse(fullDateTimeStr);
-        DateTime now = DateTime.now();
-        Duration difference = eventDateTime.difference(now);
-
-        if (difference.isNegative) {
-          daysToGoStr = "Passed";
-        } else {
-          if (difference.inDays > 0) {
-            daysToGoStr = "${difference.inDays} Days to Go";
-          } else if (difference.inHours > 0) {
-            daysToGoStr = "${difference.inHours} Hours to Go";
-          } else if (difference.inMinutes > 0) {
-            daysToGoStr = "${difference.inMinutes} Mins to Go";
-          } else {
-            daysToGoStr = "Today";
-          }
-        }
-      }
-    } catch (_) {
-      try {
-        DateTime eventDate = DateTime.parse(booking['event_date'].toString());
-        int diffDays = eventDate.difference(DateTime.now()).inDays;
-        if (diffDays > 0) {
-          daysToGoStr = "$diffDays Days to Go";
-        } else if (diffDays == 0) {
-          daysToGoStr = "Today";
-        } else {
-          daysToGoStr = "Passed";
-        }
-      } catch (__) {
-        daysToGoStr = "Upcoming";
-      }
-    }
-
-    int currentStep = 0;
     String cleanedBookingStatus = bookingStatus.trim().toLowerCase();
 
-    if (cleanedBookingStatus == "pending") {
-      currentStep = 0;
-    } else if (cleanedBookingStatus == "approved") {
-      currentStep = 1;
-    } else if (cleanedBookingStatus == "shooting") {
-      currentStep = 2;
-    } else if (cleanedBookingStatus == "final draft" || cleanedBookingStatus == "draft") {
-      currentStep = 3;
-    } else if (cleanedBookingStatus == "handover" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "completed") {
-      currentStep = 4;
+    // 🔍 ক্যানসেলেশন স্টেট চেকিং
+    bool isCancellationState = [
+      "cancelled", "cancellation pending", "cancellation approved", "refund processing", "refund done"
+    ].contains(cleanedBookingStatus);
+
+    // ⏳ টাইমিং কাউন্টার লজিক
+    String upperBadgeText = "Upcoming";
+    Color badgeColor = Colors.amber;
+
+    if (isCancellationState) {
+      // 🕒 ক্যানসেলেশন ট্যাবের জন্য: রিকোয়েস্ট দেওয়ার পর থেকে কত সময় পার হয়েছে (Ageing)
+      try {
+        if (booking['cancelled_at'] != null) {
+          DateTime cancelDateTime = DateTime.parse(booking['cancelled_at'].toString());
+          DateTime now = DateTime.now();
+          Duration diff = now.difference(cancelDateTime);
+
+          if (diff.inDays > 0) {
+            upperBadgeText = "${diff.inDays} Days Ago";
+          } else if (diff.inHours > 0) {
+            upperBadgeText = "${diff.inHours} Hours Ago";
+          } else if (diff.inMinutes > 0) {
+            upperBadgeText = "${diff.inMinutes} Mins Ago";
+          } else {
+            upperBadgeText = "Just Now";
+          }
+          badgeColor = Colors.redAccent; // ক্যানসেলেশনের জন্য রেড/ক্রিমসন থিম
+        } else {
+          upperBadgeText = "Requested";
+          badgeColor = Colors.redAccent;
+        }
+      } catch (_) {
+        upperBadgeText = "Requested";
+        badgeColor = Colors.redAccent;
+      }
+    } else {
+      // 📅 রেগুলার ট্যাবের জন্য: ইভেন্টের আর কতদিন বাকি (Days to Go)
+      try {
+        if (booking['event_date'] != null) {
+          String fullDateTimeStr = booking['event_date'].toString();
+          if (booking['event_time'] != null && !fullDateTimeStr.contains(':')) {
+            String rawTime = booking['event_time'].toString().trim();
+            fullDateTimeStr = "${booking['event_date']} $rawTime";
+          }
+          DateTime eventDateTime = DateTime.parse(fullDateTimeStr);
+          DateTime now = DateTime.now();
+          Duration difference = eventDateTime.difference(now);
+
+          if (difference.isNegative) {
+            upperBadgeText = "Passed";
+          } else {
+            if (difference.inDays > 0) upperBadgeText = "${difference.inDays} Days to Go";
+            else if (difference.inHours > 0) upperBadgeText = "${difference.inHours} Hours to Go";
+            else upperBadgeText = "Today";
+          }
+        }
+      } catch (_) {}
     }
+
+    // 🏁 ডায়নামিক টাইমলাইন স্টেপ ক্যালকুলেশন
+    int currentStep = 0;
+    if (isCancellationState) {
+      // 🔄 ক্যানসেলেশন স্টেপ: Request(0) -> Approved(1) -> Refund Process(2) -> Refunded(3)
+      if (cleanedBookingStatus == "cancellation pending") currentStep = 0;
+      else if (cleanedBookingStatus == "cancellation approved") currentStep = 1;
+      else if (cleanedBookingStatus == "refund processing") currentStep = 2;
+      else if (cleanedBookingStatus == "refund done" || cleanedBookingStatus == "cancelled") currentStep = 3;
+    } else {
+      // 📸 রেগুলার স্টেপ
+      if (cleanedBookingStatus == "pending") currentStep = 0;
+      else if (cleanedBookingStatus == "approved") currentStep = 1;
+      else if (cleanedBookingStatus == "shooting") currentStep = 2;
+      else if (cleanedBookingStatus == "final draft" || cleanedBookingStatus == "draft") currentStep = 3;
+      else if (cleanedBookingStatus == "handover" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "completed") currentStep = 4;
+    }
+
+    // 🏷️ স্ট্যাটাস চিপের টেক্সট নির্ধারণ (ক্যানসেলেশন স্ট্যাটাস বনাম পেমেন্ট স্ট্যাটাস)
+    String chipLabel = isCancellationState
+        ? (cleanedBookingStatus == "cancellation pending" ? "Pending" : "Approved")
+        : paymentStatus;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -103,31 +127,34 @@ class BookingCardWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // 🏷️ আইডি, টাইম কাউন্টার এবং চিপ বার
           Row(
             children: [
               Text("#$bookingId", style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold, fontSize: 12)),
               const Spacer(),
-              if (cleanedBookingStatus != "cancelled" && cleanedBookingStatus != "completed" && daysToGoStr != "Passed")
+              if (upperBadgeText != "Passed")
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(color: Colors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-                  child: Text(daysToGoStr, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11)),
+                  decoration: BoxDecoration(color: badgeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                  child: Text(upperBadgeText, style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 11)),
                 ),
-              _statusChip(paymentStatus, isCompleted),
+              _statusChip(chipLabel, isCompleted, isCancellationState),
             ],
           ),
           const SizedBox(height: 12),
+
           Text(packageTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 12),
+
           Row(
             children: [
               const Icon(Icons.wallet, size: 16, color: Colors.grey),
               const SizedBox(width: 5),
               const Text("Payment: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
               Text(
-                isCompleted ? "Fully Paid" : "Pending Verification",
-                style: TextStyle(color: isCompleted ? Colors.green : Colors.blue, fontSize: 13, fontWeight: FontWeight.bold),
+                isCancellationState ? "Cancellation Active" : (isCompleted ? "Fully Paid" : "Pending Verification"),
+                style: TextStyle(color: isCancellationState ? Colors.redAccent : (isCompleted ? Colors.green : Colors.blue), fontSize: 13, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Text(amountStr, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: primaryAccent)),
@@ -150,9 +177,23 @@ class BookingCardWidget extends StatelessWidget {
 
           const Divider(height: 30, thickness: 0.5),
 
+          // 🏁 ডায়নামিক টাইমলাইন এক্সচেঞ্জ সেকশন
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 2.0),
-            child: Row(
+            child: isCancellationState
+                ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildTimelineStep("Request", currentStep >= 0, isDark),
+                _buildTimelineArrow(currentStep >= 1),
+                _buildTimelineStep("Approved", currentStep >= 1, isDark),
+                _buildTimelineArrow(currentStep >= 2),
+                _buildTimelineStep("Refund Process", currentStep >= 2, isDark),
+                _buildTimelineArrow(currentStep >= 3),
+                _buildTimelineStep("Refunded", currentStep >= 3, isDark),
+              ],
+            )
+                : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildTimelineStep("Pending", currentStep >= 0, isDark),
@@ -167,9 +208,9 @@ class BookingCardWidget extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 20),
 
+          // 🔴 বোতাম অ্যাকশনস সেকশন (ডায়নামিক বাটন লজিক)
           Row(
             children: [
               Expanded(
@@ -183,30 +224,33 @@ class BookingCardWidget extends StatelessWidget {
                   child: const Text("View Details", style: TextStyle(fontSize: 13)),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: cleanedBookingStatus == "completed" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "handover"
-                    ? ElevatedButton(
-                  onPressed: () => ReviewService.showReviewSheet(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAccent,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 2,
+              // 🪄 যদি ক্যানসেলেশন স্টেট হয়, তবে ক্যান্সেল বাটনটি আর দেখাবে না (খালি স্পেসও নিবে না)
+              if (!isCancellationState) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: cleanedBookingStatus == "completed" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "handover"
+                      ? ElevatedButton(
+                    onPressed: () => ReviewService.showReviewSheet(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryAccent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 2,
+                    ),
+                    child: const Text("Review", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  )
+                      : OutlinedButton(
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.redAccent),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Cancel", style: TextStyle(fontSize: 13, color: Colors.redAccent)),
                   ),
-                  child: const Text("Review", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                )
-                    : OutlinedButton(
-                  onPressed: onCancel ?? () {},
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.redAccent),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text("Cancel", style: TextStyle(fontSize: 13, color: Colors.redAccent)),
                 ),
-              ),
+              ],
             ],
           ),
         ],
@@ -250,11 +294,15 @@ class BookingCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _statusChip(String status, bool isCompleted) {
+  Widget _statusChip(String status, bool isCompleted, bool isCancelled) {
+    Color baseColor = isCompleted ? Colors.green : Colors.orange;
+    if (isCancelled) {
+      baseColor = status.toLowerCase() == "pending" ? Colors.orange : Colors.green;
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: isCompleted ? Colors.green.withOpacity(0.15) : Colors.orange.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-      child: Text(status, style: TextStyle(color: isCompleted ? Colors.green : Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
+      decoration: BoxDecoration(color: baseColor.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+      child: Text(status.toUpperCase(), style: TextStyle(color: baseColor, fontWeight: FontWeight.bold, fontSize: 10)),
     );
   }
 }
