@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DatabaseHelper {
@@ -554,5 +556,65 @@ class DatabaseHelper {
         .select()
         .eq('category', categoryName);
     return List<Map<String, dynamic>>.from(response);
+  }
+
+
+  /// payment transaction / verifications table insert data from bookings summary and payment sheet
+
+  // ------------------------------------------------------------------------------------
+  // 🔴 নতুন সংযোজন: পেমেন্ট স্ক্রিনশট ফোল্ডারে আপলোড এবং বুকিং ডাটা টেবিলে সেভ করার কমপ্লিট ফাংশন
+  // ------------------------------------------------------------------------------------
+  Future<void> insertBookingWithTransactionImage(Map<String, dynamic> bookingData) async {
+    try {
+      String? imageUrl;
+      String? imageName = bookingData['transaction_image_name'];
+
+      // 🔴 এখানে 'nobochitro' কেটে 'user_assets' করে দিন (হুবহু নিচের মতো)
+      const String bucketName = 'user_assets';
+
+      // ১. ইমেজ ফাইল বা বাইটস চেক করে বাকেটের ভেতর payment_transaction ফোল্ডারে আপলোড করা
+      if (kIsWeb) {
+        // ওয়েবের জন্য (Uint8List Bytes)
+        final bytes = bookingData['transaction_image_file'];
+        if (bytes != null && imageName != null) {
+          // পাথের শুরুতে ফোল্ডারের নাম জুড়ে দেওয়া হলো
+          final String path = 'payment_transaction/web_${DateTime.now().millisecondsSinceEpoch}_$imageName';
+
+          await _client.storage
+              .from(bucketName)
+              .uploadBinary(path, bytes);
+
+          imageUrl = _client.storage.from(bucketName).getPublicUrl(path);
+        }
+      } else {
+        // অ্যান্ডরয়েড/আইওএস এর জন্য (File Object)
+        final file = bookingData['transaction_image_file'] as File?;
+        if (file != null && imageName != null) {
+          // পাথের শুরুতে ফোল্ডারের নাম জুড়ে দেওয়া হলো
+          final String path = 'payment_transaction/mobile_${DateTime.now().millisecondsSinceEpoch}_$imageName';
+
+          await _client.storage
+              .from(bucketName)
+              .upload(path, file);
+
+          imageUrl = _client.storage.from(bucketName).getPublicUrl(path);
+        }
+      }
+
+      // ২. ডাটাবেস টেবিল ফরমেট অনুযায়ী ম্যাপ ক্লিনিং ও প্রিপারেশন
+      final Map<String, dynamic> dbData = Map<String, dynamic>.from(bookingData);
+      dbData.remove('transaction_image_file');
+
+      // টেবিলের কলামে ইমেজের পাবলিক URL সেট করা
+      dbData['transaction_image_url'] = imageUrl;
+
+      // 🔴 এখানে নিশ্চিত হয়ে নিন আপনার টেবিলের নাম 'payment_verifications' নাকি 'bookings'
+      await _client.from('payment_verifications').insert(dbData);
+
+      debugPrint("✅ Booking and Payment Data Successfully Saved!");
+    } catch (e) {
+      debugPrint("❌ Error in insertBookingWithTransactionImage: $e");
+      rethrow;
+    }
   }
 }

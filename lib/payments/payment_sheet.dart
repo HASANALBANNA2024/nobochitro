@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:math'; // র্যান্ডম আইডি জেনারেট করার জন্য যুক্ত করা হলো
 import 'dart:typed_data'; // ইউনিভার্সাল বাইটস হ্যান্ডল করার জন্য যুক্ত করা হলো
 import 'package:flutter/foundation.dart'; // kIsWeb কন্ডিশন চেক করার জন্য
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 
 class PaymentSheet extends StatefulWidget {
   final Color primaryAccent;
@@ -33,10 +35,59 @@ class _PaymentSheetState extends State<PaymentSheet> {
 
   // ক্রস-প্ল্যাটফর্ম ইমেজ সিলেকশন ভ্যারিয়েবলসমূহ
   File? _selectedImageFile; // মোবাইলের লোকাল ফাইল অবজেক্ট ব্যাকআপ
-  Uint8List? _selectedImageBytes; // অ্যান্ড্রয়েড, আইওএস এবং ওয়েব সব জায়গায় প্রিভিউ দেখানোর ইউনিভার্সাল ডাটা
+  Uint8List? _selectedImageBytes; // অ্যান্ড্রয়েড, আইওএস এবং ওয়েব সব জায়গায় প্রিভিউ দেখানোর ইউনিভার্সাল ডাটা
   String _imageName = ""; // ইমেজের নাম দেখানোর জন্য
 
   final ImagePicker _picker = ImagePicker();
+
+  // boolean
+  bool _isLoading = false;
+
+  // 🔴 ১০ ডিজিটের মিক্সড অলমেলো বুকিং আইডি জেনারেট করার অ্যালগরিদম ফাংশন
+  String _generateMixedBookingId() {
+    // আগের স্ক্রিন থেকে আসা নাম ও ইমেইল ক্যাচ করা (ডিফল্ট ব্যাকআপসহ)
+    String name = (widget.bookingData['user_name'] ?? 'USER').toString().replaceAll(' ', '').toUpperCase();
+    String email = (widget.bookingData['user_email'] ?? 'APP').toString().split('@')[0].toUpperCase();
+
+    // মিক্স করার বেস সোর্স তৈরি
+    String baseSource = "$name$email" "NC2026";
+    // যদি সোর্স টেক্সট ছোট হয়, তবে ক্যারেক্টার পুল দিয়ে ব্যাকআপ দেওয়া
+    const String pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    final random = Random();
+    List<String> idChars = [];
+
+    // ১. নামের প্রথম থেকে বা র্যান্ডম ২ ক্যারেক্টার নেওয়া
+    if (name.length >= 2) {
+      idChars.add(name[random.nextInt(name.length)]);
+      idChars.add(name[random.nextInt(name.length)]);
+    } else {
+      idChars.add(pool[random.nextInt(pool.length)]);
+      idChars.add(pool[random.nextInt(pool.length)]);
+    }
+
+    // ২. ইমেইল থেকে ২ ক্যারেক্টার নেওয়া
+    if (email.length >= 2) {
+      idChars.add(email[random.nextInt(email.length)]);
+      idChars.add(email[random.nextInt(email.length)]);
+    } else {
+      idChars.add(pool[random.nextInt(pool.length)]);
+      idChars.add(pool[random.nextInt(pool.length)]);
+    }
+
+    // ৩. বাকি ৬ ডিজিট র্যান্ডম ক্যারেক্টার ও টাইমস্ট্যাম্প দিয়ে ১০ ডিজিট পূরণ করা
+    while (idChars.length < 10) {
+      if (random.nextBool() && baseSource.isNotEmpty) {
+        idChars.add(baseSource[random.nextInt(baseSource.length)]);
+      } else {
+        idChars.add(pool[random.nextInt(pool.length)]);
+      }
+    }
+
+    // সবকিছুকে এলোমেলো (Shuffle) করে ১০ ডিজিটের স্ট্রিং বানানো
+    idChars.shuffle(random);
+    return idChars.join().substring(0, 10);
+  }
 
   // ইউনিভার্সাল ImagePicker ফাংশন (Web + Mobile ফ্রেন্ডলি)
   Future<void> _pickImage() async {
@@ -52,7 +103,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
       setState(() {
         _selectedImageBytes = bytes;
         _imageName = pickedFile.name;
-        // ওয়েব প্ল্যাটফর্মে ডিরেক্ট লোকাল ফাইল পাথ এক্সিস্ট করে না, তাই কন্ডিশনাল অ্যাসাইনমেন্ট
+        // ওয়েব প্ল্যাটফর্মে ডিরেক্ট লোকাল ফাইল পাথ এক্সিস্ট করে না, তাই কন্ডিশনাল অ্যাসাইনমেন্ট
         if (!kIsWeb) {
           _selectedImageFile = File(pickedFile.path);
         }
@@ -283,7 +334,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
                                 borderRadius: BorderRadius.circular(15),
                                 border: Border.all(color: Colors.grey.withOpacity(0.3)),
                               ),
-                              // Image.memory ব্যবহার করায় এখন Web, Android, iOS সব প্ল্যাটফর্মে প্রিভিউ পারফেক্টলি আসবে
+                              // Image.memory ব্যবহার করায় এখন Web, Android, iOS সব প্ল্যাটফর্মে প্রিভিউ পারফেক্টলি আসবে
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(15),
                                 child: Image.memory(
@@ -354,17 +405,27 @@ class _PaymentSheetState extends State<PaymentSheet> {
               width: double.infinity,
               height: 58,
               child: ElevatedButton(
-                onPressed: () async {
+                onPressed: _isLoading ? null : () async {
                   if (_formKey.currentState!.validate()) {
+
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    // 🔴 ১০ ডিজিটের কাস্টম মিক্সড অলমেলো আইডি জেনারেট করা হলো
+                    final String generatedBookingId = _generateMixedBookingId();
 
                     // -------------------------------------------------------------
                     // ডাটাবেসে ডেটা পাঠানোর কমপ্লিট অবজেক্ট স্ট্রাকচার
                     // -------------------------------------------------------------
                     final Map<String, dynamic> finalPaymentAndBookingData = {
+                      // 🔴 কাস্টম জেনারেটেড আইডিটি 'booking_id' কলামের জন্য ম্যাপের প্রথমে পুশ করা হলো
+                      'booking_id': generatedBookingId,
+
                       // ১. Booking Summary Screen থেকে আসা সমস্ত প্রিভিয়াস ডাটা
                       ...widget.bookingData,
 
-                      // ২. এই শীট থেকে ইউজার ইনপুট করা পেমেন্ট ভেরিফিকেশন ডাটা
+                      // ২. এই শীট থেকে ইউজার ইনপুট করা পেমেন্ট ভেরিфикации ডাটা
                       'payment_method': _selectedMethod,
                       'sender_account_or_number': _numberController.text.trim(),
                       'transaction_id': _trxController.text.trim(),
@@ -373,23 +434,34 @@ class _PaymentSheetState extends State<PaymentSheet> {
                       'payment_status': 'Pending', // অ্যাডমিন ভেরিফাই করার আগ পর্যন্ত পেন্ডিং থাকবে
                       'submitted_at': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
 
-                      // ৩. সিলেক্টেড ট্রানজেকশন ডাটা (মোবাইলের জন্য File অবজেক্ট, আর ওয়েবের জন্য ডিরেক্ট Bytes অবজেক্ট)
+                      // ৩. সিলেক্টেড ট্রানজেকশন ডাটা (মোবাইলের জন্য File অবজেক্ট, আর ওয়েবের জন্য ডিরেক্ট Bytes অবজেক্ট)
                       'transaction_image_file': kIsWeb ? _selectedImageBytes : _selectedImageFile,
                       'transaction_image_name': _imageName,
                     };
 
-                    // TODO: এখানে আপনার DatabaseHelper বা Supabase/Firebase এর ইনসার্ট ফাংশনটি কল করবেন।
-                    // উদাহরণ: await DatabaseHelper.instance.insertBooking(finalPaymentAndBookingData);
-
-                    //  ঠিক এইখানে এই প্রিন্ট কোডটুকু পেস্ট করে দিন!
-                    // -----------------------------------------------------------------
-                    print("=================== 📸 NOBOCHITRO APP DATA CHECK ===================");
-                    finalPaymentAndBookingData.forEach((key, value) {
-                      print("🔑 $key : 🔴 $value");
-                    });
-                    print("====================================================================");
-                    Navigator.pop(context);
-                    _showSuccessSnack(context);
+                    try {
+                      await DatabaseHelper.instance.insertBookingWithTransactionImage(finalPaymentAndBookingData);
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                        Navigator.pop(context);
+                        _showSuccessSnack(context);
+                      }
+                    }
+                    catch (e) {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Failed to submit booking: $e"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -398,7 +470,13 @@ class _PaymentSheetState extends State<PaymentSheet> {
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
-                child: const Text(
+                child: _isLoading
+                    ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
+                )
+                    : const Text(
                   "Confirm Submission",
                   style: TextStyle(
                     color: Colors.black,
