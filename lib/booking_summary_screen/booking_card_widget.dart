@@ -8,6 +8,7 @@ class BookingCardWidget extends StatelessWidget {
   final Color primaryAccent;
   final VoidCallback? onViewDetails;
   final VoidCallback? onCancel;
+  final VoidCallback? onAppeal; // 👈 আপিলের জন্য নতুন কলব্যাক ফাংশন
 
   const BookingCardWidget({
     super.key,
@@ -17,6 +18,7 @@ class BookingCardWidget extends StatelessWidget {
     required this.primaryAccent,
     this.onViewDetails,
     this.onCancel,
+    this.onAppeal, // ইনজেক্ট করা হলো
   });
 
   @override
@@ -34,39 +36,51 @@ class BookingCardWidget extends StatelessWidget {
     String bookingStatus = booking['booking_status'] ?? "pending";
     String cleanedBookingStatus = bookingStatus.trim().toLowerCase();
 
-    // 🔍 ক্যানসেলেশন স্টেট চেকিং
+    // 🔍 আপিল ট্র্যাকিং কলাম রিড করা (আপনার ডাটাবেজের কলামের নাম অনুযায়ী)
+    String appealStatus = booking['appeal_status'] ?? "";
+    bool hasAlreadyAppealed = appealStatus.trim().toLowerCase() == "appealed";
+
+    // 🔍 ক্যানসেলেশন ও সাসপেনশন স্টেট চেকিং
     bool isCancellationState = [
       "cancelled", "cancellation pending", "cancellation approved", "refund processing", "refund done"
     ].contains(cleanedBookingStatus);
 
-    // ⏳ টাইমিং কাউন্টার লজিক
+    bool isSuspendedState = cleanedBookingStatus == "suspended";
+
+    // ⏳ টাইমিং কাউন্টার লজিক (ইভেন্ট বাকি / ক্যানসেলড এজিং / সাসপেন্ডেড এজিং)
     String upperBadgeText = "Upcoming";
     Color badgeColor = Colors.amber;
 
-    if (isCancellationState) {
-      // 🕒 ক্যানসেলেশন ট্যাবের জন্য: রিকোয়েস্ট দেওয়ার পর থেকে কত সময় পার হয়েছে (Ageing)
+    if (isSuspendedState) {
+      badgeColor = Colors.red;
+      try {
+        if (booking['suspended_at'] != null) {
+          DateTime suspendTime = DateTime.parse(booking['suspended_at'].toString());
+          Duration diff = DateTime.now().difference(suspendTime);
+          if (diff.inDays > 0) upperBadgeText = "${diff.inDays} Days Ago";
+          else if (diff.inHours > 0) upperBadgeText = "${diff.inHours} Hours Ago";
+          else upperBadgeText = "Just Now";
+        } else {
+          upperBadgeText = "Suspended";
+        }
+      } catch (_) {
+        upperBadgeText = "Suspended";
+      }
+    } else if (isCancellationState) {
       try {
         if (booking['cancelled_at'] != null) {
           DateTime cancelDateTime = DateTime.parse(booking['cancelled_at'].toString());
-          DateTime now = DateTime.now();
-          Duration diff = now.difference(cancelDateTime);
-
-          if (diff.inDays > 0) {
-            upperBadgeText = "${diff.inDays} Days Ago";
-          } else if (diff.inHours > 0) {
-            upperBadgeText = "${diff.inHours} Hours Ago";
-          } else if (diff.inMinutes > 0) {
-            upperBadgeText = "${diff.inMinutes} Mins Ago";
-          } else {
-            upperBadgeText = "Just Now";
-          }
-          badgeColor = Colors.redAccent; // ক্যানসেলেশনের জন্য রেড/ক্রিমসন থিম
+          Duration diff = DateTime.now().difference(cancelDateTime);
+          if (diff.inDays > 0) upperBadgeText = "${diff.inDays} Days Ago";
+          else if (diff.inHours > 0) upperBadgeText = "${diff.inHours} Hours Ago";
+          else upperBadgeText = "Just Now";
+          badgeColor = Colors.redAccent;
         } else {
-          upperBadgeText = "Requested";
+          upperBadgeText = "Cancelled";
           badgeColor = Colors.redAccent;
         }
       } catch (_) {
-        upperBadgeText = "Requested";
+        upperBadgeText = "Cancelled";
         badgeColor = Colors.redAccent;
       }
     } else {
@@ -96,13 +110,11 @@ class BookingCardWidget extends StatelessWidget {
     // 🏁 ডায়নামিক টাইমলাইন স্টেপ ক্যালকুলেশন
     int currentStep = 0;
     if (isCancellationState) {
-      // 🔄 ক্যানসেলেশন স্টেপ: Request(0) -> Approved(1) -> Refund Process(2) -> Refunded(3)
       if (cleanedBookingStatus == "cancellation pending") currentStep = 0;
       else if (cleanedBookingStatus == "cancellation approved") currentStep = 1;
       else if (cleanedBookingStatus == "refund processing") currentStep = 2;
       else if (cleanedBookingStatus == "refund done" || cleanedBookingStatus == "cancelled") currentStep = 3;
     } else {
-      // 📸 রেগুলার স্টেপ
       if (cleanedBookingStatus == "pending") currentStep = 0;
       else if (cleanedBookingStatus == "approved") currentStep = 1;
       else if (cleanedBookingStatus == "shooting") currentStep = 2;
@@ -110,10 +122,13 @@ class BookingCardWidget extends StatelessWidget {
       else if (cleanedBookingStatus == "handover" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "completed") currentStep = 4;
     }
 
-    // 🏷️ স্ট্যাটাস চিপের টেক্সট নির্ধারণ (ক্যানসেলেশন স্ট্যাটাস বনাম পেমেন্ট স্ট্যাটাস)
-    String chipLabel = isCancellationState
-        ? (cleanedBookingStatus == "cancellation pending" ? "Pending" : "Approved")
-        : paymentStatus;
+    // 🏷️ স্ট্যাটাস চিপের টেক্সট নির্ধারণ
+    String chipLabel = paymentStatus;
+    if (isSuspendedState) {
+      chipLabel = hasAlreadyAppealed ? "Appealed" : "Suspended";
+    } else if (isCancellationState) {
+      chipLabel = "Cancelled";
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -121,7 +136,7 @@ class BookingCardWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+        border: Border.all(color: isSuspendedState ? Colors.red.withOpacity(0.4) : (isDark ? Colors.white10 : Colors.black12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,7 +154,7 @@ class BookingCardWidget extends StatelessWidget {
                   decoration: BoxDecoration(color: badgeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
                   child: Text(upperBadgeText, style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 11)),
                 ),
-              _statusChip(chipLabel, isCompleted, isCancellationState),
+              _statusChip(chipLabel, isCompleted, isCancellationState, isSuspendedState, hasAlreadyAppealed),
             ],
           ),
           const SizedBox(height: 12),
@@ -151,10 +166,9 @@ class BookingCardWidget extends StatelessWidget {
             children: [
               const Icon(Icons.wallet, size: 16, color: Colors.grey),
               const SizedBox(width: 5),
-              const Text("Payment: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
               Text(
-                isCancellationState ? "Cancellation Active" : (isCompleted ? "Fully Paid" : "Pending Verification"),
-                style: TextStyle(color: isCancellationState ? Colors.redAccent : (isCompleted ? Colors.green : Colors.blue), fontSize: 13, fontWeight: FontWeight.bold),
+                isSuspendedState ? "Account Status: Suspended" : "Payment: ${isCompleted ? 'Fully Paid' : 'Pending'}",
+                style: TextStyle(color: isSuspendedState ? Colors.red : (isCompleted ? Colors.green : Colors.blue), fontSize: 13, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Text(amountStr, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: primaryAccent)),
@@ -175,40 +189,73 @@ class BookingCardWidget extends StatelessWidget {
           const SizedBox(height: 12),
           _infoTile(Icons.location_on_outlined, locationStr, isDark),
 
-          const Divider(height: 30, thickness: 0.5),
+          const Divider(height: 25, thickness: 0.5),
 
-          // 🏁 ডায়নামিক টাইমলাইন এক্সচেঞ্জ সেকশন
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2.0),
-            child: isCancellationState
-                ? Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildTimelineStep("Request", currentStep >= 0, isDark),
-                _buildTimelineArrow(currentStep >= 1),
-                _buildTimelineStep("Approved", currentStep >= 1, isDark),
-                _buildTimelineArrow(currentStep >= 2),
-                _buildTimelineStep("Refund Process", currentStep >= 2, isDark),
-                _buildTimelineArrow(currentStep >= 3),
-                _buildTimelineStep("Refunded", currentStep >= 3, isDark),
-              ],
-            )
-                : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildTimelineStep("Pending", currentStep >= 0, isDark),
-                _buildTimelineArrow(currentStep >= 1),
-                _buildTimelineStep("Approved", currentStep >= 1, isDark),
-                _buildTimelineArrow(currentStep >= 2),
-                _buildTimelineStep("Shooting", currentStep >= 2, isDark),
-                _buildTimelineArrow(currentStep >= 3),
-                _buildTimelineStep("Final Draft", currentStep >= 3, isDark),
-                _buildTimelineArrow(currentStep >= 4),
-                _buildTimelineStep("Handover", currentStep >= 4, isDark),
-              ],
+          // ⚠️ প্রফেশনাল এডমিন সাসপেনশন নোট নোটিশ বক্স (বাটনগুলোর উপরে দেখাবে)
+          if (isSuspendedState && booking['suspended_note'] != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 15),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Colors.red, size: 16),
+                      SizedBox(width: 6),
+                      Text("Suspension Reason:", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    booking['suspended_note'].toString(),
+                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : Colors.black87),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
+          ],
+
+          // 🏁 টাইমলাইন সেকশন (সাসপেন্ডেড হলে টাইমলাইন লুকানো থাকবে কারণ এটি ব্লকড স্টেট)
+          if (!isSuspendedState) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: isCancellationState
+                  ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildTimelineStep("Request", currentStep >= 0, isDark),
+                  _buildTimelineArrow(currentStep >= 1),
+                  _buildTimelineStep("Approved", currentStep >= 1, isDark),
+                  _buildTimelineArrow(currentStep >= 2),
+                  _buildTimelineStep("Refund Process", currentStep >= 2, isDark),
+                  _buildTimelineArrow(currentStep >= 3),
+                  _buildTimelineStep("Refunded", currentStep >= 3, isDark),
+                ],
+              )
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildTimelineStep("Pending", currentStep >= 0, isDark),
+                  _buildTimelineArrow(currentStep >= 1),
+                  _buildTimelineStep("Approved", currentStep >= 1, isDark),
+                  _buildTimelineArrow(currentStep >= 2),
+                  _buildTimelineStep("Shooting", currentStep >= 2, isDark),
+                  _buildTimelineArrow(currentStep >= 3),
+                  _buildTimelineStep("Final Draft", currentStep >= 3, isDark),
+                  _buildTimelineArrow(currentStep >= 4),
+                  _buildTimelineStep("Handover", currentStep >= 4, isDark),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
 
           // 🔴 বোতাম অ্যাকশনস সেকশন (ডায়নামিক বাটন লজিক)
           Row(
@@ -224,8 +271,33 @@ class BookingCardWidget extends StatelessWidget {
                   child: const Text("View Details", style: TextStyle(fontSize: 13)),
                 ),
               ),
-              // 🪄 যদি ক্যানসেলেশন স্টেট হয়, তবে ক্যান্সেল বাটনটি আর দেখাবে না (খালি স্পেসও নিবে না)
-              if (!isCancellationState) ...[
+
+              // 🪄 বাটন এক্সচেঞ্জ লজিক
+              if (isSuspendedState) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: hasAlreadyAppealed
+                      ? ElevatedButton(
+                    onPressed: null, // অলরেডি আপিল করা থাকলে বাটন লকড
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.withOpacity(0.3),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Appealed", style: TextStyle(fontSize: 13, color: Colors.white60)),
+                  )
+                      : ElevatedButton(
+                    onPressed: onAppeal,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Appeal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                ),
+              ] else if (!isCancellationState) ...[
                 const SizedBox(width: 12),
                 Expanded(
                   child: cleanedBookingStatus == "completed" || cleanedBookingStatus == "delivered" || cleanedBookingStatus == "handover"
@@ -294,10 +366,12 @@ class BookingCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _statusChip(String status, bool isCompleted, bool isCancelled) {
+  Widget _statusChip(String status, bool isCompleted, bool isCancelled, bool isSuspended, bool hasAlreadyAppealed) {
     Color baseColor = isCompleted ? Colors.green : Colors.orange;
-    if (isCancelled) {
-      baseColor = status.toLowerCase() == "pending" ? Colors.orange : Colors.green;
+    if (isSuspended) {
+      baseColor = hasAlreadyAppealed ? Colors.blue : Colors.red;
+    } else if (isCancelled) {
+      baseColor = Colors.redAccent;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

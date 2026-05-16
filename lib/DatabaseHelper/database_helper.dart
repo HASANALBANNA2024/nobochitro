@@ -314,4 +314,54 @@ class DatabaseHelper {
       throw Exception("Database Error: Failed to update cancellation. Details: $e");
     }
   }
+
+
+  /// apealed
+  // 📥 ১. আপিল ইমেজ/স্ক্রিনশট 'user_assets' বাকেটের আন্ডারে আপলোড করার মেথড
+  Future<String?> uploadAppealImage(dynamic file, String imageName, String bookingId) async {
+    try {
+      const String bucketName = 'user_assets';
+      final String path = 'appeals/${bookingId}_${DateTime.now().millisecondsSinceEpoch}_$imageName';
+
+      if (kIsWeb) {
+        // ওয়েবের জন্য (Uint8List bytes)
+        await _client.storage.from(bucketName).uploadBinary(path, file);
+      } else {
+        // অ্যান্ডরয়েড/আইওএস এর জন্য (File object)
+        await _client.storage.from(bucketName).upload(path, file as File);
+      }
+
+      // আপলোড শেষে পাবলিক URL রিটার্ন
+      return _client.storage.from(bucketName).getPublicUrl(path);
+    } catch (e) {
+      debugPrint("❌ Error uploading appeal image: $e");
+      return null;
+    }
+  }
+
+  // 📝 ২. ডাটাবেজের কলামে আপিল নোট এবং ইমেজ ইউআরএল পুশ করার মেথড
+  Future<void> submitSuspensionAppeal({
+    required String bookingId,
+    required String appealNote,
+    String? appealImageUrl,
+  }) async {
+    try {
+      // আপনার লজিক অনুযায়ী: bookings টেবিল বা কোর স্ট্যাটাস suspended-ই থাকবে যাতে ৩য় ট্যাবে কার্ডটি লক থাকে
+      await _client
+          .from('payment_verifications') // আপনার স্ট্রাকচার অনুযায়ী যদি এই টেবিলেই booking_status হ্যান্ডেল করেন
+          .update({
+        'booking_status': 'suspended', // মেইন স্ট্যাটাস লক থাকবে
+        'appeal_status': 'appealed',   // 👈 আপনার পছন্দ অনুযায়ী আপিল ট্র্যাকিং কলামে 'appealed' সেট হবে
+        'appeal_note': appealNote,
+        'appeal_image_url': appealImageUrl,
+        'appeal_time_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      })
+          .eq('booking_id', bookingId);
+
+      debugPrint("✅ Suspension appeal submitted successfully for #$bookingId");
+    } catch (e) {
+      throw Exception("Database Error: Failed to submit appeal. Details: $e");
+    }
+  }
 }
