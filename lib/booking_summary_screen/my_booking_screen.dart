@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/responsive_review_list/_review_sheet_widget.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
 
-class MyBookingScreen extends StatelessWidget {
+class MyBookingScreen extends StatefulWidget {
   final Color primaryAccent;
   final int selectedIndex;
   final Function(int) onDestinationSelected;
@@ -20,91 +22,322 @@ class MyBookingScreen extends StatelessWidget {
   });
 
   @override
+  State<MyBookingScreen> createState() => _MyBookingScreenState();
+}
+
+class _MyBookingScreenState extends State<MyBookingScreen> {
+  Future<List<Map<String, dynamic>>>? _bookingsFuture;
+  String dynamicNsrId = "NSR-LOADING...";
+  bool _isLoadingUser = true;
+  int _selectedTabIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSupabaseUserData();
+  }
+
+  Future<void> _fetchSupabaseUserData() async {
+    try {
+      final String? nsrId = await DatabaseHelper.instance.getCurrentUserNsrId();
+      if (nsrId != null) {
+        setState(() {
+          dynamicNsrId = nsrId;
+          _isLoadingUser = false;
+          _bookingsFuture = DatabaseHelper.instance.getUserBookings(dynamicNsrId);
+        });
+      } else {
+        setState(() {
+          dynamicNsrId = "NSR-NOT-FOUND";
+          _isLoadingUser = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        dynamicNsrId = "NSR-ERROR";
+        _isLoadingUser = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isWeb = screenWidth > 800;
-
-    final List<Map<String, dynamic>> bookings = [
-      {
-        "title": "Premium Portrait Session",
-        "photographer": "Ayesha Rahman",
-        "date": "Sat, May 15, 2026",
-        "time": "10:00 AM",
-        "status": "Upcoming",
-        "amount": "15,750 BDT",
-      },
-      {
-        "title": "Wedding Photography Session",
-        "photographer": "Rahat Khan",
-        "date": "Sun, Apr 20, 2026",
-        "time": "04:00 PM",
-        "status": "Completed",
-        "amount": "12,500 BDT",
-      },
-    ];
+    final currentFirebaseUser = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      appBar: buildCustomAppBar(context, primaryAccent, "My Bookings"),
+      appBar: buildCustomAppBar(context, widget.primaryAccent, "My Bookings"),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Center(
               child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: isWeb ? 1100 : screenWidth,
-                ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: bookings.length,
-                        itemBuilder: (context, index) {
-                          final booking = bookings[index];
-                          bool isCompleted = booking['status'] == "Completed";
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: currentFirebaseUser == null
+                    ? const Center(child: Text("Please log in to see your bookings", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)))
+                    : _isLoadingUser
+                    ? Center(child: CircularProgressIndicator(color: widget.primaryAccent))
+                    : dynamicNsrId == "NSR-NOT-FOUND" || dynamicNsrId == "NSR-ERROR"
+                    ? const Center(child: Text("Failed to load user profile context.", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)))
+                    : FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _bookingsFuture,
+                  builder: (context, snapshot) {
+                    int total = snapshot.hasData ? snapshot.data!.length : 0;
+                    int upcoming = snapshot.hasData ? snapshot.data!.where((b) => (b['payment_status'] ?? '').toString().toLowerCase() != 'completed').length : 0;
+                    int completed = total - upcoming;
 
-                          // পরিবর্তন ১: এখানে context পাস করে দিয়েছি
-                          return _buildBookingCard(
-                            booking,
-                            isDark,
-                            isCompleted,
-                            theme,
-                            context, // <-- এই context টি পাঠানো হলো
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                    return CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        // 📊 ১. রেস্পন্সিভ ভিজ্যুয়াল গ্ল্যান্স রো (ওয়েবে ছড়ানো, মোবাইলে স্ক্রোলযোগ্য)
+                        SliverToBoxAdapter(child: _buildVisualGlanceRow(isDark, total, upcoming, completed, isWeb)),
+
+                        SliverToBoxAdapter(child: _buildTabButtons(isDark)),
+
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                          sliver: const SliverToBoxAdapter(
+                            child: Text(
+                              "🏁 MY BOOKING TIMELINE",
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.8, color: Colors.grey),
+                            ),
+                          ),
+                        ),
+                        _selectedTabIndex == 0
+                            ? _buildActiveGridContent(snapshot, isDark, theme, isWeb)
+                            : _buildNonFunctionalGridContent(isDark, theme, isWeb),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: !isWeb
-          ? CustomBottomNav(
-              currentIndex: selectedIndex,
-              onTap: onDestinationSelected,
-            )
-          : null,
+      bottomNavigationBar: !isWeb ? CustomBottomNav(currentIndex: widget.selectedIndex, onTap: widget.onDestinationSelected) : null,
     );
   }
 
-  // পরিবর্তন ২: এখানে BuildContext context প্যারামিটারটি যোগ করেছি
-  Widget _buildBookingCard(
-    Map<String, dynamic> booking,
-    bool isDark,
-    bool isCompleted,
-    ThemeData theme,
-    BuildContext context, // <-- এখানে context রিসিভ করা হচ্ছে
-  ) {
+  // 🟢 ওয়েব এবং মোবাইলের জন্য কাস্টমাইজড গ্ল্যান্স লেআউট
+  Widget _buildVisualGlanceRow(bool isDark, int total, int upcoming, int completed, bool isWeb) {
+    final List<Widget> cards = [
+      _glanceCard("Total Bookings", "$total", Icons.grid_view_rounded, Colors.blue, isDark, isWeb),
+      _glanceCard("Upcoming", "$upcoming", Icons.hourglass_top_rounded, Colors.orange, isDark, isWeb),
+      _glanceCard("Completed", "$completed", Icons.check_circle_rounded, Colors.green, isDark, isWeb),
+    ];
+
+    if (isWeb) {
+      // 🎯 ওয়েবে কার্ডগুলো সমান চওড়া হয়ে পুরো ১১০০ উইডথ কাভার করবে, দেখতে বেমানান লাগবে না
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: cards.map((card) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: card))).toList(),
+        ),
+      );
+    }
+
+    // মোবাইলে আগের মতোই সুইফট স্ক্রোলিং থাকবে
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(children: cards),
+    );
+  }
+
+  Widget _glanceCard(String title, String count, IconData icon, Color color, bool isDark, bool isWeb) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
+      width: isWeb ? null : 160,
+      margin: isWeb ? EdgeInsets.zero : const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(radius: 18, backgroundColor: color.withOpacity(0.15), child: Icon(icon, size: 18, color: color)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(count, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButtons(bool isDark) {
+    List<String> tabs = ["ACTIVE & UPCOMING", "CANCELLED & REFUNDS", "SUSPENDED"];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            bool isSelected = _selectedTabIndex == index;
+            return GestureDetector(
+              onTap: () => setState(() => _selectedTabIndex = index),
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? widget.primaryAccent : (isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  tabs[index],
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.black : (isDark ? Colors.white60 : Colors.black54)),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  SliverPadding _buildActiveGridContent(AsyncSnapshot<List<Map<String, dynamic>>> snapshot, bool isDark, ThemeData theme, bool isWeb) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const SliverPadding(
+        padding: EdgeInsets.all(16),
+        sliver: SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
+      );
+    }
+    if (snapshot.hasError || snapshot.data == null || snapshot.data!.isEmpty) {
+      return SliverPadding(
+        padding: const EdgeInsets.all(16),
+        sliver: SliverToBoxAdapter(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40.0),
+              child: Column(
+                children: [
+                  Icon(Icons.calendar_month_outlined, size: 50, color: Colors.grey.withOpacity(0.5)),
+                  const SizedBox(height: 10),
+                  Text(snapshot.hasError ? "Database Error" : "No Active Bookings Found!", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final List<Map<String, dynamic>> bookings = snapshot.data!;
+
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: isWeb ? 2 : 1,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          // 🎯 ক্র্যাশ-সেফটি রেশিও: মোবাইলের জন্য রেশিও কমানো হয়েছে যাতে বেশি ভার্টিকাল স্পেস পায়
+          childAspectRatio: isWeb ? 1.4 : 1.15,
+        ),
+        delegate: SliverChildBuilderDelegate(
+              (context, index) {
+            final booking = bookings[index];
+            bool isCompleted = (booking['payment_status'] ?? "").toString().trim().toLowerCase() == "completed" ||
+                (booking['payment_status'] ?? "").toString().trim().toLowerCase() == "approved";
+            return _buildBookingCard(booking, isDark, isCompleted, theme, context);
+          },
+          childCount: bookings.length,
+        ),
+      ),
+    );
+  }
+
+  SliverPadding _buildNonFunctionalGridContent(bool isDark, ThemeData theme, bool isWeb) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverToBoxAdapter(
+        child: Opacity(
+          opacity: 0.45,
+          child: AbsorbPointer(
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isWeb ? 2 : 1,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: isWeb ? 1.4 : 1.15,
+              ),
+              itemCount: 2,
+              itemBuilder: (context, index) {
+                return _buildBookingCard({
+                  'booking_id': 'NB-XXXXX',
+                  'package_name': 'Archived Preview Session',
+                  'event_date': 'DD-MM-YYYY',
+                  'event_time': '00:00 PM',
+                  'event_location': 'Not Available in Preview',
+                  'total_amount': '0',
+                  'payment_status': 'Inactive'
+                }, isDark, false, theme, context);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookingCard(Map<String, dynamic> booking, bool isDark, bool isCompleted, ThemeData theme, BuildContext context) {
+    String bookingId = booking['booking_id'] ?? "NB-00000";
+    String packageTitle = booking['package_name'] ?? "Photography Session";
+    String dateStr = booking['event_date'] ?? "N/A";
+    String timeStr = booking['event_time'] ?? "N/A";
+    String locationStr = booking['event_location'] ?? "N/A";
+    String amountStr = "${booking['total_amount']?.toString() ?? '0'} BDT";
+    String status = booking['payment_status'] ?? "Pending";
+    String photographerName = booking['photographer_name'] ?? "Not Assigned";
+
+    String daysToGoStr = "Upcoming";
+    try {
+      if (booking['event_date'] != null) {
+        DateTime eventDate = DateTime.parse(booking['event_date'].toString());
+        int difference = eventDate.difference(DateTime.now()).inDays;
+        if (difference > 0) {
+          daysToGoStr = "$difference Days to Go";
+        } else if (difference == 0) {
+          daysToGoStr = "Today";
+        } else {
+          daysToGoStr = "Passed";
+        }
+      }
+    } catch (_) {
+      daysToGoStr = "3 Days to Go";
+    }
+
+    int currentStep = 0;
+    String cleanedStatus = status.trim().toLowerCase();
+    if (cleanedStatus == "approved" || cleanedStatus == "completed") {
+      currentStep = 1;
+    } else if (cleanedStatus == "shooting") {
+      currentStep = 2;
+    } else if (cleanedStatus == "handover" || cleanedStatus == "delivered") {
+      currentStep = 3;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16), // 🎯 উদাহরণটার মতো নিচে একটা সুন্দর ফিক্সড মার্জিন গ্যাপ রাখার জন্য
+      padding: const EdgeInsets.all(18), // 🎯 উদাহরণটার মতো একটু আরামদায়ক এবং মার্জিত প্যাডিং
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -112,145 +345,161 @@ class MyBookingScreen extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // 🎯 কার্ডের নিচের অতিরিক্ত ফাঁকা হাইট চিরতরে বন্ধ
         children: [
+          // 🔹 টপ সেকশন (আইডি, ডেজ লেফট, স্ট্যাটাস চিপ)
           Row(
             children: [
-              Text(
-                "#NB-58267",
-                style: TextStyle(
-                  color: primaryAccent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
+              Text("#$bookingId", style: TextStyle(color: widget.primaryAccent, fontWeight: FontWeight.bold, fontSize: 12)),
               const Spacer(),
-              _statusChip(booking['status'], isCompleted),
+              if (!isCompleted && daysToGoStr != "Passed")
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(color: Colors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                  child: Text(daysToGoStr, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11)),
+                ),
+              _statusChip(status, isCompleted),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            booking['title'],
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          Text(packageTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 12),
           Row(
             children: [
               const Icon(Icons.wallet, size: 16, color: Colors.grey),
               const SizedBox(width: 5),
-              const Text(
-                "Payment: ",
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-              const Text(
-                "Partial Paid",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
+              const Text("Payment: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
+              Text(
+                isCompleted ? "Fully Paid" : "Pending Verification",
+                style: TextStyle(color: isCompleted ? Colors.green : Colors.blue, fontSize: 13, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
-              Text(
-                booking['amount'],
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  color: primaryAccent,
-                ),
-              ),
+              Text(amountStr, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.primaryAccent)),
             ],
           ),
+
           const Divider(height: 30, thickness: 0.5),
+
+          // 🔹 মিডল সেকশন (ডেট, টাইম, ফটোগ্রাফার, লোকেশন)
           Row(
             children: [
-              _infoTile(Icons.calendar_today, booking['date'], isDark),
+              _infoTile(Icons.calendar_today, dateStr, isDark),
               const SizedBox(width: 20),
-              _infoTile(Icons.access_time, booking['time'], isDark),
+              _infoTile(Icons.access_time, timeStr, isDark),
             ],
           ),
           const SizedBox(height: 12),
-          _infoTile(
-            Icons.location_on_outlined,
-            "Dhanmondi, Dhaka (Studio)",
-            isDark,
+          _infoTile(Icons.camera_alt_outlined, "Photographer: $photographerName", isDark),
+          const SizedBox(height: 12),
+          _infoTile(Icons.location_on_outlined, locationStr, isDark),
+
+          const Divider(height: 30, thickness: 0.5),
+
+          // 🔹 টাইমলাইন স্টেপার সেকশন
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildTimelineStep("Pending", currentStep >= 0, isDark),
+                _buildTimelineArrow(currentStep >= 1),
+                _buildTimelineStep("Approved", currentStep >= 1, isDark),
+                _buildTimelineArrow(currentStep >= 2),
+                _buildTimelineStep("Shooting", currentStep >= 2, isDark),
+                _buildTimelineArrow(currentStep >= 3),
+                _buildTimelineStep("Handover", currentStep >= 3, isDark),
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
+
+          const SizedBox(height: 20), // বাটনগুলোর উপরে পারফেক্ট গ্যাপ
+
+          // 🔹 বটম অ্যাকশন বাটন গ্রুপ
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: primaryAccent),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    side: BorderSide(color: widget.primaryAccent),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text("View Details"),
+                  child: const Text("View Details", style: TextStyle(fontSize: 13)),
                 ),
               ),
               const SizedBox(width: 12),
-              if (isCompleted)
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // এখন আর লাল দাগ আসবে না, কারণ context এখন এই মেথডের পরিচিত
-                      ReviewService.showReviewSheet(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAccent,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: const Text(
-                      "Review",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+              Expanded(
+                child: isCompleted
+                    ? ElevatedButton(
+                  onPressed: () => ReviewService.showReviewSheet(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.primaryAccent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                   ),
+                  child: const Text("Review", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                )
+                    : OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.redAccent),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text("Cancel", style: TextStyle(fontSize: 13, color: Colors.redAccent)),
                 ),
+              ),
             ],
           ),
         ],
       ),
     );
   }
+  Widget _buildTimelineStep(String label, bool isActive, bool isDark) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(isActive ? Icons.check_circle : Icons.radio_button_unchecked, size: 12, color: isActive ? Colors.green : (isDark ? Colors.white30 : Colors.black26)),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: isActive ? FontWeight.bold : FontWeight.normal, color: isActive ? (isDark ? Colors.white : Colors.black87) : Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildTimelineArrow(bool isActive) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("➔", style: TextStyle(fontSize: 9, color: isActive ? Colors.green : Colors.grey.withOpacity(0.3))),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _infoTile(IconData icon, String text, bool isDark) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 13,
-            color: isDark ? Colors.white70 : Colors.black87,
-          ),
-        ),
+        Icon(icon, size: 13, color: Colors.grey),
+        const SizedBox(width: 5),
+        Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.black87))),
       ],
     );
   }
 
   Widget _statusChip(String status, bool isCompleted) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isCompleted
-            ? Colors.green.withOpacity(0.15)
-            : Colors.orange.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: isCompleted ? Colors.green : Colors.orange,
-          fontWeight: FontWeight.bold,
-          fontSize: 11,
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: isCompleted ? Colors.green.withOpacity(0.15) : Colors.orange.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+      child: Text(status, style: TextStyle(color: isCompleted ? Colors.green : Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
     );
   }
 }
