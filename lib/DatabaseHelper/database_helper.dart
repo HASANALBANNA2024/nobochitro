@@ -339,27 +339,79 @@ class DatabaseHelper {
     }
   }
 
-  // 📝 ২. ডাটাবেজের কলামে আপিল নোট এবং ইমেজ ইউআরএল পুশ করার মেথড
+  // ====================================================================================
+  // 🔑 ৩. নতুন আপিল রিকোয়ারমেন্টস এর জন্য প্রয়োজনীয় মেথডসমূহ (আগের সব ঠিক থাকবে)
+  // ====================================================================================
+
+  /// 👤 ১. কারেন্ট ইউজারের NSR ID তুলে আনার মেথড (ফাইল পাথে ব্যবহার করার জন্য)
+  Future<String> getCurrentUserId() async {
+    try {
+      final String? nsrId = await getCurrentUserNsrId();
+      if (nsrId != null) {
+        return nsrId; // সফল হলে কাস্টম NSR ID রিটার্ন করবে (যেমন: NSR-995814)
+      }
+
+      // ব্যাকআপ হিসেবে যদি NSR ID না থাকে, ফায়ারবেস UID ব্যবহার করবে
+      final String? firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+      if (firebaseUid != null) {
+        return firebaseUid;
+      }
+
+      throw Exception("User not logged in!");
+    } catch (e) {
+      throw Exception("Failed to get User ID: $e");
+    }
+  }
+
+  /// 📥 ২. ডাইনামিক কাস্টম পাথে ইমেজ 'user_assets' বাকেটে আপলোড করার মেথড
+  Future<String?> uploadAppealImageWithPath(dynamic fileToUpload, String storagePath) async {
+    try {
+      const String bucketName = 'user_assets';
+
+      if (kIsWeb) {
+        // ওয়েবের জন্য (Uint8List Bytes)
+        await _client.storage
+            .from(bucketName)
+            .uploadBinary(storagePath, fileToUpload as Uint8List);
+      } else {
+        // অ্যান্ডরয়েড/আইওএস এর জন্য (File Object)
+        await _client.storage
+            .from(bucketName)
+            .upload(storagePath, fileToUpload as File);
+      }
+
+      // আপলোড হওয়া ফাইলের পাবলিক ইউআরএল রিটার্ন করা
+      return _client.storage.from(bucketName).getPublicUrl(storagePath);
+    } catch (e) {
+      debugPrint("❌ Bucket Upload Error: $e");
+      return null;
+    }
+  }
+
+  ///  ডাটাবেজে আপিল নোট, ইমেজ ইউআরএল এবং কাউন্ট (১, ২, ৩) আপডেট করার মেথড
+
   Future<void> submitSuspensionAppeal({
     required String bookingId,
     required String appealNote,
     String? appealImageUrl,
+    required int appealCount,
   }) async {
     try {
-      // আপনার লজিক অনুযায়ী: bookings টেবিল বা কোর স্ট্যাটাস suspended-ই থাকবে যাতে ৩য় ট্যাবে কার্ডটি লক থাকে
       await _client
-          .from('payment_verifications') // আপনার স্ট্রাকচার অনুযায়ী যদি এই টেবিলেই booking_status হ্যান্ডেল করেন
+          .from('payment_verifications')
           .update({
         'booking_status': 'suspended', // মেইন স্ট্যাটাস লক থাকবে
-        'appeal_status': 'appealed',   // 👈 আপনার পছন্দ অনুযায়ী আপিল ট্র্যাকিং কলামে 'appealed' সেট হবে
+        'appeal_status': null,
         'appeal_note': appealNote,
         'appeal_image_url': appealImageUrl,
+        'appeal_count': appealCount,   // ডাটাবেজে নতুন কাউন্ট সেভ হবে
+        'appeal_cancel_notes': null,   // রি-আপিল করলে আগের রিজেকশন নোট মুছে ক্লিন হয়ে যাবে
         'appeal_time_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       })
           .eq('booking_id', bookingId);
 
-      debugPrint("✅ Suspension appeal submitted successfully for #$bookingId");
+      debugPrint("✅ Appeal submitted & appeal_status set to null for #$bookingId");
     } catch (e) {
       throw Exception("Database Error: Failed to submit appeal. Details: $e");
     }
