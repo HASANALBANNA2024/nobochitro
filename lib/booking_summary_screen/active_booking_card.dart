@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/responsive_review_list/_review_sheet_widget.dart';
+import 'package:url_launcher/url_launcher.dart'; // 👈 ড্রাইভ লিংক ওপেন করার জন্য
 
 class ActiveBookingCard extends StatelessWidget {
   final Map<String, dynamic> booking;
@@ -31,6 +32,7 @@ class ActiveBookingCard extends StatelessWidget {
 
     String paymentStatus = (booking['payment_status'] ?? "Pending").toString().trim().toUpperCase();
     String bookingStatus = (booking['booking_status'] ?? "pending").toString().trim().toLowerCase();
+    String? driveLink = booking['drive_link_handover'];
 
     // 📅 Days to Go টাইমিং লজিক
     String upperBadgeText = "Upcoming";
@@ -54,7 +56,7 @@ class ActiveBookingCard extends StatelessWidget {
       }
     } catch (_) {}
 
-    // 📸 রেগুলার টাইমলাইন ট্র্যাকিং (booking_status এর ওপর নির্ভরশীল)
+    // 📸 রেগুলার টাইমলাইন ট্র্যাকিং
     int currentStep = 0;
     if (bookingStatus == "pending") currentStep = 0;
     else if (bookingStatus == "approved") currentStep = 1;
@@ -62,9 +64,11 @@ class ActiveBookingCard extends StatelessWidget {
     else if (bookingStatus == "final draft" || bookingStatus == "draft") currentStep = 3;
     else if (bookingStatus == "handover" || bookingStatus == "delivered" || bookingStatus == "completed") currentStep = 4;
 
+    bool isHandoverStage = currentStep == 4;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(18), // 👈 আপনার আগের অরিজিনাল প্যাডিং
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -72,7 +76,7 @@ class ActiveBookingCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min, // 👈 নিশ্চিত করে যেন নিচে বাড়তি স্পেস না বাড়ে
         children: [
           Row(
             children: [
@@ -140,18 +144,30 @@ class ActiveBookingCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: onViewDetails ?? () {},
+                  onPressed: () async {
+                    if (isHandoverStage && driveLink != null && driveLink.isNotEmpty) {
+                      final Uri url = Uri.parse(driveLink);
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
+                    } else {
+                      if (onViewDetails != null) onViewDetails!();
+                    }
+                  },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: primaryAccent),
                     padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text("View Details", style: TextStyle(fontSize: 13)),
+                  child: Text(
+                    isHandoverStage ? "Drive Link" : "View Details",
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: bookingStatus == "completed" || bookingStatus == "delivered" || bookingStatus == "handover"
+                child: isHandoverStage
                     ? ElevatedButton(
                   onPressed: () => ReviewService.showReviewSheet(context),
                   style: ElevatedButton.styleFrom(
@@ -193,8 +209,7 @@ class ActiveBookingCard extends StatelessWidget {
 
   Widget _buildTimelineArrow(bool isActive) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
+      child: Center( // 👈 Padding ফেলে দিয়ে সরাসরি Center উইজেট দেওয়া হয়েছে যাতে নিচে স্পেস না বাড়ে
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
