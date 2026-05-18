@@ -31,16 +31,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
   bool _isReviewVisible = false;
   Timer? _reviewTimer;
+  Timer? _hideTimer; // 🟢 হাইড করার জন্য আরেকটি সেফ টাইমার মেমোরি
 
   // drawer open control
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
+  void initState() {
+    super.initState();
+    // 🟢 টাইমার লজিকটি initState-এ নিয়ে আসা হলো যাতে স্ক্রিন লোড হতেই পারফেক্টলি কাজ শুরু করে
+    _startReviewButtonTimer();
+  }
+
+  void _startReviewButtonTimer() {
+    // প্রতি ২০ সেকেন্ডের লুপ (১০ সেকেন্ড শো থাকবে, ১০ সেকেন্ড হাইড থাকবে)
+    _reviewTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
+      if (mounted) {
+        setState(() => _isReviewVisible = true); // ১০ সেকেন্ড পর শো হবে
+
+        // ঠিক ১০ সেকেন্ড পর আবার বাটনটি সুন্দর অ্যানিমেশন দিয়ে হাইড হয়ে যাবে
+        _hideTimer = Timer(const Duration(seconds: 10), () {
+          if (mounted) {
+            setState(() => _isReviewVisible = false);
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // 🛑 মেমোরি লিক এবং ব্যাকগ্রাউন্ড ক্র্যাশ রোধ করতে টাইমারগুলো ডিসপোজ করা হলো
+    _reviewTimer?.cancel();
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
     final isDarkMode = theme.brightness == Brightness.dark;
     final primaryAccent = isDarkMode
         ? const Color(0xFFD4AF37)
@@ -48,7 +77,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final background = isDarkMode
         ? const Color(0xFF0F0F0F)
         : theme.scaffoldBackgroundColor;
-
     bool isLargeScreen = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
@@ -57,9 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       drawer: CustomSideNavigation(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          setState(() => _currentIndex = index);
           Navigator.pop(context);
         },
         onSettingsPressed: () {
@@ -72,22 +98,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             widget.onThemeChanged,
           );
         },
-        onThemeChanged: (isDark) {
-          widget.onThemeChanged(isDark);
-        },
+        onThemeChanged: widget.onThemeChanged,
       ),
       body: Column(
         children: [
           CustomHeader(
             primaryAccent: primaryAccent,
-            onMenuPressed: () {
-              _scaffoldKey.currentState?.openDrawer();
-            },
+            onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
           Expanded(
             child: _buildMainContent(
-              textTheme,
-              colorScheme,
+              theme.textTheme,
+              theme.colorScheme,
               isLargeScreen,
               primaryAccent,
               theme,
@@ -95,6 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      // 🟢 ফিক্সড বাটন কল
       floatingActionButton: _buildWriteReviewButton(context, primaryAccent),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
 
@@ -104,24 +127,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               currentIndex: _currentIndex,
               onTap: (index) {
                 if (index == 4) {
-                  // Open settings bottom sheet for mobile view
                   SettingsUtils.showSettings(
                     context,
                     primaryAccent,
                     widget.onThemeChanged,
                   );
                 } else if (index == 2) {
-                  // Direct navigation to My Booking Screen
                   if (FirebaseAuth.instance.currentUser != null) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => MyBookingScreen(
                           primaryAccent: primaryAccent,
-                          selectedIndex: _currentIndex, // Pass current state
-                          onDestinationSelected: (idx) {
-                            setState(() => _currentIndex = idx);
-                          },
+                          selectedIndex: _currentIndex,
+                          onDestinationSelected: (idx) =>
+                              setState(() => _currentIndex = idx),
                           onThemeChanged: widget.onThemeChanged,
                           onSettingsPressed: () {
                             SettingsUtils.showSettings(
@@ -145,7 +165,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (FirebaseAuth.instance.currentUser != null) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => ClientProfileScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const ClientProfileScreen(),
+                      ),
                     );
                   } else {
                     showModalBottomSheet(
@@ -156,16 +178,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   }
                 } else if (index == 0) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DashboardScreen(
-                        onThemeChanged: widget.onThemeChanged,
-                      ),
-                    ),
-                  );
+                  // কারেন্ট স্ক্রিনেই থাকলে নতুন করে পুশ করার দরকার নেই, জাস্ট স্টেট রিসেট করলেই হয়
+                  setState(() => _currentIndex = 0);
                 } else {
-                  // Regular index update for Home and Packages
                   setState(() => _currentIndex = index);
                 }
               },
@@ -173,7 +188,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // --- UI Methods (No Logic Change) ---
+  // --- UI Methods ---
   Widget _buildMainContent(
     TextTheme textTheme,
     ColorScheme colorScheme,
@@ -194,12 +209,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // n8n banner dart file call
                   N8nDynamicBanner(
                     primaryAccent: primaryAccent,
-                    onBookingClick: () {
-                      print("Booking session clicked!");
-                    },
+                    onBookingClick: () => print("Booking session clicked!"),
                   ),
                   const SizedBox(height: 5),
                   Text(
@@ -234,77 +246,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // review widget of review
+  // 🟢 ক্লিন এবং ফিক্সড রিভিউ বাটন উইজেট (StatefulBuilder রিমুভড)
   Widget _buildWriteReviewButton(BuildContext context, Color primaryAccent) {
-    final size = MediaQuery.of(context).size;
-    final bool isMobile = size.width < 600;
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        // Timer settings
-        _reviewTimer ??= Timer.periodic(const Duration(seconds: 10), (timer) {
-          if (context.mounted) {
-            setState(() => _isReviewVisible = true);
-            Future.delayed(const Duration(seconds: 10), () {
-              if (context.mounted) {
-                setState(() => _isReviewVisible = false);
-              }
-            });
-          }
-        });
-
-        return AnimatedOpacity(
-          opacity: _isReviewVisible ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 800),
-          child: AnimatedSlide(
-            offset: _isReviewVisible ? Offset.zero : const Offset(-0.5, 0),
-            duration: const Duration(milliseconds: 800),
-            child: Padding(
-              padding: EdgeInsets.only(left: 20),
-              child: InkWell(
-                onTap: () => ReviewService.showReviewSheet(context),
+    return AnimatedOpacity(
+      opacity: _isReviewVisible ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 600),
+      child: AnimatedSlide(
+        offset: _isReviewVisible ? Offset.zero : const Offset(-0.3, 0),
+        duration: const Duration(milliseconds: 600),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: InkWell(
+            onTap: () => ReviewService.showReviewSheet(context),
+            borderRadius: BorderRadius.circular(30),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: primaryAccent,
                 borderRadius: BorderRadius.circular(30),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
-                  decoration: BoxDecoration(
-                    color: primaryAccent,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.rate_review_rounded,
+                    color: Colors.black,
+                    size: 20,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(
-                        Icons.rate_review_rounded,
-                        color: Colors.black,
-                        size: 20,
-                      ),
-                      SizedBox(width: 10),
-                      Text(
-                        "Write Review",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+                  SizedBox(width: 10),
+                  Text(
+                    "Write Review",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
