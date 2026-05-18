@@ -196,7 +196,8 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                     const SizedBox(height: 20),
                     ResponsiveReviewList(
                       primaryAccent: widget.primaryAccent,
-                      sectionTitle: "Client Reviews",
+                      sectionTitle: "${widget.categoryName} Highlights",
+                      filterCategoryName: widget.categoryName,
                     ),
                     const SizedBox(height: 50),
                   ],

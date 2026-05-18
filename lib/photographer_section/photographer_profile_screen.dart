@@ -108,28 +108,28 @@ class PhotographerProfileScreen extends StatelessWidget {
                       // আপনার দেওয়া লেআউট লজিক হুবহু রাখা হয়েছে
                       screenWidth > 850
                           ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: _buildDetailedInfo(photographerData),
-                          ),
-                          const SizedBox(width: 40),
-                          Expanded(
-                            flex: 1,
-                            child: _buildExpertiseSideBar(
-                              photographerData,
-                            ),
-                          ),
-                        ],
-                      )
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildDetailedInfo(photographerData),
+                                ),
+                                const SizedBox(width: 40),
+                                Expanded(
+                                  flex: 1,
+                                  child: _buildExpertiseSideBar(
+                                    photographerData,
+                                  ),
+                                ),
+                              ],
+                            )
                           : Column(
-                        children: [
-                          _buildDetailedInfo(photographerData),
-                          const SizedBox(height: 30),
-                          _buildExpertiseSideBar(photographerData),
-                        ],
-                      ),
+                              children: [
+                                _buildDetailedInfo(photographerData),
+                                const SizedBox(height: 30),
+                                _buildExpertiseSideBar(photographerData),
+                              ],
+                            ),
 
                       const SizedBox(height: 15),
                       CommunityGallery(
@@ -140,6 +140,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                       ResponsiveReviewList(
                         primaryAccent: primaryAccent,
                         sectionTitle: "Client Reviews",
+                        filterPhotographerName: photographerData['name'],
                       ),
                       const SizedBox(height: 40),
                     ],
@@ -155,7 +156,9 @@ class PhotographerProfileScreen extends StatelessWidget {
 
   Widget _buildDetailedInfo(Map<String, dynamic> data) {
     // ডাটাবেস কী: technical_arsenal
-    List<String> gearList = (data['technical_arsenal'] ?? "").toString().split(',');
+    List<String> gearList = (data['technical_arsenal'] ?? "").toString().split(
+      ',',
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,23 +236,25 @@ class PhotographerProfileScreen extends StatelessWidget {
           // আপনার Nobochitro প্রজেক্টের জন্য বুকিং বাটন (প্রয়োজনীয়)
           ElevatedButton(
             // আপনার প্রোফাইল স্ক্রিনের 'Book Now' বাটনে জাস্ট এইটুকু লিখুন
-            onPressed: () {
-
-            },
+            onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAccent,
               minimumSize: const Size(double.infinity, 45),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: const Text("Book Now", style: TextStyle(color: Colors.white)),
-          )
+            child: const Text(
+              "Book Now",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
     );
   }
 
   // BuildContext context যোগ করা হয়েছে
-
 
   Widget _statRow(IconData icon, String text) {
     return Padding(
