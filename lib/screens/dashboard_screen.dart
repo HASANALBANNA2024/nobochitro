@@ -9,8 +9,8 @@ import 'package:nobochitro/client_profile/client_profile_screen.dart';
 import 'package:nobochitro/community_gallery/community_gallery.dart';
 import 'package:nobochitro/photographer_section/photographer_section.dart';
 import 'package:nobochitro/photography_package/photography_packages.dart';
-import 'package:nobochitro/responsive_review_list/_review_sheet_widget.dart';
 import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
+import 'package:nobochitro/responsive_review_list/review_sheet_widget.dart';
 import 'package:nobochitro/settings/settings_utils.dart';
 import 'package:nobochitro/widgets/custom_bottom_nav.dart';
 import 'package:nobochitro/widgets/custom_header.dart';
@@ -112,30 +112,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 } else if (index == 2) {
                   // Direct navigation to My Booking Screen
-                  if(FirebaseAuth.instance.currentUser!=null)
-                    {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MyBookingScreen(
-                            primaryAccent: primaryAccent,
-                            selectedIndex: _currentIndex, // Pass current state
-                            onDestinationSelected: (idx) {
-                              setState(() => _currentIndex = idx);
-                            },
-                            onThemeChanged: widget.onThemeChanged,
-                            onSettingsPressed: () {
-                              SettingsUtils.showSettings(
-                                context,
-                                primaryAccent,
-                                widget.onThemeChanged,
-                              );
-                            },
-                          ),
+                  if (FirebaseAuth.instance.currentUser != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MyBookingScreen(
+                          primaryAccent: primaryAccent,
+                          selectedIndex: _currentIndex, // Pass current state
+                          onDestinationSelected: (idx) {
+                            setState(() => _currentIndex = idx);
+                          },
+                          onThemeChanged: widget.onThemeChanged,
+                          onSettingsPressed: () {
+                            SettingsUtils.showSettings(
+                              context,
+                              primaryAccent,
+                              widget.onThemeChanged,
+                            );
+                          },
                         ),
-                      );
-                    }
-                  else{
+                      ),
+                    );
+                  } else {
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -144,21 +142,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   }
                 } else if (index == 3) {
-                 if(FirebaseAuth.instance.currentUser!=null)
-                   {
-                     Navigator.push(
-                       context,
-                       MaterialPageRoute(builder: (_) => ClientProfileScreen()),
-                     );
-                   }
-                 else{
-                   showModalBottomSheet(
-                     context: context,
-                     isScrollControlled: true,
-                     backgroundColor: Colors.transparent,
-                     builder: (context) => const LoginModalSheet(),
-                   );
-                 }
+                  if (FirebaseAuth.instance.currentUser != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ClientProfileScreen()),
+                    );
+                  } else {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => const LoginModalSheet(),
+                    );
+                  }
                 } else if (index == 0) {
                   Navigator.push(
                     context,
@@ -194,9 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

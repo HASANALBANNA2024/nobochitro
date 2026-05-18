@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:nobochitro/responsive_review_list/_review_sheet_widget.dart';
-import 'package:url_launcher/url_launcher.dart'; // 👈 ড্রাইভ লিংক ওপেন করার জন্য
+import 'package:url_launcher/url_launcher.dart';
+
+import '../responsive_review_list/review_sheet_widget.dart' show ReviewService;
+
+/// completed package of Completed Drive
 
 class ActiveBookingCard extends StatelessWidget {
   final Map<String, dynamic> booking;
@@ -30,18 +33,25 @@ class ActiveBookingCard extends StatelessWidget {
     String amountStr = "${booking['total_amount']?.toString() ?? '0'} BDT";
     String photographerName = booking['photographer_name'] ?? "Not Assigned";
 
-    String paymentStatus = (booking['payment_status'] ?? "Pending").toString().trim().toUpperCase();
-    String bookingStatus = (booking['booking_status'] ?? "pending").toString().trim().toLowerCase();
+    String paymentStatus = (booking['payment_status'] ?? "Pending")
+        .toString()
+        .trim()
+        .toUpperCase();
+    String bookingStatus = (booking['booking_status'] ?? "pending")
+        .toString()
+        .trim()
+        .toLowerCase();
     String? driveLink = booking['drive_link_handover'];
 
-    // 📅 Days to Go টাইমিং লজিক
+    // Days to go for upcoming package
     String upperBadgeText = "Upcoming";
     Color badgeColor = Colors.amber;
     try {
       if (booking['event_date'] != null) {
         String fullDateTimeStr = booking['event_date'].toString();
         if (booking['event_time'] != null && !fullDateTimeStr.contains(':')) {
-          fullDateTimeStr = "${booking['event_date']} ${booking['event_time'].toString().trim()}";
+          fullDateTimeStr =
+              "${booking['event_date']} ${booking['event_time'].toString().trim()}";
         }
         DateTime eventDateTime = DateTime.parse(fullDateTimeStr);
         Duration difference = eventDateTime.difference(DateTime.now());
@@ -49,26 +59,36 @@ class ActiveBookingCard extends StatelessWidget {
         if (difference.isNegative) {
           upperBadgeText = "Passed";
         } else {
-          if (difference.inDays > 0) upperBadgeText = "${difference.inDays} Days to Go";
-          else if (difference.inHours > 0) upperBadgeText = "${difference.inHours} Hours to Go";
-          else upperBadgeText = "Today";
+          if (difference.inDays > 0)
+            upperBadgeText = "${difference.inDays} Days to Go";
+          else if (difference.inHours > 0)
+            upperBadgeText = "${difference.inHours} Hours to Go";
+          else
+            upperBadgeText = "Today";
         }
       }
     } catch (_) {}
 
-    // 📸 রেগুলার টাইমলাইন ট্র্যাকিং
+    // Regular Time line tracking
     int currentStep = 0;
-    if (bookingStatus == "pending") currentStep = 0;
-    else if (bookingStatus == "approved") currentStep = 1;
-    else if (bookingStatus == "shooting") currentStep = 2;
-    else if (bookingStatus == "final draft" || bookingStatus == "draft") currentStep = 3;
-    else if (bookingStatus == "handover" || bookingStatus == "delivered" || bookingStatus == "completed") currentStep = 4;
+    if (bookingStatus == "pending")
+      currentStep = 0;
+    else if (bookingStatus == "approved")
+      currentStep = 1;
+    else if (bookingStatus == "shooting")
+      currentStep = 2;
+    else if (bookingStatus == "final draft" || bookingStatus == "draft")
+      currentStep = 3;
+    else if (bookingStatus == "handover" ||
+        bookingStatus == "delivered" ||
+        bookingStatus == "completed")
+      currentStep = 4;
 
     bool isHandoverStage = currentStep == 4;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18), // 👈 আপনার আগের অরিজিনাল প্যাডিং
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -76,40 +96,90 @@ class ActiveBookingCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // 👈 নিশ্চিত করে যেন নিচে বাড়তি স্পেস না বাড়ে
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Text("#$bookingId", style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+              Text(
+                "#$bookingId",
+                style: TextStyle(
+                  color: primaryAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
               const Spacer(),
               if (upperBadgeText != "Passed")
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(color: badgeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-                  child: Text(upperBadgeText, style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 11)),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    upperBadgeText,
+                    style: TextStyle(
+                      color: badgeColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
                 ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: (isCompleted ? Colors.green : Colors.orange).withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-                child: Text(paymentStatus, style: TextStyle(color: isCompleted ? Colors.green : Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
+                decoration: BoxDecoration(
+                  color: (isCompleted ? Colors.green : Colors.orange)
+                      .withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  paymentStatus,
+                  style: TextStyle(
+                    color: isCompleted ? Colors.green : Colors.orange,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(packageTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(
+            packageTitle,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
               const Icon(Icons.wallet, size: 16, color: Colors.grey),
               const SizedBox(width: 5),
-              const Text("Payment: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
+              const Text(
+                "Payment: ",
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
               Text(
                 isCompleted ? "Fully Paid" : "Pending Verification",
-                style: TextStyle(color: isCompleted ? Colors.green : Colors.blue, fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: isCompleted ? Colors.green : Colors.blue,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const Spacer(),
-              Text(amountStr, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: primaryAccent)),
+              Text(
+                amountStr,
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: primaryAccent,
+                ),
+              ),
             ],
           ),
           const Divider(height: 30, thickness: 0.5),
@@ -121,7 +191,10 @@ class ActiveBookingCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          _infoTile(Icons.camera_alt_outlined, "Photographer: $photographerName"),
+          _infoTile(
+            Icons.camera_alt_outlined,
+            "Photographer: $photographerName",
+          ),
           const SizedBox(height: 12),
           _infoTile(Icons.location_on_outlined, locationStr),
           const Divider(height: 30, thickness: 0.5),
@@ -145,10 +218,15 @@ class ActiveBookingCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () async {
-                    if (isHandoverStage && driveLink != null && driveLink.isNotEmpty) {
+                    if (isHandoverStage &&
+                        driveLink != null &&
+                        driveLink.isNotEmpty) {
                       final Uri url = Uri.parse(driveLink);
                       if (await canLaunchUrl(url)) {
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                        await launchUrl(
+                          url,
+                          mode: LaunchMode.externalApplication,
+                        );
                       }
                     } else {
                       if (onViewDetails != null) onViewDetails!();
@@ -157,7 +235,9 @@ class ActiveBookingCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: primaryAccent),
                     padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: Text(
                     isHandoverStage ? "Drive Link" : "View Details",
@@ -169,25 +249,46 @@ class ActiveBookingCard extends StatelessWidget {
               Expanded(
                 child: isHandoverStage
                     ? ElevatedButton(
-                  onPressed: () => ReviewService.showReviewSheet(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAccent,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 2,
-                  ),
-                  child: const Text("Review", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                )
+                        onPressed: () {
+                          ReviewService.showReviewSheet(
+                            context,
+                            booking: booking,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryAccent,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: const Text(
+                          "Review",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      )
                     : OutlinedButton(
-                  onPressed: onCancel,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.redAccent),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text("Cancel", style: TextStyle(fontSize: 13, color: Colors.redAccent)),
-                ),
+                        onPressed: onCancel,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ),
               ),
             ],
           ),
@@ -200,20 +301,41 @@ class ActiveBookingCard extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(isActive ? Icons.check_circle : Icons.radio_button_unchecked, size: 12, color: isActive ? Colors.green : (isDark ? Colors.white30 : Colors.black26)),
+        Icon(
+          isActive ? Icons.check_circle : Icons.radio_button_unchecked,
+          size: 12,
+          color: isActive
+              ? Colors.green
+              : (isDark ? Colors.white30 : Colors.black26),
+        ),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 9, fontWeight: isActive ? FontWeight.bold : FontWeight.normal, color: isActive ? (isDark ? Colors.white : Colors.black87) : Colors.grey)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            color: isActive
+                ? (isDark ? Colors.white : Colors.black87)
+                : Colors.grey,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildTimelineArrow(bool isActive) {
     return Expanded(
-      child: Center( // 👈 Padding ফেলে দিয়ে সরাসরি Center উইজেট দেওয়া হয়েছে যাতে নিচে স্পেস না বাড়ে
+      child: Center(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("➔", style: TextStyle(fontSize: 9, color: isActive ? Colors.green : Colors.grey.withOpacity(0.3))),
+            Text(
+              "➔",
+              style: TextStyle(
+                fontSize: 9,
+                color: isActive ? Colors.green : Colors.grey.withOpacity(0.3),
+              ),
+            ),
           ],
         ),
       ),
@@ -226,7 +348,17 @@ class ActiveBookingCard extends StatelessWidget {
       children: [
         Icon(icon, size: 13, color: Colors.grey),
         const SizedBox(width: 5),
-        Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.black87))),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+        ),
       ],
     );
   }

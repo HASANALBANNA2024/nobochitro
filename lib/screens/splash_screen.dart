@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nobochitro/screens/dashboard_screen.dart';
 
@@ -16,7 +17,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -36,13 +38,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 4), () { // সময় ১ সেকেন্ড বাড়িয়ে ৪ করলাম যাতে ইন্ডিকেটরটা দেখা যায়
+    Timer(const Duration(seconds: 4), () {
+      // সময় ১ সেকেন্ড বাড়িয়ে ৪ করলাম যাতে ইন্ডিকেটরটা দেখা যায়
       widget.onAppReady();
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => DashboardScreen(onThemeChanged: widget.onThemeChanged),
+          builder: (_) =>
+              DashboardScreen(onThemeChanged: widget.onThemeChanged),
         ),
       );
     });
@@ -58,7 +62,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      body: Stack( // Indicator টিকে একদম নিচে রাখার জন্য Stack ব্যবহার করা হয়েছে
+      body: Stack(
+        // Indicator টিকে একদম নিচে রাখার জন্য Stack ব্যবহার করা হয়েছে
         children: [
           Center(
             child: ScaleTransition(
@@ -84,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         letterSpacing: 6,
                       ),
                     ),
-                    // --- ট্যাগলাইন যোগ করা হলো ---
+                    // --- tag line add ---
                     const SizedBox(height: 8),
                     Text(
                       "PRESERVE YOUR MEMORIES",
@@ -100,8 +105,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-
-          // --- লোডিং ইন্ডিকেটর (স্ক্রিনের নিচের দিকে) ---
+          // ---loading indicator---
           Positioned(
             bottom: 50,
             left: 0,

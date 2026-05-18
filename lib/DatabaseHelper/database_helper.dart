@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
+
+import 'package:firebase_auth/firebase_auth.dart'; // 👈 কাস্টম NSR ID মেথডের জন্য ফায়ারবেস অথ ইম্পোর্ট করা হলো
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // 👈 কাস্টম NSR ID মেথডের জন্য ফায়ারবেস অথ ইম্পোর্ট করা হলো
 
 class DatabaseHelper {
   DatabaseHelper._();
@@ -130,8 +130,6 @@ class DatabaseHelper {
         .stream(primaryKey: ['photographer_id']);
   }
 
-
-
   // database_helper.dart ফাইলের ভেতরে এটি যোগ করুন
   Future<List<Map<String, dynamic>>> getPackages() async {
     try {
@@ -148,7 +146,6 @@ class DatabaseHelper {
       return []; // কোনো এরর হলে খালি লিস্ট রিটার্ন করবে যাতে অ্যাপ ক্র্যাশ না করে
     }
   }
-
 
   // get photographers
   Future<List<Map<String, dynamic>>> getPhotographers() async {
@@ -175,8 +172,8 @@ class DatabaseHelper {
 
   // result screen for cateogry by use packages
   Future<List<Map<String, dynamic>>> getPackagesByCategory(
-      String categoryName,
-      ) async {
+    String categoryName,
+  ) async {
     final response = await _client
         .from('packages')
         .select()
@@ -184,12 +181,12 @@ class DatabaseHelper {
     return List<Map<String, dynamic>>.from(response);
   }
 
-
   /// payment transaction / verifications table insert data from bookings summary and payment sheet
 
-
   // ------------------------------------------------------------------------------------
-  Future<void> insertBookingWithTransactionImage(Map<String, dynamic> bookingData) async {
+  Future<void> insertBookingWithTransactionImage(
+    Map<String, dynamic> bookingData,
+  ) async {
     try {
       String? imageUrl;
       String? imageName = bookingData['transaction_image_name'];
@@ -203,11 +200,10 @@ class DatabaseHelper {
         final bytes = bookingData['transaction_image_file'];
         if (bytes != null && imageName != null) {
           // পাথের শুরুতে ফোল্ডারের নাম জুড়ে দেওয়া হলো
-          final String path = 'payment_transaction/web_${DateTime.now().millisecondsSinceEpoch}_$imageName';
+          final String path =
+              'payment_transaction/web_${DateTime.now().millisecondsSinceEpoch}_$imageName';
 
-          await _client.storage
-              .from(bucketName)
-              .uploadBinary(path, bytes);
+          await _client.storage.from(bucketName).uploadBinary(path, bytes);
 
           imageUrl = _client.storage.from(bucketName).getPublicUrl(path);
         }
@@ -216,18 +212,19 @@ class DatabaseHelper {
         final file = bookingData['transaction_image_file'] as File?;
         if (file != null && imageName != null) {
           // পাথের শুরুতে ফোল্ডারের নাম জুড়ে দেওয়া হলো
-          final String path = 'payment_transaction/mobile_${DateTime.now().millisecondsSinceEpoch}_$imageName';
+          final String path =
+              'payment_transaction/mobile_${DateTime.now().millisecondsSinceEpoch}_$imageName';
 
-          await _client.storage
-              .from(bucketName)
-              .upload(path, file);
+          await _client.storage.from(bucketName).upload(path, file);
 
           imageUrl = _client.storage.from(bucketName).getPublicUrl(path);
         }
       }
 
       // ২. ডাটাবেস টেবিল ফরমেট অনুযায়ী ম্যাপ ক্লিনিং ও প্রিপারেশন
-      final Map<String, dynamic> dbData = Map<String, dynamic>.from(bookingData);
+      final Map<String, dynamic> dbData = Map<String, dynamic>.from(
+        bookingData,
+      );
       dbData.remove('transaction_image_file');
 
       // টেবিলের কলামে ইমেজের পাবলিক URL সেট করা
@@ -260,7 +257,7 @@ class DatabaseHelper {
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       print("Log: Severe Database Error in getUserBookings: $e");
-      return  [];
+      return [];
     }
   }
 
@@ -281,13 +278,18 @@ class DatabaseHelper {
           .maybeSingle();
 
       if (docSnap != null && docSnap['id'] != null) {
-        return docSnap['id'].toString(); // সফল হলে রিটার্ন করবে (যেমন: NSR-995814)
+        return docSnap['id']
+            .toString(); // সফল হলে রিটার্ন করবে (যেমন: NSR-995814)
       }
 
-      debugPrint("Helper Log: Firebase UID matched no user in Supabase 'users' table.");
+      debugPrint(
+        "Helper Log: Firebase UID matched no user in Supabase 'users' table.",
+      );
       return null;
     } catch (e) {
-      debugPrint("Helper Log: Severe Error fetching NSR ID from global utility: $e");
+      debugPrint(
+        "Helper Log: Severe Error fetching NSR ID from global utility: $e",
+      );
       return null;
     }
   }
@@ -303,25 +305,30 @@ class DatabaseHelper {
       await supabase
           .from('payment_verifications')
           .update({
-        'booking_status': newStatus,
-        'cancellation_notes': cancellationNotes,
-        'cancelled_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      })
+            'booking_status': newStatus,
+            'cancellation_notes': cancellationNotes,
+            'cancelled_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          })
           .eq('booking_id', bookingId);
-
     } catch (e) {
-      throw Exception("Database Error: Failed to update cancellation. Details: $e");
+      throw Exception(
+        "Database Error: Failed to update cancellation. Details: $e",
+      );
     }
   }
 
-
   /// apealed
   // 📥 ১. আপিল ইমেজ/স্ক্রিনশট 'user_assets' বাকেটের আন্ডারে আপলোড করার মেথড
-  Future<String?> uploadAppealImage(dynamic file, String imageName, String bookingId) async {
+  Future<String?> uploadAppealImage(
+    dynamic file,
+    String imageName,
+    String bookingId,
+  ) async {
     try {
       const String bucketName = 'user_assets';
-      final String path = 'appeals/${bookingId}_${DateTime.now().millisecondsSinceEpoch}_$imageName';
+      final String path =
+          'appeals/${bookingId}_${DateTime.now().millisecondsSinceEpoch}_$imageName';
 
       if (kIsWeb) {
         // ওয়েবের জন্য (Uint8List bytes)
@@ -364,7 +371,10 @@ class DatabaseHelper {
   }
 
   /// 📥 ২. ডাইনামিক কাস্টম পাথে ইমেজ 'user_assets' বাকেটে আপলোড করার মেথড
-  Future<String?> uploadAppealImageWithPath(dynamic fileToUpload, String storagePath) async {
+  Future<String?> uploadAppealImageWithPath(
+    dynamic fileToUpload,
+    String storagePath,
+  ) async {
     try {
       const String bucketName = 'user_assets';
 
@@ -400,20 +410,59 @@ class DatabaseHelper {
       await _client
           .from('payment_verifications')
           .update({
-        'booking_status': 'suspended', // মেইন স্ট্যাটাস লক থাকবে
-        'appeal_status': null,
-        'appeal_note': appealNote,
-        'appeal_image_url': appealImageUrl,
-        'appeal_count': appealCount,   // ডাটাবেজে নতুন কাউন্ট সেভ হবে
-        'appeal_cancel_notes': null,   // রি-আপিল করলে আগের রিজেকশন নোট মুছে ক্লিন হয়ে যাবে
-        'appeal_time_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      })
+            'booking_status': 'suspended', // মেইন স্ট্যাটাস লক থাকবে
+            'appeal_status': null,
+            'appeal_note': appealNote,
+            'appeal_image_url': appealImageUrl,
+            'appeal_count': appealCount, // ডাটাবেজে নতুন কাউন্ট সেভ হবে
+            'appeal_cancel_notes':
+                null, // রি-আপিল করলে আগের রিজেকশন নোট মুছে ক্লিন হয়ে যাবে
+            'appeal_time_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          })
           .eq('booking_id', bookingId);
 
-      debugPrint("✅ Appeal submitted & appeal_status set to null for #$bookingId");
+      debugPrint(
+        "✅ Appeal submitted & appeal_status set to null for #$bookingId",
+      );
     } catch (e) {
       throw Exception("Database Error: Failed to submit appeal. Details: $e");
+    }
+  }
+
+  /// Review Sheet insert
+  static Future<void> insertReview(Map<String, dynamic> reviewData) async {
+    try {
+      await _client.from('reviews').insert(reviewData);
+      debugPrint("✅ Review successfully saved to Supabase!");
+    } catch (e) {
+      debugPrint("❌ Error in insertReview: $e");
+      throw Exception("Failed to save review: $e");
+    }
+  }
+
+  // ==========================================
+  // 📸 নিচে এই নতুন মেথডটি হুবহু যোগ করুন
+  // ==========================================
+  static Future<String?> uploadImageBytes({
+    required String folder,
+    required String userId,
+    required Uint8List bytes,
+  }) async {
+    try {
+      final String fileName =
+          '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      const String bucketName =
+          'user_assets'; // 🟢 আপনার প্রজেক্টের সঠিক বাকেট নাম
+
+      await _client.storage
+          .from(bucketName)
+          .uploadBinary('$folder/$fileName', bytes);
+
+      return _client.storage.from(bucketName).getPublicUrl('$folder/$fileName');
+    } catch (e) {
+      debugPrint("❌ Error in uploadImageBytes: $e");
+      return null;
     }
   }
 }
