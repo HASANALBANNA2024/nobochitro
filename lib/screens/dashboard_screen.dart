@@ -234,7 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 5),
                   ResponsiveReviewList(
                     primaryAccent: primaryAccent,
-                    sectionTitle: "Client Testimonials",
+                    sectionTitle: "Client Review With us",
                   ),
                   const SizedBox(height: 80),
                 ],
@@ -246,7 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // 🟢 ক্লিন এবং ফিক্সড রিভিউ বাটন উইজেট (StatefulBuilder রিমুভড)
+  // Clean and fixed review button
   Widget _buildWriteReviewButton(BuildContext context, Color primaryAccent) {
     return AnimatedOpacity(
       opacity: _isReviewVisible ? 1.0 : 0.0,

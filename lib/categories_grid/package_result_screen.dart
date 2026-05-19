@@ -195,9 +195,11 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                     ),
                     const SizedBox(height: 20),
                     ResponsiveReviewList(
-                      primaryAccent: widget.primaryAccent,
-                      sectionTitle: "${widget.categoryName} Highlights",
-                      filterCategoryName: widget.categoryName,
+                      primaryAccent: const Color(0xFFE5A93C),
+                      sectionTitle:
+                          'Reviews for ${widget.categoryName}', // যেমন: Reviews for Wedding
+                      filterCategoryName:
+                          widget.categoryName, // ক্যাটাগরির নাম পাস করবেন
                     ),
                     const SizedBox(height: 50),
                   ],

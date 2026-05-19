@@ -139,7 +139,8 @@ class PhotographerProfileScreen extends StatelessWidget {
                       const SizedBox(height: 15),
                       ResponsiveReviewList(
                         primaryAccent: primaryAccent,
-                        sectionTitle: "Client Reviews",
+                        sectionTitle:
+                            "Client Reviews of ${photographerData['name']}",
                         filterPhotographerName: photographerData['name'],
                       ),
                       const SizedBox(height: 40),

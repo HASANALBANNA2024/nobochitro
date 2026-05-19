@@ -46,7 +46,6 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
   /// Fetch current user context and reviews sequentially
   Future<void> _initializeData() async {
     try {
-      // Get current user's NSR ID or Firebase UID safely
       _currentUserId = await DatabaseHelper.instance.getCurrentUserId();
     } catch (_) {
       _currentUserId = null;
@@ -57,7 +56,6 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
   /// Fetch reviews from Supabase and apply precise multi-level filtering
   Future<void> _fetchAndFilterReviews() async {
     try {
-      // Corrected: Fetch real data using the dedicated getReviews method
       List<Map<String, dynamic>> rawReviews = await DatabaseHelper.instance
           .getReviews();
 
@@ -135,12 +133,13 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
               ? 'Amazing service from #Wedding Luxury package! Highly recommended.'
               : 'The photo quality of my #Birthday Bash was top-notch.',
           'rating': 4.7,
-          'image_urls': index % 2 == 0
-              ? ['https://picsum.photos/500/500?random=$index']
-              : [],
+          'review_image_url': index % 2 == 0
+              ? 'https://picsum.photos/500/500?random=$index'
+              : null,
           'package_name': index % 2 == 0 ? 'Wedding Luxury' : 'Birthday Bash',
           'category_name': index % 2 == 0 ? 'Wedding' : 'Birthday',
           'photographer_name': 'John_Doe',
+          'user_avatar': null,
         };
       });
 
@@ -257,7 +256,6 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                 Navigator.pop(context);
                 setState(() => _isLoading = true);
                 try {
-                  // 🟢 FIX: Called static update method directly via Class name instead of instance
                   await DatabaseHelper.update(
                     table: 'reviews',
                     column: 'id',
@@ -394,7 +392,8 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount:
                               MediaQuery.of(context).size.width > 900 ? 3 : 1,
-                          mainAxisExtent: 220,
+                          mainAxisExtent:
+                              250, // রেসপন্সিভ এক্সটেন্ট ব্যালেন্স করা হয়েছে
                           crossAxisSpacing: 15,
                           mainAxisSpacing: 15,
                         ),
@@ -429,10 +428,11 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
           _currentPage % (_allReviews.isEmpty ? 1 : _allReviews.length),
     );
 
-    if (_isLoading)
+    if (_isLoading) {
       return const Center(
         child: CupertinoActivityIndicator(color: Colors.amber),
       );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -465,7 +465,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                 alignment: Alignment.center,
                 children: [
                   SizedBox(
-                    height: 230,
+                    height: 250, // ফেসবুক লেআউটের জন্য হাইট সামান্য বাড়ানো হলো
                     child: ScrollConfiguration(
                       behavior: ScrollConfiguration.of(context).copyWith(
                         dragDevices: {
@@ -571,34 +571,140 @@ class _ReviewCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  /// ফেসবুকে টেক্সট ফরম্যাটিংয়ের মতো করে ট্যাগ ও টেক্সট পার্স করার উইজেট লজিক
+  Widget _buildFormattedComment(String comment) {
+    if (!comment.contains('#') && !comment.contains('@')) {
+      return Text(
+        comment,
+        style: const TextStyle(
+          fontSize: 12,
+          color: Colors.white70,
+          height: 1.4,
+        ),
+      );
+    }
+
+    final List<InlineSpan> spans = [];
+    final words = comment.split(' ');
+
+    for (var word in words) {
+      if (word.startsWith('#')) {
+        spans.add(
+          TextSpan(
+            text: '$word ',
+            style: TextStyle(
+              color: primaryAccent,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        );
+      } else if (word.startsWith('@')) {
+        spans.add(
+          TextSpan(
+            text: '$word ',
+            style: const TextStyle(
+              color: Colors.blueAccent,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        );
+      } else {
+        spans.add(
+          TextSpan(
+            text: '$word ',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        );
+      }
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  /// সুপাবেস টেক্সট অ্যারে বা সিংগেল ইউআরএল থেকে ক্লিন ইমেজ লিস্ট জেনারেট করা
+  List<String> _parseReviewImages(dynamic rawUrl) {
+    if (rawUrl == null) return [];
+    String urlStr = rawUrl.toString().trim();
+    if (urlStr.isEmpty) return [];
+
+    // পোস্টগ্রেস টেক্সট অ্যারে হলে ফিক্সিং "{url1,url2}"
+    if (urlStr.startsWith('{') && urlStr.endsWith('}')) {
+      urlStr = urlStr.substring(1, urlStr.length - 1);
+      return urlStr
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return [urlStr];
+  }
+
   void _openImageLightbox(BuildContext context, String url) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: "Lightbox",
-      barrierColor: Colors.black12,
-      transitionDuration: const Duration(milliseconds: 250),
+      barrierColor: Colors.black87, // ফেসবুকের মতো রিয়েল ড্রপ ব্যাকগ্রাউন্ড
+      transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (context, anim1, anim2) {
-        return Stack(
-          children: [
-            Center(
-              child: InteractiveViewer(
-                clipBehavior: Clip.none,
-                child: Image.network(url, fit: BoxFit.contain),
-              ),
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF131313),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
             ),
-            Positioned(
-              top: 40,
-              right: 20,
-              child: Material(
-                color: Colors.transparent,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Navigator.pop(context),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
                 ),
-              ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: InteractiveViewer(
+                    clipBehavior: Clip.none,
+                    maxScale: 2.5,
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const SizedBox(
+                          height: 150,
+                          child: Center(
+                            child: CupertinoActivityIndicator(
+                              color: Colors.amber,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -609,21 +715,28 @@ class _ReviewCard extends StatelessWidget {
     final String name = review['user_name'] ?? "Anonymous";
     final String comment = review['comment'] ?? "";
     final double rating = (review['rating'] ?? 5.0).toDouble();
-    final List<dynamic> imageUrls = review['image_urls'] ?? [];
     final String rUserId = review['user_id'] ?? "anonymous_user";
 
-    // Check if this specific card belongs to the logged-in client
     final bool isOwnReview = currentUserId != null && currentUserId == rUserId;
     final bool isAnonymous =
         name.toLowerCase() == 'anonymous' || rUserId == 'anonymous_user';
+
+    // সুপাবেস ইমেজ স্ট্রাকচার কলাম ম্যাপিং
+    final List<String> parsedUrls = _parseReviewImages(
+      review['review_image_url'],
+    );
+    final String? userAvatarUrl = review['user_avatar'];
+
+    // ইউজার প্রোফাইল ইমেজ ডাইনামিক ক্যাশ রেন্ডারার
     final String profileUrl =
+        userAvatarUrl ??
         "https://ijxtbmgvtwvpkbshunwf.supabase.co/storage/v1/object/public/user_assets/profile_user_image/$rUserId.jpg";
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
         boxShadow: [
           BoxShadow(
@@ -639,17 +752,29 @@ class _ReviewCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              // 👤 ১০০% ক্রস-প্লাটফর্ম সার্কেল অ্যাভাটার সেফটি
               CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.grey[800],
-                backgroundImage: isAnonymous ? null : NetworkImage(profileUrl),
-                child: isAnonymous
-                    ? const Icon(
-                        Icons.person_outline,
-                        size: 16,
-                        color: Colors.amber,
-                      )
-                    : null,
+                child: ClipOval(
+                  child: isAnonymous
+                      ? const Icon(
+                          Icons.person_outline,
+                          size: 16,
+                          color: Colors.amber,
+                        )
+                      : Image.network(
+                          profileUrl,
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.person,
+                            size: 16,
+                            color: Colors.white60,
+                          ),
+                        ),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -673,7 +798,6 @@ class _ReviewCard extends StatelessWidget {
                 ),
               ),
 
-              // Show option popup trigger if it's the user's personal post row entry
               if (isOwnReview)
                 PopupMenuButton<String>(
                   icon: const Icon(
@@ -683,7 +807,6 @@ class _ReviewCard extends StatelessWidget {
                   ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(maxWidth: 100),
-                  // 🟢 FIX: Changed parameter from 'backgroundColor' to 'color' to support modern Flutter SDK standards
                   color: const Color(0xFF2C2C2C),
                   onSelected: (action) {
                     if (action == 'edit') onEdit();
@@ -734,40 +857,34 @@ class _ReviewCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+
+          // 📝 ফেসবুক স্টাইল টেক্সট ও ট্যাগ কন্টেনার (Scrollable & Responsive)
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              child: Text(
-                comment,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                  height: 1.4,
-                ),
-              ),
+              child: _buildFormattedComment(comment),
             ),
           ),
-          const SizedBox(height: 8),
-          if (imageUrls.isNotEmpty)
+
+          // 📸 রিভিউ টেক্সটের নিচে সুন্দর ফেসবুক স্টাইল থাম্বনেইল গ্যালারি লুপ
+          if (parsedUrls.isNotEmpty) ...[
+            const SizedBox(height: 8),
             SizedBox(
-              height: 45,
+              height: 48,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: imageUrls.length,
+                itemCount: parsedUrls.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
-                    onTap: () => _openImageLightbox(
-                      context,
-                      imageUrls[index].toString(),
-                    ),
+                    onTap: () => _openImageLightbox(context, parsedUrls[index]),
                     child: Container(
                       margin: const EdgeInsets.only(right: 8),
-                      width: 45,
+                      width: 48,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.white10),
                         image: DecorationImage(
-                          image: NetworkImage(imageUrls[index].toString()),
+                          image: NetworkImage(parsedUrls[index]),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -776,12 +893,14 @@ class _ReviewCard extends StatelessWidget {
                 },
               ),
             ),
+          ],
+
           Align(
             alignment: Alignment.bottomRight,
             child: Icon(
               Icons.format_quote_rounded,
-              size: 16,
-              color: primaryAccent.withOpacity(0.2),
+              size: 14,
+              color: primaryAccent.withOpacity(0.15),
             ),
           ),
         ],

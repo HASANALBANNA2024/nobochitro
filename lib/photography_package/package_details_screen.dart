@@ -6,6 +6,7 @@ import 'package:nobochitro/photography_package/package_comparison_table.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
 import '../authentication/login_screen.dart';
+import '../responsive_review_list/responsive_review_list.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final Color primaryAccent;
@@ -125,6 +126,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 const SizedBox(height: 20),
 
                 _buildBookButton(pkg),
+                const SizedBox(height: 20),
+                ResponsiveReviewList(
+                  primaryAccent: const Color(0xFFE5A93C),
+                  sectionTitle: 'Package Reviews',
+                  filterPackageName: pkg['title']?.toString(),
+                ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -253,26 +260,24 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           height: 56,
           child: ElevatedButton(
             onPressed: () {
-             if(FirebaseAuth.instance.currentUser!=null)
-               {
-                 Navigator.push(
-                   context,
-                   MaterialPageRoute(
-                     builder: (_) => BookingSummaryScreen(
-                       primaryAccent: widget.primaryAccent,
-                       packageData: widget.packageData,
-                     ),
-                   ),
-                 );
-               }
-             else{
-               showModalBottomSheet(
-                 context: context,
-                 isScrollControlled: true,
-                 backgroundColor: Colors.transparent,
-                 builder: (context) => const LoginModalSheet(),
-               );
-             }
+              if (FirebaseAuth.instance.currentUser != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookingSummaryScreen(
+                      primaryAccent: widget.primaryAccent,
+                      packageData: widget.packageData,
+                    ),
+                  ),
+                );
+              } else {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const LoginModalSheet(),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6342E8),
