@@ -54,40 +54,59 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
   @override
   void initState() {
     super.initState();
-    _initializeSheet();
-  }
-
-  void _initializeSheet() {
-    _controller.loadUserInformation().then((_) {
-      if (mounted) {
-        setState(() {
-          // 🏷️ ডাটাবেজের রিয়াল লগ অনুসারে `package_category` ফিল্ডটি ম্যাপিং করা হলো
-          if (widget.booking != null && widget.booking is Map) {
-            String package =
-                widget.booking['package_name'] ?? "Photography Session";
-            String photographer =
-                widget.booking['photographer_name'] ?? "NoboChitro Team";
-
-            // 🎯 আপনার ডাটাবেজের লগ অনুযায়ী 'package_category' চেক করবে, না পেলে 'category_name'
-            String category =
-                widget.booking['package_category'] ??
-                widget.booking['category_name'] ??
-                "Shoot";
-
-            _controller.reviewController.text =
-                "Amazing experience with #$package package under $category category. Special thanks to Photographer: @$photographer! ";
-          } else {
-            _controller.reviewController.text = "";
-          }
-
-          // সব ডাটা প্রসেসিং শেষে ইউজার স্টেট ট্রু হবে যাতে লাল এরর অ্যাসোশিয়েশন না আসে
-          _isUserLoaded = true;
-        });
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeSheet();
     });
   }
 
-  // 🖼️ মেমোরি লিক ও ওয়েব রেটিনা ট্র্যাকিং সেফ করতে ফিউচার প্রি-হ্যান্ডেলিং
+  void _initializeSheet() async {
+    if (widget.booking != null && widget.booking is Map) {
+      final Map<String, dynamic> bData = Map<String, dynamic>.from(
+        widget.booking as Map,
+      );
+
+      String extractedName = bData['user_name']?.toString() ?? "";
+      String extractedEmail =
+          bData['user_email']?.toString() ?? bData['email']?.toString() ?? "";
+      String? extractedAvatar =
+          bData['user_avatar']?.toString() ??
+          bData['profile_image']?.toString();
+
+      _controller.setManualUserInformation(
+        name: extractedName,
+        email: extractedEmail,
+        avatarUrl: extractedAvatar,
+      );
+    }
+
+    try {
+      await _controller.loadUserInformation();
+    } catch (e) {
+      debugPrint("Error loading user info: $e");
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      if (widget.booking != null && widget.booking is Map) {
+        String package =
+            widget.booking['package_name'] ?? "Photography Session";
+        String photographer =
+            widget.booking['photographer_name'] ?? "NoboChitro Team";
+        String category =
+            widget.booking['package_category'] ??
+            widget.booking['category_name'] ??
+            "Nature";
+
+        _controller.reviewController.text =
+            "Amazing experience with #$package package under $category category. Special thanks to Photographer: @$photographer! ";
+      } else {
+        _controller.reviewController.text = "";
+      }
+      _isUserLoaded = true;
+    });
+  }
+
   Future<Uint8List> _getImageBytes(String path, int index) async {
     if (_webImageCache.containsKey(path)) {
       return _webImageCache[path]!;
@@ -100,6 +119,32 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
     return bytes;
   }
 
+  void _handleFinalSubmit() async {
+    Map<String, dynamic>? bookingData;
+    if (widget.booking is Map) {
+      bookingData = Map<String, dynamic>.from(widget.booking as Map);
+    }
+
+    bool isSuccess = await _controller.submitReview(
+      context: context,
+      bookingData: bookingData,
+      onLoadingToggle: () {
+        if (mounted) setState(() {});
+      },
+    );
+
+    if (isSuccess && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Review posted successfully! 🎉"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
@@ -110,14 +155,14 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
         ? (screenWidth > 600 ? 550 : screenWidth)
         : screenWidth;
 
-    String displaySubtitle = "Posting global review";
-    if (widget.booking != null) {
-      if (widget.booking is Map && widget.booking['package_name'] != null) {
-        displaySubtitle = "Reviewing: ${widget.booking['package_name']}";
-      } else {
-        displaySubtitle = "Review ID: ${widget.booking.toString()}";
-      }
-    }
+    String displaySubtitle =
+        widget.booking is Map && widget.booking['package_name'] != null
+        ? "Reviewing: ${widget.booking['package_name']}"
+        : "Posting global review";
+
+    String userNameToShow = _controller.displayName.isNotEmpty
+        ? _controller.displayName
+        : "User";
 
     return Container(
       width: sheetWidth,
@@ -130,7 +175,7 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
       ),
       child: !_isUserLoaded
           ? const SizedBox(
-              height: 220,
+              height: 250,
               child: Center(
                 child: CupertinoActivityIndicator(
                   color: Colors.white,
@@ -155,19 +200,39 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                       ),
                     ),
                   ),
-
-                  /// User Profile Header
                   Row(
                     children: [
                       CircleAvatar(
                         radius: 22,
                         backgroundColor: Colors.grey[800],
-                        backgroundImage: _controller.userPhotoUrl != null
-                            ? NetworkImage(_controller.userPhotoUrl!)
-                            : null,
-                        child: _controller.userPhotoUrl == null
-                            ? const Icon(Icons.person, color: Colors.white70)
-                            : null,
+                        child: ClipOval(
+                          child:
+                              (_controller.userPhotoUrl != null &&
+                                  _controller.userPhotoUrl!.startsWith('http'))
+                              ? Image.network(
+                                  _controller.userPhotoUrl!,
+                                  fit: BoxFit.cover,
+                                  width: 44,
+                                  height: 44,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.person,
+                                      color: Colors.white70,
+                                    );
+                                  },
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return const Center(
+                                          child: CupertinoActivityIndicator(
+                                            radius: 8,
+                                          ),
+                                        );
+                                      },
+                                )
+                              : const Icon(Icons.person, color: Colors.white70),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -175,7 +240,7 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _controller.displayName,
+                              userNameToShow,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -206,8 +271,6 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                     ),
                   ),
                   const SizedBox(height: 15),
-
-                  /// Rating Stars
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -230,8 +293,6 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  /// Comments Box
                   TextField(
                     controller: _controller.reviewController,
                     maxLines: 4,
@@ -248,8 +309,6 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                     ),
                   ),
                   const SizedBox(height: 15),
-
-                  /// 🖼️ লাইভ মাল্টি-ইমেজ প্রিভিউ সেকশন
                   if (_controller.selectedImages.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(bottom: 15),
@@ -258,8 +317,9 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                         scrollDirection: Axis.horizontal,
                         itemCount: _controller.selectedImages.length,
                         itemBuilder: (context, index) {
-                          if (index >= _controller.selectedImages.length)
+                          if (index >= _controller.selectedImages.length) {
                             return const SizedBox.shrink();
+                          }
                           final imageFile = _controller.selectedImages[index];
                           return Stack(
                             key: ValueKey("${imageFile.path}_$index"),
@@ -322,8 +382,6 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                         },
                       ),
                     ),
-
-                  /// Tools Row
                   Row(
                     children: [
                       _actionButton(Icons.camera_alt_outlined, "Add Photo", () {
@@ -349,27 +407,7 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
                     child: ElevatedButton(
                       onPressed: _controller.isLoading
                           ? null
-                          : () async {
-                              Map<String, dynamic>? finalBookingData;
-                              if (widget.booking is Map<String, dynamic>) {
-                                finalBookingData = widget.booking;
-                              } else if (widget.booking is String) {
-                                finalBookingData = {
-                                  'booking_id': widget.booking,
-                                };
-                              }
-
-                              bool isSuccess = await _controller.submitReview(
-                                context: context,
-                                bookingData: finalBookingData,
-                                onLoadingToggle: () {
-                                  if (mounted) setState(() {});
-                                },
-                              );
-                              if (isSuccess && mounted) {
-                                Navigator.pop(context);
-                              }
-                            },
+                          : _handleFinalSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ReviewService.goldColor,
                         shape: RoundedRectangleBorder(

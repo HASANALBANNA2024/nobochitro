@@ -13,33 +13,46 @@ class ReviewController {
   bool isLoading = false;
 
   String displayName = "anonymous_user";
-  String displayEmail = ""; // 🟢 ডিফল্ট ইমেইল একদম খালি রাখা হলো
+  String displayEmail = "";
   String? userPhotoUrl;
   String? customNsrId;
 
-  /// 👤 ইউজারের প্রোফাইল ডাটা লোড করা
+  /// 👤 বুকিং ডাটা থেকে সরাসরি নাম, ইমেইল এবং প্রোফাইল পিকচার কন্ট্রোলারে সেট করা
+  void setManualUserInformation({
+    required String name,
+    required String email,
+    String? avatarUrl,
+  }) {
+    if (name.trim().isNotEmpty) displayName = name;
+    if (email.trim().isNotEmpty) displayEmail = email;
+    if (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+      userPhotoUrl = avatarUrl;
+  }
+
+  /// 👤 ইউজারের প্রোফাইল ডাটা লোড করা (ফায়ারবেস ও লোকাল ডিবি থেকে)
   Future<void> loadUserInformation() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       customNsrId = await DatabaseHelper.instance.getCurrentUserNsrId();
 
-      // ইউজার লগইন থাকলে তার নাম ও ইমেইল সেট করা
-      displayName =
-          user.displayName ??
-          (user.email != null ? user.email!.split('@')[0] : "anonymous_user");
-      displayEmail = user.email ?? ""; // লগইন থাকলে রিয়াল ইমেইল
+      if (displayName == "anonymous_user") {
+        displayName =
+            user.displayName ??
+            (user.email != null ? user.email!.split('@')[0] : "anonymous_user");
+      }
+      if (displayEmail.isEmpty) {
+        displayEmail = user.email ?? "";
+      }
 
       if (customNsrId != null) {
         userPhotoUrl =
             "https://ijxtbmgvtwvpkbshunwf.supabase.co/storage/v1/object/public/user_assets/profile_user_image/$customNsrId.jpg";
       } else {
-        userPhotoUrl = user.photoURL;
+        userPhotoUrl ??= user.photoURL;
       }
     } else {
-      // 🟢 ইউজার লগইন না থাকলে নাম anonymous_user এবং ইমেইল সম্পূর্ণ ফাকা/খালি থাকবে
-      displayName = "anonymous_user";
-      displayEmail = "";
-      userPhotoUrl = null;
+      if (displayName == "anonymous_user") displayName = "anonymous_user";
+      if (displayEmail.isEmpty) displayEmail = "";
     }
   }
 
@@ -61,7 +74,7 @@ class ReviewController {
     onUpdate();
   }
 
-  /// 🚀 মাল্টি-ইমেজ কমা সেপারেটেড লিংকসহ রিভিউ পোস্ট করার মেথড
+  /// 🚀 সুপাবেস টেবিলের ১৭টি কলামের সাথে ম্যাচ করা ফুল সাবমিট মেথড
   Future<bool> submitReview({
     required BuildContext context,
     Map<String, dynamic>? bookingData,
@@ -84,7 +97,7 @@ class ReviewController {
           FirebaseAuth.instance.currentUser?.uid ??
           "anonymous_user";
 
-      // 🔄 ইমেজ আপলোড সাইকেল (ওয়েব সেফ বাইটস রিড)
+      // 🔄 ইমেজ আপলোড প্রসেস
       if (selectedImages.isNotEmpty) {
         for (int i = 0; i < selectedImages.length; i++) {
           final bytes = await selectedImages[i].readAsBytes();
@@ -100,32 +113,44 @@ class ReviewController {
         }
       }
 
-      // 📎 সব ইমেজ লিংক একসাথে করে কমা দিয়ে সেপারেট করা স্ট্রিং জেনারেশন
-      String commaSeparatedImageUrls = uploadedUrls.isNotEmpty
-          ? uploadedUrls.join(',')
-          : "";
+      // 🎯 Supabase Text Array ফরম্যাট
+      dynamic finalReviewImages;
+      if (uploadedUrls.isNotEmpty) {
+        finalReviewImages = "{${uploadedUrls.join(',')}}";
+      } else {
+        finalReviewImages = null;
+      }
 
-      // 🟢 ডাইনামিক বুকিং ও ক্যাটাগরি ডাটা ফিল্টারিং (ড্যাশবোর্ড মোডে অটোমেশন নাল হ্যান্ডেল করবে)
-      final String? packageName = bookingData?['package_name'];
-      final String? photographerName = bookingData?['photographer_name'];
-      final String? categoryName = bookingData?['category_name'];
-      final String? bookingId = bookingData?['booking_id'];
+      // 🟢 টেবিলের কলাম স্ক্রিনশট অনুযায়ী ডাটা ম্যাপ ফিক্সিং
+      final String? bookingId =
+          bookingData?['booking_id']?.toString() ??
+          bookingData?['id']?.toString();
+      final String? packageId = bookingData?['package_id']?.toString();
+      final String? packageName = bookingData?['package_name']?.toString();
+      final String? photographerId = bookingData?['photographer_id']
+          ?.toString();
+      final String? photographerName = bookingData?['photographer_name']
+          ?.toString();
+      final String? categoryName =
+          bookingData?['package_category']?.toString() ??
+          bookingData?['category_name']?.toString();
 
       final Map<String, dynamic> reviewData = {
+        'booking_id': bookingId,
+        'photographer_id': photographerId,
         'user_id': userIdForUpload,
-        'user_name':
-            displayName, // লগইন থাকলে অরিজিনাল নাম, না থাকলে anonymous_user
-        'user_email':
-            displayEmail, // লগইন থাকলে অরিজিনাল ইমেইল, না থাকলে একদম খালি ""
-        'comment': reviewController.text.trim(),
+        'user_name': displayName,
         'rating': rating,
+        'comment': reviewController.text.trim(),
+        'created_at': DateTime.now().toIso8601String(),
+        'package_id': packageId, // 🎯 স্ক্রিনশট অনুযায়ী ফিক্সড কলাম
         'review_image_url':
-            commaSeparatedImageUrls, // কমা দিয়ে সাজানো ছবির স্ট্রিং
+            finalReviewImages, // 🎯 স্ক্রিনশট অনুযায়ী ARRAY টাইপ কলাম
         'package_name': packageName,
         'photographer_name': photographerName,
-        'category_name': categoryName, // 🎯 ডাইনামিক ক্যাটাগরি নেম সাপোর্ট
-        'booking_id': bookingId,
-        'created_at': DateTime.now().toIso8601String(),
+        'category_name': categoryName,
+        'user_avatar': userPhotoUrl, // 🎯 স্ক্রিনশট অনুযায়ী কলাম
+        'user_email': displayEmail.isNotEmpty ? displayEmail : null,
       };
 
       await DatabaseHelper.insertReview(reviewData);

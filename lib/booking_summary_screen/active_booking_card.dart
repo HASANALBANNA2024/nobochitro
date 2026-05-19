@@ -85,16 +85,19 @@ class ActiveBookingCard extends StatelessWidget {
     bool isHandoverStage = currentStep == 4;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(
+        14,
+      ), // প্যাডিং কিছুটা অপ্টিমাইজ করা হয়েছে যেন অতিরিক্ত স্পেস না নেয়
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize
+            .min, // কার্ডকে কন্টেন্টের সমান টাইট রাখবে, বাড়তি স্পেস নিবে না
         children: [
           Row(
             children: [
@@ -145,27 +148,27 @@ class ActiveBookingCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             packageTitle,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.wallet, size: 16, color: Colors.grey),
+              const Icon(Icons.wallet, size: 15, color: Colors.grey),
               const SizedBox(width: 5),
               const Text(
                 "Payment: ",
-                style: TextStyle(color: Colors.grey, fontSize: 13),
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
               Text(
                 isCompleted ? "Fully Paid" : "Pending Verification",
                 style: TextStyle(
                   color: isCompleted ? Colors.green : Colors.blue,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -174,43 +177,49 @@ class ActiveBookingCard extends StatelessWidget {
                 amountStr,
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  fontSize: 16,
+                  fontSize: 15,
                   color: primaryAccent,
                 ),
               ),
             ],
           ),
-          const Divider(height: 30, thickness: 0.5),
+          const Divider(height: 20, thickness: 0.5),
           Row(
             children: [
-              _infoTile(Icons.calendar_today, dateStr),
-              const SizedBox(width: 20),
-              _infoTile(Icons.access_time, timeStr),
+              Expanded(child: _infoTile(Icons.calendar_today, dateStr)),
+              const SizedBox(width: 10),
+              Expanded(child: _infoTile(Icons.access_time, timeStr)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _infoTile(
             Icons.camera_alt_outlined,
             "Photographer: $photographerName",
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _infoTile(Icons.location_on_outlined, locationStr),
-          const Divider(height: 30, thickness: 0.5),
+          const Divider(height: 20, thickness: 0.5),
+
+          // 🎯 টাইমলাইন রো যা স্ক্রিন সাইজ অনুযায়ী সংকুচিত হতে পারবে (No Overflow)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTimelineStep("Pending", currentStep >= 0),
+              Expanded(child: _buildTimelineStep("Pending", currentStep >= 0)),
               _buildTimelineArrow(currentStep >= 1),
-              _buildTimelineStep("Approved", currentStep >= 1),
+              Expanded(child: _buildTimelineStep("Approved", currentStep >= 1)),
               _buildTimelineArrow(currentStep >= 2),
-              _buildTimelineStep("Shooting", currentStep >= 2),
+              Expanded(child: _buildTimelineStep("Shooting", currentStep >= 2)),
               _buildTimelineArrow(currentStep >= 3),
-              _buildTimelineStep("Final Draft", currentStep >= 3),
+              Expanded(
+                child: _buildTimelineStep("Final Draft", currentStep >= 3),
+              ),
               _buildTimelineArrow(currentStep >= 4),
-              _buildTimelineStep("Handover", currentStep >= 4),
+              Expanded(child: _buildTimelineStep("Handover", currentStep >= 4)),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(
+            height: 12,
+          ), // টাইমলাইন ও বাটনের মাঝের স্পেস টাইট করা হলো যেন নিচে উপচে না পড়ে
           Row(
             children: [
               Expanded(
@@ -232,23 +241,25 @@ class ActiveBookingCard extends StatelessWidget {
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: primaryAccent),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: Text(
                     isHandoverStage ? "Drive Link" : "View Details",
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: isHandoverStage
                     ? ElevatedButton(
                         onPressed: () {
-                          // 🎯 সম্পূর্ণ বুকিং ডাটা পাস করা হচ্ছে রিভিউ শিটে
                           ReviewService.showReviewSheet(
                             context,
                             booking: booking,
@@ -257,17 +268,17 @@ class ActiveBookingCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryAccent,
                           foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          elevation: 2,
+                          elevation: 1,
                         ),
                         child: const Text(
                           "Review",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 12,
                           ),
                         ),
                       )
@@ -275,16 +286,17 @@ class ActiveBookingCard extends StatelessWidget {
                         onPressed: onCancel,
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Colors.redAccent),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: const Text(
                           "Cancel",
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -302,20 +314,25 @@ class ActiveBookingCard extends StatelessWidget {
       children: [
         Icon(
           isActive ? Icons.check_circle : Icons.radio_button_unchecked,
-          size: 12,
+          size: 10,
           color: isActive
               ? Colors.green
               : (isDark ? Colors.white30 : Colors.black26),
         ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            color: isActive
-                ? (isDark ? Colors.white : Colors.black87)
-                : Colors.grey,
+        const SizedBox(height: 1),
+        // 🎯 FittedBox ছোট স্ক্রিনে টেক্সট সাইজ অটোমেটিক ছোট করে রেন্ডার করবে
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              color: isActive
+                  ? (isDark ? Colors.white : Colors.black87)
+                  : Colors.grey,
+            ),
           ),
         ),
       ],
@@ -325,17 +342,15 @@ class ActiveBookingCard extends StatelessWidget {
   Widget _buildTimelineArrow(bool isActive) {
     return Expanded(
       child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "➔",
-              style: TextStyle(
-                fontSize: 9,
-                color: isActive ? Colors.green : Colors.grey.withOpacity(0.3),
-              ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "➔",
+            style: TextStyle(
+              fontSize: 8,
+              color: isActive ? Colors.green : Colors.grey.withOpacity(0.3),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -344,10 +359,11 @@ class ActiveBookingCard extends StatelessWidget {
   Widget _infoTile(IconData icon, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(icon, size: 13, color: Colors.grey),
         const SizedBox(width: 5),
-        Flexible(
+        Expanded(
           child: Text(
             text,
             maxLines: 1,
