@@ -392,8 +392,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount:
                               MediaQuery.of(context).size.width > 900 ? 3 : 1,
-                          mainAxisExtent:
-                              250, // রেসপন্সিভ এক্সটেন্ট ব্যালেন্স করা হয়েছে
+                          mainAxisExtent: 250,
                           crossAxisSpacing: 15,
                           mainAxisSpacing: 15,
                         ),
@@ -465,7 +464,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                 alignment: Alignment.center,
                 children: [
                   SizedBox(
-                    height: 250, // ফেসবুক লেআউটের জন্য হাইট সামান্য বাড়ানো হলো
+                    height: 250, // facebook layout height express
                     child: ScrollConfiguration(
                       behavior: ScrollConfiguration.of(context).copyWith(
                         dragDevices: {
@@ -571,7 +570,7 @@ class _ReviewCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  /// ফেসবুকে টেক্সট ফরম্যাটিংয়ের মতো করে ট্যাগ ও টেক্সট পার্স করার উইজেট লজিক
+  /// facebook tags formatting
   Widget _buildFormattedComment(String comment) {
     if (!comment.contains('#') && !comment.contains('@')) {
       return Text(
