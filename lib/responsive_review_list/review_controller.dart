@@ -7,12 +7,13 @@ class ReviewController {
   int rating = 0;
   final TextEditingController reviewController = TextEditingController();
 
-  // 🟢 XFile ব্যবহার করা হলো যা মোবাইল ও ওয়েব দুই জায়গাতেই প্রিভিউ ফ্রেন্ডলি
+  // ক্রস-প্লাটফর্ম সেফ XFile লিস্ট
   final List<XFile> selectedImages = [];
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
 
-  String displayName = "Anonymous";
+  String displayName = "anonymous_user";
+  String displayEmail = ""; // 🟢 ডিফল্ট ইমেইল একদম খালি রাখা হলো
   String? userPhotoUrl;
   String? customNsrId;
 
@@ -21,9 +22,12 @@ class ReviewController {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       customNsrId = await DatabaseHelper.instance.getCurrentUserNsrId();
+
+      // ইউজার লগইন থাকলে তার নাম ও ইমেইল সেট করা
       displayName =
           user.displayName ??
-          (user.email != null ? user.email!.split('@')[0] : "Anonymous");
+          (user.email != null ? user.email!.split('@')[0] : "anonymous_user");
+      displayEmail = user.email ?? ""; // লগইন থাকলে রিয়াল ইমেইল
 
       if (customNsrId != null) {
         userPhotoUrl =
@@ -31,6 +35,11 @@ class ReviewController {
       } else {
         userPhotoUrl = user.photoURL;
       }
+    } else {
+      // 🟢 ইউজার লগইন না থাকলে নাম anonymous_user এবং ইমেইল সম্পূর্ণ ফাকা/খালি থাকবে
+      displayName = "anonymous_user";
+      displayEmail = "";
+      userPhotoUrl = null;
     }
   }
 
@@ -52,7 +61,7 @@ class ReviewController {
     onUpdate();
   }
 
-  /// 🚀 মাল্টি-ইমেজসহ রিভিউ সাবমিট করার লজিক
+  /// 🚀 মাল্টি-ইমেজ কমা সেপারেটেড লিংকসহ রিভিউ পোস্ট করার মেথড
   Future<bool> submitReview({
     required BuildContext context,
     Map<String, dynamic>? bookingData,
@@ -75,7 +84,7 @@ class ReviewController {
           FirebaseAuth.instance.currentUser?.uid ??
           "anonymous_user";
 
-      // 🔄 সুপাবেস বাকেটের 'review_images' ফোল্ডারে আপলোড
+      // 🔄 ইমেজ আপলোড সাইকেল (ওয়েব সেফ বাইটস রিড)
       if (selectedImages.isNotEmpty) {
         for (int i = 0; i < selectedImages.length; i++) {
           final bytes = await selectedImages[i].readAsBytes();
@@ -91,20 +100,30 @@ class ReviewController {
         }
       }
 
-      final String packageName =
-          bookingData?['package_name'] ?? "General App Review";
-      final String photographerName =
-          bookingData?['photographer_name'] ?? "NoboChitro Team";
+      // 📎 সব ইমেজ লিংক একসাথে করে কমা দিয়ে সেপারেট করা স্ট্রিং জেনারেশন
+      String commaSeparatedImageUrls = uploadedUrls.isNotEmpty
+          ? uploadedUrls.join(',')
+          : "";
+
+      // 🟢 ডাইনামিক বুকিং ও ক্যাটাগরি ডাটা ফিল্টারিং (ড্যাশবোর্ড মোডে অটোমেশন নাল হ্যান্ডেল করবে)
+      final String? packageName = bookingData?['package_name'];
+      final String? photographerName = bookingData?['photographer_name'];
+      final String? categoryName = bookingData?['category_name'];
       final String? bookingId = bookingData?['booking_id'];
 
       final Map<String, dynamic> reviewData = {
         'user_id': userIdForUpload,
-        'user_name': displayName,
+        'user_name':
+            displayName, // লগইন থাকলে অরিজিনাল নাম, না থাকলে anonymous_user
+        'user_email':
+            displayEmail, // লগইন থাকলে অরিজিনাল ইমেইল, না থাকলে একদম খালি ""
         'comment': reviewController.text.trim(),
         'rating': rating,
-        'image_urls': uploadedUrls,
+        'review_image_url':
+            commaSeparatedImageUrls, // কমা দিয়ে সাজানো ছবির স্ট্রিং
         'package_name': packageName,
         'photographer_name': photographerName,
+        'category_name': categoryName, // 🎯 ডাইনামিক ক্যাটাগরি নেম সাপোর্ট
         'booking_id': bookingId,
         'created_at': DateTime.now().toIso8601String(),
       };

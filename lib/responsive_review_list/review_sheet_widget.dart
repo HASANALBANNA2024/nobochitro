@@ -49,7 +49,7 @@ class _DynamicReviewSheet extends StatefulWidget {
 class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
   final ReviewController _controller = ReviewController();
   bool _isUserLoaded = false;
-  final Map<String, Uint8List> _webImageCache = {}; // ওয়েব প্রিভিউ মেমোরি ক্যাশ
+  final Map<String, Uint8List> _webImageCache = {};
 
   @override
   void initState() {
@@ -61,26 +61,39 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
     _controller.loadUserInformation().then((_) {
       if (mounted) {
         setState(() {
-          _isUserLoaded = true;
-
-          // 🏷️ অটো-ট্যাগিং এবং কাস্টম কমেন্ট জেনারেটর লজিক
+          // 🏷️ ডাটাবেজের রিয়াল লগ অনুসারে `package_category` ফিল্ডটি ম্যাপিং করা হলো
           if (widget.booking != null && widget.booking is Map) {
             String package =
                 widget.booking['package_name'] ?? "Photography Session";
             String photographer =
                 widget.booking['photographer_name'] ?? "NoboChitro Team";
+
+            // 🎯 আপনার ডাটাবেজের লগ অনুযায়ী 'package_category' চেক করবে, না পেলে 'category_name'
+            String category =
+                widget.booking['package_category'] ??
+                widget.booking['category_name'] ??
+                "Shoot";
+
             _controller.reviewController.text =
-                "Amazing experience with #$package package. Specialized thanks to Photographer: @$photographer! ";
+                "Amazing experience with #$package package under $category category. Special thanks to Photographer: @$photographer! ";
+          } else {
+            _controller.reviewController.text = "";
           }
+
+          // সব ডাটা প্রসেসিং শেষে ইউজার স্টেট ট্রু হবে যাতে লাল এরর অ্যাসোশিয়েশন না আসে
+          _isUserLoaded = true;
         });
       }
     });
   }
 
-  // 🖼️ ব্রাউজারে সেফলি মেমোরি বাইটস লোড করার ফাংশন
+  // 🖼️ মেমোরি লিক ও ওয়েব রেটিনা ট্র্যাকিং সেফ করতে ফিউচার প্রি-হ্যান্ডেলিং
   Future<Uint8List> _getImageBytes(String path, int index) async {
     if (_webImageCache.containsKey(path)) {
       return _webImageCache[path]!;
+    }
+    if (index >= _controller.selectedImages.length) {
+      return Uint8List(0);
     }
     final bytes = await _controller.selectedImages[index].readAsBytes();
     _webImageCache[path] = bytes;
@@ -93,7 +106,6 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // 🟢 রেসপনসিভ উইডথ: ওয়েবে ফুলস্ক্রিন ছড়াবে না, মিডল বা সুন্দর সাইজে থাকবে
     double sheetWidth = kIsWeb
         ? (screenWidth > 600 ? 550 : screenWidth)
         : screenWidth;
@@ -116,250 +128,272 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
         color: ReviewService.surfaceColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 45,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[850],
-                  borderRadius: BorderRadius.circular(10),
+      child: !_isUserLoaded
+          ? const SizedBox(
+              height: 220,
+              child: Center(
+                child: CupertinoActivityIndicator(
+                  color: Colors.white,
+                  radius: 15,
                 ),
               ),
-            ),
-
-            /// User Profile Header
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.grey[800],
-                  backgroundImage: _controller.userPhotoUrl != null
-                      ? NetworkImage(_controller.userPhotoUrl!)
-                      : null,
-                  child: _controller.userPhotoUrl == null
-                      ? const Icon(Icons.person, color: Colors.white70)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _controller.displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+            )
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 45,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[850],
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        displaySubtitle,
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
+                    ),
+                  ),
+
+                  /// User Profile Header
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: Colors.grey[800],
+                        backgroundImage: _controller.userPhotoUrl != null
+                            ? NetworkImage(_controller.userPhotoUrl!)
+                            : null,
+                        child: _controller.userPhotoUrl == null
+                            ? const Icon(Icons.person, color: Colors.white70)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _controller.displayName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              displaySubtitle,
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const Divider(color: Colors.white10, height: 25),
-            const Text(
-              "Share Experience",
-              style: TextStyle(
-                color: ReviewService.goldColor,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 15),
-
-            /// Rating Stars
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  5,
-                  (index) => GestureDetector(
-                    onTap: () => setState(() => _controller.rating = index + 1),
-                    child: Icon(
-                      index < _controller.rating
-                          ? Icons.star_rounded
-                          : Icons.star_outline_rounded,
-                      color: index < _controller.rating
-                          ? Colors.amber
-                          : Colors.white10,
-                      size: 42,
+                  const Divider(color: Colors.white10, height: 25),
+                  const Text(
+                    "Share Experience",
+                    style: TextStyle(
+                      color: ReviewService.goldColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+                  const SizedBox(height: 15),
 
-            /// Comments Box
-            TextField(
-              controller: _controller.reviewController,
-              maxLines: 4,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "Write your review here...",
-                hintStyle: const TextStyle(color: Colors.white24),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-
-            /// 🖼️ ফেসবুক স্টাইল লাইভ মাল্টি-ইমেজ প্রিভিউ (ওয়েব+মোবাইল ফ্রেন্ডলি)
-            if (_controller.selectedImages.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(bottom: 15),
-                height: 90,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _controller.selectedImages.length,
-                  itemBuilder: (context, index) {
-                    final imageFile = _controller.selectedImages[index];
-                    return Stack(
-                      key: ValueKey(imageFile.path),
-                      children: [
-                        FutureBuilder<Uint8List>(
-                          future: _getImageBytes(imageFile.path, index),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                    ConnectionState.done &&
-                                snapshot.hasData) {
-                              return Container(
-                                margin: const EdgeInsets.only(right: 10),
-                                width: 80,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  image: DecorationImage(
-                                    image: MemoryImage(snapshot.data!),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            }
-                            return Container(
-                              margin: const EdgeInsets.only(right: 10),
-                              width: 80,
-                              color: Colors.white10,
-                              child: const CupertinoActivityIndicator(),
-                            );
-                          },
-                        ),
-                        Positioned(
-                          right: 12,
-                          top: 2,
-                          child: GestureDetector(
-                            onTap: () {
-                              _webImageCache.remove(imageFile.path);
-                              _controller.removeImage(index, () {
-                                if (mounted) setState(() {});
-                              });
-                            },
-                            child: const CircleAvatar(
-                              radius: 10,
-                              backgroundColor: Colors.red,
-                              child: Icon(
-                                Icons.close,
-                                size: 12,
-                                color: Colors.white,
-                              ),
-                            ),
+                  /// Rating Stars
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        5,
+                        (index) => GestureDetector(
+                          onTap: () =>
+                              setState(() => _controller.rating = index + 1),
+                          child: Icon(
+                            index < _controller.rating
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            color: index < _controller.rating
+                                ? Colors.amber
+                                : Colors.white10,
+                            size: 42,
                           ),
                         ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-
-            /// Tools Row
-            Row(
-              children: [
-                _actionButton(Icons.camera_alt_outlined, "Add Photo", () {
-                  _controller.pickImage(() {
-                    if (mounted) setState(() {});
-                  });
-                }),
-                const SizedBox(width: 10),
-                _actionButton(Icons.person_add_alt_1_outlined, "Tag", () {
-                  // ড্যাশবোর্ড বা জেনারেল রিভিউ এর জন্য ম্যানুয়াল ট্যাগিং পপআপ চাইলে করতে পারেন
-                  setState(() {
-                    _controller.reviewController.text +=
-                        " #Photography_Session ";
-                  });
-                }),
-              ],
-            ),
-            const SizedBox(height: 25),
-
-            /// Submit Button
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: _controller.isLoading
-                    ? null
-                    : () async {
-                        Map<String, dynamic>? finalBookingData;
-                        if (widget.booking is Map<String, dynamic>) {
-                          finalBookingData = widget.booking;
-                        } else if (widget.booking is String) {
-                          finalBookingData = {'booking_id': widget.booking};
-                        }
-
-                        bool isSuccess = await _controller.submitReview(
-                          context: context,
-                          bookingData: finalBookingData,
-                          onLoadingToggle: () {
-                            if (mounted) setState(() {});
-                          },
-                        );
-                        if (isSuccess && mounted) {
-                          Navigator.pop(context);
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ReviewService.goldColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 5,
-                ),
-                child: _controller.isLoading
-                    ? const CupertinoActivityIndicator(color: Colors.black)
-                    : const Text(
-                        "POST REVIEW",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  /// Comments Box
+                  TextField(
+                    controller: _controller.reviewController,
+                    maxLines: 4,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: "Write your review here...",
+                      hintStyle: const TextStyle(color: Colors.white24),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.05),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  /// 🖼️ লাইভ মাল্টি-ইমেজ প্রিভিউ সেকশন
+                  if (_controller.selectedImages.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 15),
+                      height: 90,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _controller.selectedImages.length,
+                        itemBuilder: (context, index) {
+                          if (index >= _controller.selectedImages.length)
+                            return const SizedBox.shrink();
+                          final imageFile = _controller.selectedImages[index];
+                          return Stack(
+                            key: ValueKey("${imageFile.path}_$index"),
+                            children: [
+                              FutureBuilder<Uint8List>(
+                                future: _getImageBytes(imageFile.path, index),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                          ConnectionState.done &&
+                                      snapshot.hasData &&
+                                      snapshot.data!.isNotEmpty) {
+                                    return Container(
+                                      margin: const EdgeInsets.only(right: 10),
+                                      width: 80,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        image: DecorationImage(
+                                          image: MemoryImage(snapshot.data!),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return Container(
+                                    margin: const EdgeInsets.only(right: 10),
+                                    width: 80,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white10,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Center(
+                                      child: CupertinoActivityIndicator(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              Positioned(
+                                right: 12,
+                                top: 2,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    _webImageCache.remove(imageFile.path);
+                                    _controller.removeImage(index, () {
+                                      if (mounted) setState(() {});
+                                    });
+                                  },
+                                  child: const CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: Colors.red,
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                  /// Tools Row
+                  Row(
+                    children: [
+                      _actionButton(Icons.camera_alt_outlined, "Add Photo", () {
+                        _controller.pickImage(() {
+                          if (mounted) setState(() {});
+                        });
+                      }),
+                      const SizedBox(width: 10),
+                      _actionButton(Icons.person_add_alt_1_outlined, "Tag", () {
+                        setState(() {
+                          _controller.reviewController.text +=
+                              " #Photography_Session ";
+                        });
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+
+                  /// Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _controller.isLoading
+                          ? null
+                          : () async {
+                              Map<String, dynamic>? finalBookingData;
+                              if (widget.booking is Map<String, dynamic>) {
+                                finalBookingData = widget.booking;
+                              } else if (widget.booking is String) {
+                                finalBookingData = {
+                                  'booking_id': widget.booking,
+                                };
+                              }
+
+                              bool isSuccess = await _controller.submitReview(
+                                context: context,
+                                bookingData: finalBookingData,
+                                onLoadingToggle: () {
+                                  if (mounted) setState(() {});
+                                },
+                              );
+                              if (isSuccess && mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ReviewService.goldColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        elevation: 5,
+                      ),
+                      child: _controller.isLoading
+                          ? const CupertinoActivityIndicator(
+                              color: Colors.black,
+                            )
+                          : const Text(
+                              "POST REVIEW",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 

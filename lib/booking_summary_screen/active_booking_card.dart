@@ -3,8 +3,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../responsive_review_list/review_sheet_widget.dart' show ReviewService;
 
-/// completed package of Completed Drive
-
 class ActiveBookingCard extends StatelessWidget {
   final Map<String, dynamic> booking;
   final bool isDark;
@@ -43,7 +41,6 @@ class ActiveBookingCard extends StatelessWidget {
         .toLowerCase();
     String? driveLink = booking['drive_link_handover'];
 
-    // Days to go for upcoming package
     String upperBadgeText = "Upcoming";
     Color badgeColor = Colors.amber;
     try {
@@ -59,30 +56,31 @@ class ActiveBookingCard extends StatelessWidget {
         if (difference.isNegative) {
           upperBadgeText = "Passed";
         } else {
-          if (difference.inDays > 0)
+          if (difference.inDays > 0) {
             upperBadgeText = "${difference.inDays} Days to Go";
-          else if (difference.inHours > 0)
+          } else if (difference.inHours > 0) {
             upperBadgeText = "${difference.inHours} Hours to Go";
-          else
+          } else {
             upperBadgeText = "Today";
+          }
         }
       }
     } catch (_) {}
 
-    // Regular Time line tracking
     int currentStep = 0;
-    if (bookingStatus == "pending")
+    if (bookingStatus == "pending") {
       currentStep = 0;
-    else if (bookingStatus == "approved")
+    } else if (bookingStatus == "approved") {
       currentStep = 1;
-    else if (bookingStatus == "shooting")
+    } else if (bookingStatus == "shooting") {
       currentStep = 2;
-    else if (bookingStatus == "final draft" || bookingStatus == "draft")
+    } else if (bookingStatus == "final draft" || bookingStatus == "draft") {
       currentStep = 3;
-    else if (bookingStatus == "handover" ||
+    } else if (bookingStatus == "handover" ||
         bookingStatus == "delivered" ||
-        bookingStatus == "completed")
+        bookingStatus == "completed") {
       currentStep = 4;
+    }
 
     bool isHandoverStage = currentStep == 4;
 
@@ -250,6 +248,7 @@ class ActiveBookingCard extends StatelessWidget {
                 child: isHandoverStage
                     ? ElevatedButton(
                         onPressed: () {
+                          // 🎯 সম্পূর্ণ বুকিং ডাটা পাস করা হচ্ছে রিভিউ শিটে
                           ReviewService.showReviewSheet(
                             context,
                             booking: booking,
