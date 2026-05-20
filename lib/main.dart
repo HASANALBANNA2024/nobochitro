@@ -36,7 +36,7 @@ class PhotographyApp extends StatefulWidget {
 class _PhotographyAppState extends State<PhotographyApp> {
   ThemeMode _themeMode = ThemeMode.dark;
 
-  // এই ভেরিয়েবলটি কন্ট্রোল করবে সাপোর্ট হাব কখন দেখাবে
+  // support hub
   bool _showSupportHub = false;
 
   void toggleTheme(bool isOn) {
