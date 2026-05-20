@@ -1,11 +1,12 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/hero_banner/hero_banner.dart';
 
 class BannerData {
+  final String campaignId;
   final String title;
   final String subtitle;
   final String description;
@@ -14,6 +15,7 @@ class BannerData {
   final DateTime? endDate;
 
   BannerData({
+    required this.campaignId,
     required this.title,
     required this.subtitle,
     required this.description,
@@ -22,20 +24,31 @@ class BannerData {
     this.endDate,
   });
 
-  // Supabase থেকে আসা ডেটা ম্যাপ করার জন্য
-  factory BannerData.fromSupabase(Map<String, dynamic> json) {
+  // 🎯 সুপাবেসের যেকোনো ফিল্ড null বা খালি থাকলে অ্যাপ ক্র্যাশ করা আটকাবে
+  factory BannerData.fromSupabase(Map<String, dynamic>? json) {
+    // পুরো json-ই যদি null আসে তার সেফটি চেইক
+    if (json == null) {
+      return BannerData(
+        campaignId: "COUPON",
+        title: "EXCLUSIVE OFFER!",
+        subtitle: "Special Discount Available",
+        description: "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching",
+        buttonText: "COPY CODE",
+        imageUrl: "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
+        endDate: null,
+      );
+    }
+
     return BannerData(
-      title: json['title'] ?? "EXCLUSIVE OFFER!",
-      subtitle:
-          "${json['discount_pct'] ?? 0}% OFF - ${json['targeted_category'] ?? 'Premium'}",
+      campaignId: json['campaign_id']?.toString() ?? "COUPON",
+      title: json['title']?.toString() ?? "EXCLUSIVE OFFER!",
+      subtitle: "${json['discount_pct'] ?? 0}% OFF - ${json['targeted_category'] ?? 'All Categories'}",
       description: "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching",
-      buttonText: "BOOK NOW",
-      imageUrl:
-          json['banner_url'] ??
-          "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
-      endDate: json['end_date'] != null
-          ? DateTime.tryParse(json['end_date'].toString())
-          : null,
+      buttonText: json['campaign_id']?.toString() ?? "COPY CODE",
+      imageUrl: (json['banner_url'] != null && json['banner_url'].toString().isNotEmpty)
+          ? json['banner_url'].toString()
+          : "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg", // ইমেজ নাল বা খালি হলে ডিফল্ট ব্যাকআপ ইমেজ
+      endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date'].toString()) : null,
     );
   }
 }
@@ -54,8 +67,7 @@ class SupabaseDynamicBanner extends StatefulWidget {
   State<SupabaseDynamicBanner> createState() => _SupabaseDynamicBannerState();
 }
 
-class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
-    with TickerProviderStateMixin {
+class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with TickerProviderStateMixin {
   BannerData? _currentBanner;
   Timer? _countdownTimer;
   int _secondsRemaining = 0;
@@ -74,22 +86,29 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
   }
 
   Future<void> _fetchDataFromSupabase() async {
-    final campaignData = await DatabaseHelper.instance.getActiveCampaign();
+    try {
+      final campaignData = await DatabaseHelper.instance.getActiveCampaign();
 
-    if (campaignData != null && mounted) {
-      setState(() {
-        _currentBanner = BannerData.fromSupabase(campaignData);
-        _isLoading = false;
+      if (campaignData != null && mounted) {
+        setState(() {
+          _currentBanner = BannerData.fromSupabase(campaignData);
+          _isLoading = false;
 
-        // End Date অনুযায়ী টাইমার সেট করা
-        if (_currentBanner!.endDate != null) {
-          _secondsRemaining = _currentBanner!.endDate!
-              .difference(DateTime.now())
-              .inSeconds;
-          if (_secondsRemaining > 0) _startCountdown();
-        }
-      });
-    } else {
+          // End Date অনুযায়ী টাইমার সেট করা (Null এবং ভ্যালিডেশন চেইক সহ)
+          if (_currentBanner?.endDate != null) {
+            _secondsRemaining = _currentBanner!.endDate!.difference(DateTime.now()).inSeconds;
+            if (_secondsRemaining > 0) {
+              _startCountdown();
+            } else {
+              _secondsRemaining = 0; // মাইনাস টাইমস্ট্যাম্প যেন না দেখায়
+            }
+          }
+        });
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint("❌ ব্যানার ডাটা ফেচিং সেফটি চেইক এরর: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -122,28 +141,26 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
 
   @override
   Widget build(BuildContext context) {
-    // ডেটা না পেলে বা ক্যাম্পেইন না থাকলে আগের HeroBanner দেখাবে
     if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_currentBanner == null)
-      return HeroBanner(primaryAccent: widget.primaryAccent);
+
+    // ডাটা যদি নাল থাকে তবে সেফটি হিসেবে আপনার আগের HeroBanner লোড হবে, অ্যাপ ক্র্যাশ করবে না
+    if (_currentBanner == null) return HeroBanner(primaryAccent: widget.primaryAccent);
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isWeb = screenWidth > 600;
-    final String currentDate = DateFormat(
-      'dd MMM, EEEE',
-    ).format(DateTime.now());
+    final String currentDate = DateFormat('dd MMM, EEEE').format(DateTime.now());
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 800),
       child: Container(
         key: const ValueKey('supabase_dynamic_banner'),
         width: double.infinity,
-        // ওভারফ্লো এড়াতে maxHeight বাদ দিয়ে শুধু minHeight রাখা হয়েছে
         constraints: BoxConstraints(minHeight: isWeb ? 280 : 200),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           image: DecorationImage(
+            // ইমেজ নাল বা ব্রোকেন লিঙ্কের এরর হ্যান্ডলিং
             image: NetworkImage(_currentBanner!.imageUrl),
             fit: BoxFit.cover,
             alignment: Alignment.centerRight,
@@ -170,12 +187,12 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
                 ),
               ),
 
-              // Main Content Area - ফ্লেক্সিবল করার জন্য Padding + Column ব্যবহার
+              // Main Content Area
               Padding(
                 padding: EdgeInsets.all(isWeb ? 25.0 : 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min, // ওভারফ্লো রোধ করবে
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Timer & Date Row
                     Wrap(
@@ -184,10 +201,7 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
                       runSpacing: 4,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(4),
@@ -271,22 +285,41 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
 
                     const SizedBox(height: 20),
 
-                    // Button
+                    // Coupon Copy Button
                     SizedBox(
                       height: isWeb ? 45 : 36,
-                      child: ElevatedButton(
-                        onPressed: widget.onBookingClick,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          // কুপন কোড নাল হলে কপি করার সময় ক্র্যাশ এড়ানো
+                          if (_currentBanner!.campaignId.isNotEmpty) {
+                            await Clipboard.setData(
+                              ClipboardData(text: _currentBanner!.campaignId),
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('🎉 কুপন কোড "${_currentBanner!.campaignId}" কপি হয়েছে!'),
+                                  backgroundColor: Colors.green,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          }
+                          if (widget.onBookingClick != null) widget.onBookingClick!();
+                        },
+                        icon: Icon(
+                          Icons.copy,
+                          size: isWeb ? 16 : 14,
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFD4AF37),
                           foregroundColor: Colors.black,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isWeb ? 30 : 20,
-                          ),
+                          padding: EdgeInsets.symmetric(horizontal: isWeb ? 25 : 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: Text(
+                        label: Text(
                           _currentBanner!.buttonText,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -299,7 +332,7 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
                 ),
               ),
 
-              // App Icon
+              // App Icon (ইমেজ পাথ বা লোড এরর হ্যান্ডলিং)
               Positioned(
                 top: 12,
                 right: 12,

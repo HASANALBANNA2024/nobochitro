@@ -1,5 +1,6 @@
+import 'dart:async';
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart'; // 👈 ফায়ারবেস ফায়ারস্টোর ইম্পোর্ট করা হলো
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +10,7 @@ import 'package:nobochitro/payments/payment_sheet.dart';
 import 'package:nobochitro/widgets/addOns_selector.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:nobochitro/widgets/photographer_selector.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👈 সুপাবেস ক্লায়েন্ট ব্যবহারের জন্য নিশ্চিত করা হলো
 
 class BookingSummaryScreen extends StatefulWidget {
   final Color primaryAccent;
@@ -35,7 +37,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   String _selectedPhotographer = "None";
   double totalAddonsPrice = 0.0;
 
-  // 🔴 ফায়ারবেস থেকে ডাইনামিক ক্লায়েন্ট ডাটা ট্র্যাকিং
+  // 🔴 ফায়ারবেস থেকে ডাইনামিক ক্লায়েন্ট ডাটা ট্র্যাকিং
   String dynamicNsrId = "NSR-LOADING...";
   String dynamicUserName = "Loading User...";
   String dynamicUserEmail = "";
@@ -48,17 +50,29 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   List<Map<String, dynamic>> _selectedAddOnsList = [];
   late Future<List<Map<String, dynamic>>> _photographersFuture;
 
+  // 🎯 ─── কুপন সিস্টেমের নতুন ভ্যারিয়েবলস ───
+  final TextEditingController _couponController = TextEditingController();
+  String? _appliedCouponCode;
+  bool _isCouponApplied = false;
+  int _discountPercentage = 0;
+
   @override
   void initState() {
     super.initState();
     _selectedDurationHours = widget.packageData['base_hours'] ?? 1;
     _photographersFuture = DatabaseHelper.instance.getPhotographers();
 
-    // 🔴 স্ক্রিন ওপেন হওয়ার সাথে সাথে ফায়ারস্টোর থেকে ইউজারের ডাটা লোড হবে
+    // 🔴 স্ক্রিন ওপেন হওয়ার সাথে সাথে ফায়ারস্টোর থেকে ইউজারের ডাটা লোড হবে
     _fetchFirebaseUserData();
   }
 
-  // 🔴 ফায়ারস্টোর থেকে রিয়েলটাইম ক্লায়েন্টের NSR-ID, নাম, ফোন ও ইমেইল তুলে আনার ফাংশন
+  @override
+  void dispose() {
+    _couponController.dispose(); // কন্ট্রোলার মেমোরি ক্লিয়ার করা
+    super.dispose();
+  }
+
+  // 🔴 ফায়ারস্টোর থেকে রিয়েলটাইম ক্লায়েন্টের NSR-ID, নাম, ফোন ও ইমেইল তুলে আনার ফাংশন
   Future<void> _fetchFirebaseUserData() async {
     try {
       final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
@@ -87,7 +101,88 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     }
   }
 
-  // আপনার দেওয়া ৬০% লজিক অনুযায়ী ফটোগ্রাফারের এক্সট্রা আওয়ার্লি চার্জ ক্যালকুলেশন
+  // 🎯 ─── সুপাবেস কুপন চেক ও অ্যাপ্লাই লজিক (targeted_category এবং targeted_package চেইক) ───
+  Future<void> _applyCouponCode() async {
+    final inputCode = _couponController.text.trim();
+    if (inputCode.isEmpty) {
+      _showSnackBar("Please enter a coupon code!", Colors.red);
+      return;
+    }
+
+    try {
+      final response = await Supabase.instance.client
+          .from('campaigns')
+          .select()
+          .eq('campaign_id', inputCode)
+          .eq('is_active', true)
+          .maybeSingle();
+
+      if (response == null) {
+        _showSnackBar("❌ Invalid or inactive coupon code!", Colors.red);
+        return;
+      }
+
+      // ১. মেয়াদের তারিখ চেক (Expiry Check)
+      final DateTime now = DateTime.now();
+      final DateTime endDate = DateTime.parse(response['end_date'].toString());
+      if (now.isAfter(endDate)) {
+        _showSnackBar("❌ Sorry, this coupon code has expired!", Colors.red);
+        return;
+      }
+
+      // কারেন্ট প্যাকেজের আইডি এবং ক্যাটাগরি ডাটা
+      final String currentPackageId = widget.packageData['package_id']?.toString() ?? "PKG-UNKNOWN";
+      final String currentCategory = widget.packageData['category']?.toString() ?? "General";
+
+      final String? dbCategory = response['targeted_category']?.toString();
+      final String? dbPackage = response['targeted_package']?.toString();
+
+      bool isEligible = false;
+
+      // ২. সুনির্দিষ্ট প্যাকেজ চেক (targeted_package কলাম চেক)
+      if (dbPackage != null && dbPackage.trim().isNotEmpty) {
+        List<String> allowedPackages = dbPackage.split(',').map((e) => e.trim().toLowerCase()).toList();
+        if (allowedPackages.contains(currentPackageId.toLowerCase())) {
+          isEligible = true;
+        }
+      }
+
+      // ৩. ক্যাটাগরি চেক (targeted_category কলাম চেক - যদি প্যাকেজ দিয়ে ম্যাচ না হয়ে থাকে)
+      if (!isEligible && dbCategory != null && dbCategory.trim().isNotEmpty) {
+        List<String> allowedCategories = dbCategory.split(',').map((e) => e.trim().toLowerCase()).toList();
+        if (allowedCategories.contains(currentCategory.toLowerCase())) {
+          isEligible = true;
+        }
+      }
+
+      // কুপন যদি কোনো নির্দিষ্ট কন্ডিশন হোল্ড করে কিন্তু কোনোটাই ম্যাচ না করে
+      if ((dbPackage != null && dbPackage.trim().isNotEmpty || dbCategory != null && dbCategory.trim().isNotEmpty) && !isEligible) {
+        _showSnackBar("❌ This coupon is not valid for this package or category!", Colors.red);
+        return;
+      }
+
+      // ৪. সব চেক পাস হলে ডিসকাউন্ট স্টেট সেট হবে
+      setState(() {
+        _discountPercentage = response['discount_pct'] ?? 0;
+        _appliedCouponCode = inputCode;
+        _isCouponApplied = true;
+      });
+
+      _showSnackBar("🎉 Coupon applied successfully! ৳$_discountPercentage% off.", Colors.green);
+
+    } catch (e) {
+      debugPrint("Coupon Apply Error: $e");
+      _showSnackBar("Error validating coupon!", Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, Color bgColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: bgColor, duration: const Duration(seconds: 2)),
+    );
+  }
+
+  // আপনার দেওয়া ৬০% লজিক অনুযায়ী ফটোগ্রাফারের এক্সট্রা আওয়ার্লি চার্জ ক্যালকুলেশন
   double _calculateExtraPhotographerCharge() {
     if (_selectedPhotographer == "None" || _selectedPhotographer.isEmpty) return 0.0;
 
@@ -105,7 +200,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     return 0.0;
   }
 
-  // এক্সট্রা আওয়ার্সের প্রাইস ক্যালকুলেশন
+  // এক্সট্রা আওয়ার্সের প্রাইস ক্যালকুলেশন
   double _calculateExtraHoursPrice() {
     double basePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
     int baseHours = widget.packageData['base_hours'] ?? 1;
@@ -120,9 +215,17 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     return extraPrice;
   }
 
+  // 🎯 মেইন টোটাল অ্যামাউন্ট হিসাব (কুপন ডিসকাউন্ট শুধুমাত্র মেইন ফাইনাল টাকা থেকে মাইনাস হবে)
   double _calculateFinalAmount() {
     double basePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
-    return basePrice + _calculateExtraHoursPrice() + _calculateExtraPhotographerCharge() + totalAddonsPrice;
+    double totalBeforeDiscount = basePrice + _calculateExtraHoursPrice() + _calculateExtraPhotographerCharge() + totalAddonsPrice;
+
+    if (_isCouponApplied) {
+      double discount = totalBeforeDiscount * (_discountPercentage / 100);
+      return totalBeforeDiscount - discount;
+    }
+
+    return totalBeforeDiscount;
   }
 
   @override
@@ -170,7 +273,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     _buildSectionTitle("Select Photographer", theme),
                     PhotographerSelector(
                       photographersFuture: _photographersFuture,
-                      // 🔴 ফিক্সড: সুপাবেসের কলামের নাম 'photographer_id' অনুযায়ী রিয়েলটাইম আইডি ক্যাচ করা হচ্ছে
                       onPhotographerSelected: (p) => setState(() {
                         _selectedPhotographer = p['name'] ?? "Unknown";
                         _selectedPhotographerId = p['photographer_id']?.toString() ?? "N-UNKNOWN";
@@ -222,6 +324,51 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     const SizedBox(height: 25),
                     _buildSectionTitle("Event Location", theme),
                     _buildLocationSelector(isDark),
+
+                    // 🎯 ─── কুপন কোড ইনপুট ফিল্ড ও বাটন UI সেকশন ───
+                    const SizedBox(height: 25),
+                    _buildSectionTitle("Have a Coupon?", theme),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _couponController,
+                            enabled: !_isCouponApplied,
+                            textCapitalization: TextCapitalization.characters,
+                            decoration: InputDecoration(
+                              hintText: "Enter Coupon Code",
+                              filled: true,
+                              fillColor: isDark ? Colors.grey[900] : Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.black12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: _isCouponApplied ? null : _applyCouponCode,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.primaryAccent,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Text(_isCouponApplied ? "Applied" : "Apply"),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_isCouponApplied) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        "🎉 Coupon '$_appliedCouponCode' Active ($_discountPercentage% Discount Appended)",
+                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ],
 
                     const SizedBox(height: 35),
                     _buildProceedButton(context),
@@ -439,9 +586,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     );
   }
 
-  // -------------------------------------------------------------
-  // 🔴 ১০০% ডাইনামিক ও সংশোধিত প্রোসিড বাটন (0% UI Change)
-  // -------------------------------------------------------------
   Widget _buildProceedButton(BuildContext context) {
     double totalAmount = _calculateFinalAmount();
     double extraHoursPrice = _calculateExtraHoursPrice();
@@ -453,12 +597,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     double packageBasePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
     String rawFeatures = widget.packageData['features']?.toString() ?? "No features listed";
 
-    // 🔴 ফায়ারস্টোর এবং সুপাবেস থেকে একদম পারফেক্ট ম্যাপিং
     String databaseNsrId = dynamicNsrId;
     String databaseUserName = dynamicUserName;
     String databasePhotographerId = _selectedPhotographerId ?? "N-UNKNOWN";
 
-    // button active conditions fill up
     bool isDateSelected = _selectedDate != null;
     bool isPhotographerSelected = _selectedPhotographer != "None" && _selectedPhotographer.isNotEmpty;
     bool isLocationValid = _selectedLocationType == "Outdoor" ? _outdoorAddress.trim().isNotEmpty : true;
@@ -471,11 +613,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         onPressed: isFormValid
             ? () {
           final Map<String, dynamic> currentBooking = {
-            // ফায়ারস্টোর থেকে আসা ডাইনামিক ইউজার ডাটা (ফোন ও ইমেইল যুক্ত করা হয়েছে)
             'user_id': databaseNsrId,
             'user_name': databaseUserName,
-            'user_email': dynamicUserEmail,    // 👈 নতুন
-            'user_phone': dynamicUserPhone,    // 👈 নতুন
+            'user_email': dynamicUserEmail,
+            'user_phone': dynamicUserPhone,
 
             'package_id': databasePackageId,
             'package_name': databasePackageName,
@@ -483,7 +624,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             'base_price': packageBasePrice,
             'package_features': rawFeatures,
 
-            // সুপাবেস থেকে আসা সঠিক কাস্টম ফটোগ্রাফার আইডি
             'photographer_id': databasePhotographerId,
             'photographer_name': _selectedPhotographer,
             'photographer_hourly_rate': _selectedPhotographerHourlyRate,
@@ -499,6 +639,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             'extra_photographer_price': extraPhotographerPrice,
             'total_addons_price': totalAddonsPrice,
             'total_amount': totalAmount,
+
+            // পেমেন্ট শীটে কুপন ট্র্যাকিংয়ের জন্য ডাটা পাঠানো হচ্ছে
+            'applied_coupon_code': _appliedCouponCode ?? "NONE",
+            'coupon_discount_percentage': _discountPercentage,
 
             'selected_addons_breakdown': _selectedAddOnsList.map((item) => {
               'name': item['name'],

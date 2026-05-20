@@ -463,9 +463,7 @@ class DatabaseHelper {
       final activeCampaign = await instance.getActiveCampaign();
 
       if (activeCampaign != null) {
-        debugPrint(
-          "ℹ️ Supabase-এ অলরেডি একটিভ ক্যাম্পেইন আছে। নতুন করে ডামি ডাটা লাগবে না।",
-        );
+        debugPrint("ℹ️ Supabase-এ অলরেডি একটিভ ক্যাম্পেইন আছে। নতুন করে ডামি ডাটা লাগবে না।");
         return;
       }
 
@@ -478,33 +476,35 @@ class DatabaseHelper {
       final now = DateTime.now();
 
       // 🎯 YYYY-MM-DD ফরম্যাটে রূপান্তর (সুপাবেস date কলামের জন্য পারফেক্ট)
-      final String formattedStartDate =
-          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final String formattedStartDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
       final endDate = now.add(const Duration(days: 2));
-      final String formattedEndDate =
-          "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
+      final String formattedEndDate = "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
 
-      // ৪. ডামি ডাটা স্ট্রাকচার (আপনার টেবিলের সব কলাম অনুযায়ী)
+      // ৪. ডামি ডাটা স্ট্রাকচার (টেবিলের প্রতিটি কলামের নাম ও টাইপ হুবহু মেইনটেইন করা হয়েছে)
       final Map<String, dynamic> demoCampaign = {
-        'campaign_id': generatedCampaignId,
-        'title': 'EXCLUSIVE CAMPAIGN! 50% OFF',
-        'discount_pct': 50,
-        'targeted_category': 'Premium Portrait & Wedding',
-        'banner_url':
-            'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg',
-        'is_active': true,
-        'start_date': formattedStartDate, // 🎯 আজ থেকে শুরু
-        'end_date': formattedEndDate, // ২ দিন পর শেষ
-        'created_at': now.toIso8601String(), // টাইমস্ট্যাম্প সহ ক্রিয়েশন টাইম
+        'campaign_id': generatedCampaignId,      // text কলাম
+        'title': 'EXCLUSIVE CAMPAIGN! 50% OFF',    // text কলাম
+        'banner_url': 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg', // text কলাম
+        'discount_pct': 50,                       // int4 কলাম
+
+        // 🎯 নতুন লজিক অনুযায়ী কমা দিয়ে আলাদা করা মাল্টিপল ক্যাটাগরি দেওয়া হলো
+        'targeted_category': 'Portrait, Wedding, Event', // text কলাম
+
+        'is_active': true,                        // bool কলাম
+        'start_date': formattedStartDate,         // date কলাম
+        'end_date': formattedEndDate,             // date কলাম
+        'created_at': now.toIso8601String(),      // timestamptz কলাম
       };
 
-      // ৫. ডাটা ইনসার্ট করা
-      await insert(table: 'campaigns', data: demoCampaign);
-
-      debugPrint(
-        "✅ ID: $generatedCampaignId এবং Start Date: $formattedStartDate সহ ডামি ক্যাম্পেইন সফলভাবে ইনসার্ট হয়েছে!",
+      // ৫. ডাটাবেজে ইনসার্ট করা
+      await insert(
+        table: 'campaigns',
+        data: demoCampaign,
       );
+
+      debugPrint("✅ সফলভাবে সব কলাম মেইনটেইন করে ডামি ডাটা ইনসার্ট হয়েছে!");
+      debugPrint("🎟️ কুপন কোড: $generatedCampaignId | ক্যাটাগরি: Portrait, Wedding, Event");
     } catch (e) {
       debugPrint("❌ DatabaseHelper ডামি ডাটা ইনসার্ট এরর: $e");
     }
