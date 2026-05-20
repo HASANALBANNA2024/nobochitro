@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/firebase_options.dart';
 import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
@@ -20,6 +21,7 @@ void main() async {
   // await DatabaseHelper.insertDemoPhotographers();
   // await DatabaseHelper.insertDemoPackages();
   // await DatabaseHelper.instance.insertAddons();
+  await DatabaseHelper.insertDemoCampaignOnStart();
 
   runApp(const PhotographyApp());
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/hero_banner/hero_banner.dart';
 
 class BannerData {
@@ -11,7 +11,7 @@ class BannerData {
   final String description;
   final String buttonText;
   final String imageUrl;
-  final int durationSeconds;
+  final DateTime? endDate;
 
   BannerData({
     required this.title,
@@ -19,43 +19,47 @@ class BannerData {
     required this.description,
     required this.buttonText,
     required this.imageUrl,
-    this.durationSeconds = 60,
+    this.endDate,
   });
 
-  factory BannerData.fromJson(Map<String, dynamic> json) {
+  // Supabase থেকে আসা ডেটা ম্যাপ করার জন্য
+  factory BannerData.fromSupabase(Map<String, dynamic> json) {
     return BannerData(
-      title: json['title'] ?? "EXCLUSIVE OFFER! 50% OFF",
-      subtitle: json['subtitle'] ?? "Premium Portrait Sessions",
-      description: json['description'] ?? "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching",
-      buttonText: json['buttonText'] ?? "BOOK NOW",
-      imageUrl: json['imageUrl'] ?? "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
-      durationSeconds: json['durationSeconds'] ?? 60,
+      title: json['title'] ?? "EXCLUSIVE OFFER!",
+      subtitle:
+          "${json['discount_pct'] ?? 0}% OFF - ${json['targeted_category'] ?? 'Premium'}",
+      description: "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching",
+      buttonText: "BOOK NOW",
+      imageUrl:
+          json['banner_url'] ??
+          "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
+      endDate: json['end_date'] != null
+          ? DateTime.tryParse(json['end_date'].toString())
+          : null,
     );
   }
 }
 
-class N8nDynamicBanner extends StatefulWidget {
+class SupabaseDynamicBanner extends StatefulWidget {
   final Color primaryAccent;
-  final String? n8nApiUrl;
   final VoidCallback? onBookingClick;
 
-  const N8nDynamicBanner({
+  const SupabaseDynamicBanner({
     super.key,
     required this.primaryAccent,
-    this.n8nApiUrl,
-    this.onBookingClick
+    this.onBookingClick,
   });
 
   @override
-  State<N8nDynamicBanner> createState() => _N8nDynamicBannerState();
+  State<SupabaseDynamicBanner> createState() => _SupabaseDynamicBannerState();
 }
 
-class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProviderStateMixin {
-  late BannerData _currentBanner;
-  Timer? _toggleTimer;
+class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
+    with TickerProviderStateMixin {
+  BannerData? _currentBanner;
   Timer? _countdownTimer;
-  int _secondsRemaining = 60;
-  bool _isCampaignActive = true;
+  int _secondsRemaining = 0;
+  bool _isLoading = true;
   late AnimationController _pulseController;
 
   @override
@@ -66,22 +70,32 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
 
-    _currentBanner = BannerData(
-      title: "EXCLUSIVE OFFER! 50% OFF",
-      subtitle: "Premium Portrait Sessions",
-      description: "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching\n✓ World-class Quality",
-      buttonText: "BOOK NOW",
-      imageUrl: "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
-    );
+    _fetchDataFromSupabase();
+  }
 
-    _startScheduleTimer();
-    _startCountdown();
-    if (widget.n8nApiUrl != null) _fetchDataFromN8n();
+  Future<void> _fetchDataFromSupabase() async {
+    final campaignData = await DatabaseHelper.instance.getActiveCampaign();
+
+    if (campaignData != null && mounted) {
+      setState(() {
+        _currentBanner = BannerData.fromSupabase(campaignData);
+        _isLoading = false;
+
+        // End Date অনুযায়ী টাইমার সেট করা
+        if (_currentBanner!.endDate != null) {
+          _secondsRemaining = _currentBanner!.endDate!
+              .difference(DateTime.now())
+              .inSeconds;
+          if (_secondsRemaining > 0) _startCountdown();
+        }
+      });
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _startCountdown() {
     _countdownTimer?.cancel();
-    _secondsRemaining = 60;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 0) {
         if (mounted) setState(() => _secondsRemaining--);
@@ -91,69 +105,46 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
     });
   }
 
-  void _startScheduleTimer() {
-    _toggleTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _isCampaignActive = !_isCampaignActive;
-          if (_isCampaignActive) _startCountdown();
-        });
-      }
-    });
-  }
-
-  Future<void> _fetchDataFromN8n() async {
-    try {
-      final response = await http.get(Uri.parse(widget.n8nApiUrl!));
-      if (response.statusCode == 200) {
-        setState(() {
-          _currentBanner = BannerData.fromJson(json.decode(response.body));
-          _secondsRemaining = _currentBanner.durationSeconds;
-        });
-      }
-    } catch (e) {
-      debugPrint("n8n Error: $e");
-    }
-  }
-
   @override
   void dispose() {
-    _toggleTimer?.cancel();
     _countdownTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
 
   String _formatTime(int seconds) {
-    int mins = seconds ~/ 60;
+    if (seconds <= 0) return "00:00:00";
+    int hours = seconds ~/ 3600;
+    int mins = (seconds % 3600) ~/ 60;
     int secs = seconds % 60;
-    return "${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}";
+    return "${hours.toString().padLeft(2, '0')}:${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}";
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
-    if (!_isCampaignActive) return HeroBanner(primaryAccent: widget.primaryAccent);
+    // ডেটা না পেলে বা ক্যাম্পেইন না থাকলে আগের HeroBanner দেখাবে
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_currentBanner == null)
+      return HeroBanner(primaryAccent: widget.primaryAccent);
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isWeb = screenWidth > 600; // সাধারণত ৬০০ এর বেশি হলে আমরা ওয়েব/ট্যাবলেট ধরি
-    final String currentDate = DateFormat('dd MMM, EEEE').format(DateTime.now());
+    final bool isWeb = screenWidth > 600;
+    final String currentDate = DateFormat(
+      'dd MMM, EEEE',
+    ).format(DateTime.now());
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 800),
       child: Container(
-        key: const ValueKey('dynamic_banner'),
+        key: const ValueKey('supabase_dynamic_banner'),
         width: double.infinity,
-        // আপনার HeroBanner এর হাইট লজিক এখানে হুবহু বসানো হয়েছে
-        constraints: BoxConstraints(
-          minHeight: isWeb ? 280 : 200,
-          maxHeight: isWeb ? 350 : 250,
-        ),
+        // ওভারফ্লো এড়াতে maxHeight বাদ দিয়ে শুধু minHeight রাখা হয়েছে
+        constraints: BoxConstraints(minHeight: isWeb ? 280 : 200),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           image: DecorationImage(
-            image: NetworkImage(_currentBanner.imageUrl),
+            image: NetworkImage(_currentBanner!.imageUrl),
             fit: BoxFit.cover,
             alignment: Alignment.centerRight,
           ),
@@ -168,9 +159,9 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.black.withOpacity(0.85),
-                        Colors.black.withOpacity(0.3),
-                        Colors.transparent
+                        Colors.black.withOpacity(0.9),
+                        Colors.black.withOpacity(0.4),
+                        Colors.transparent,
                       ],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
@@ -179,123 +170,153 @@ class _N8nDynamicBannerState extends State<N8nDynamicBanner> with TickerProvider
                 ),
               ),
 
-              // Main Content Area
+              // Main Content Area - ফ্লেক্সিবল করার জন্য Padding + Column ব্যবহার
               Padding(
-                padding: EdgeInsets.all(isWeb ? 25.0 : 15.0),
+                padding: EdgeInsets.all(isWeb ? 25.0 : 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center, // কন্টেন্ট মাঝখানে রাখার জন্য
+                  mainAxisSize: MainAxisSize.min, // ওভারফ্লো রোধ করবে
                   children: [
                     // Timer & Date Row
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               ScaleTransition(
                                 scale: _pulseController,
-                                child: const Icon(Icons.circle, color: Colors.white, size: 5),
+                                child: const Icon(
+                                  Icons.circle,
+                                  color: Colors.white,
+                                  size: 8,
+                                ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 6),
                               Text(
-                                "LIVE: ${_formatTime(_secondsRemaining)}",
-                                style: TextStyle(color: Colors.white, fontSize: isWeb ? 11 : 9, fontWeight: FontWeight.bold),
+                                "ENDS IN: ${_formatTime(_secondsRemaining)}",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: isWeb ? 12 : 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Text(
-                            currentDate,
-                            style: TextStyle(color: Colors.white70, fontSize: isWeb ? 11 : 9)
+                          currentDate,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: isWeb ? 12 : 10,
+                          ),
                         ),
                       ],
                     ),
 
-                    const Spacer(), // অটোমেটিক ব্যালেন্সড স্পেসিং
+                    const SizedBox(height: 16),
 
-                    // Title - ওয়েব এবং মোবাইলের জন্য আলাদা সাইজ
+                    // Title
                     Text(
-                      _currentBanner.title,
+                      _currentBanner!.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: const Color(0xFFFFD700),
-                        fontSize: isWeb ? 30 : 20, // মোবাইলে ২০, ওয়েবে ৩০
+                        fontSize: isWeb ? 28 : 22,
                         fontWeight: FontWeight.w900,
-                        height: 1.1,
+                        height: 1.2,
                       ),
                     ),
 
+                    const SizedBox(height: 4),
+
                     // Subtitle
                     Text(
-                      _currentBanner.subtitle,
-                      maxLines: 1,
+                      _currentBanner!.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: isWeb ? 18 : 14,
+                        fontSize: isWeb ? 16 : 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 12),
 
-                    // Description - মোবাইল ভিউতে টেক্সট ছোট করা হয়েছে
+                    // Description
                     SizedBox(
-                      width: isWeb ? screenWidth * 0.4 : screenWidth * 0.55,
+                      width: isWeb ? screenWidth * 0.5 : screenWidth * 0.65,
                       child: Text(
-                        _currentBanner.description,
-                        maxLines: 3,
+                        _currentBanner!.description,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: isWeb ? 14 : 10,
-                          height: 1.3,
+                          fontSize: isWeb ? 14 : 12,
+                          height: 1.4,
                         ),
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 20),
 
                     // Button
                     SizedBox(
-                      height: isWeb ? 40 : 32,
+                      height: isWeb ? 45 : 36,
                       child: ElevatedButton(
                         onPressed: widget.onBookingClick,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFD4AF37),
                           foregroundColor: Colors.black,
-                          padding: EdgeInsets.symmetric(horizontal: isWeb ? 30 : 20),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWeb ? 30 : 20,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         child: Text(
-                          _currentBanner.buttonText,
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: isWeb ? 13 : 11),
+                          _currentBanner!.buttonText,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isWeb ? 14 : 12,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              // App Icon (এটি Stack এর সবার নিচে থাকবে যাতে অন্য কিছুর নিচে চাপা না পড়ে)
+
+              // App Icon
               Positioned(
                 top: 12,
                 right: 12,
                 child: Container(
-                  padding: const EdgeInsets.all(4), // আইকনের চারপাশে হালকা প্যাডিং
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2), // আইকনটি হাইলাইট করার জন্য হালকা ব্যাকগ্রাউন্ড
+                    color: Colors.black.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
                   child: Image.asset(
                     'assets/images/app_icon.png',
-                    width: isWeb ? 40 : 28, // মোবাইল ভিউতে ছোট রাখা হয়েছে
-                    height: isWeb ? 40 : 28,
+                    width: isWeb ? 45 : 30,
+                    height: isWeb ? 45 : 30,
                     fit: BoxFit.contain,
                     errorBuilder: (c, e, s) => Icon(
                       Icons.auto_awesome,
-                      color: const Color(0xFFFFD700), // গোল্ডেন কালার
+                      color: const Color(0xFFFFD700),
                       size: isWeb ? 30 : 20,
                     ),
                   ),

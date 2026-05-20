@@ -209,9 +209,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  N8nDynamicBanner(
+                  SupabaseDynamicBanner(
                     primaryAccent: primaryAccent,
-                    onBookingClick: () => print("Booking session clicked!"),
+                    onBookingClick: () {
+                      debugPrint("campaign booking clicked");
+                    },
                   ),
                   const SizedBox(height: 5),
                   Text(

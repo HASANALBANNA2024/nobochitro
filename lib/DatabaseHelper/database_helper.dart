@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -433,6 +434,79 @@ class DatabaseHelper {
     } catch (e) {
       debugPrint("❌ Error deleting review: $e");
       throw Exception("Failed to delete review: $e");
+    }
+  }
+
+  // campaign
+  // Get active campaign from Supabase
+  Future<Map<String, dynamic>?> getActiveCampaign() async {
+    try {
+      final response = await _client
+          .from('campaigns')
+          .select()
+          .eq('is_active', true) // শুধুমাত্র অ্যাক্টিভ ক্যাম্পেইন
+          .order('created_at', ascending: false) // সবচেয়ে লেটেস্ট
+          .limit(1)
+          .maybeSingle();
+
+      return response;
+    } catch (e) {
+      debugPrint("❌ Error fetching active campaign: $e");
+      return null;
+    }
+  }
+
+  // campaign data(dummy)
+  static Future<void> insertDemoCampaignOnStart() async {
+    try {
+      // ১. প্রথমে চেক করে দেখা অলরেডি কোনো একটিভ ক্যাম্পেইন আছে কি না
+      final activeCampaign = await instance.getActiveCampaign();
+
+      if (activeCampaign != null) {
+        debugPrint(
+          "ℹ️ Supabase-এ অলরেডি একটিভ ক্যাম্পেইন আছে। নতুন করে ডামি ডাটা লাগবে না।",
+        );
+        return;
+      }
+
+      // ২. জেনেরিক এবং র‍্যান্ডম campaign_id তৈরি লজিক (NSRB + ৪ ডিজিট)
+      final random = Random();
+      final int randomNumber = 1000 + random.nextInt(9000);
+      final String generatedCampaignId = "NSRB$randomNumber";
+
+      // ৩. আজকের তারিখ এবং ২ দিন পরের তারিখ তৈরি
+      final now = DateTime.now();
+
+      // 🎯 YYYY-MM-DD ফরম্যাটে রূপান্তর (সুপাবেস date কলামের জন্য পারফেক্ট)
+      final String formattedStartDate =
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+      final endDate = now.add(const Duration(days: 2));
+      final String formattedEndDate =
+          "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
+
+      // ৪. ডামি ডাটা স্ট্রাকচার (আপনার টেবিলের সব কলাম অনুযায়ী)
+      final Map<String, dynamic> demoCampaign = {
+        'campaign_id': generatedCampaignId,
+        'title': 'EXCLUSIVE CAMPAIGN! 50% OFF',
+        'discount_pct': 50,
+        'targeted_category': 'Premium Portrait & Wedding',
+        'banner_url':
+            'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg',
+        'is_active': true,
+        'start_date': formattedStartDate, // 🎯 আজ থেকে শুরু
+        'end_date': formattedEndDate, // ২ দিন পর শেষ
+        'created_at': now.toIso8601String(), // টাইমস্ট্যাম্প সহ ক্রিয়েশন টাইম
+      };
+
+      // ৫. ডাটা ইনসার্ট করা
+      await insert(table: 'campaigns', data: demoCampaign);
+
+      debugPrint(
+        "✅ ID: $generatedCampaignId এবং Start Date: $formattedStartDate সহ ডামি ক্যাম্পেইন সফলভাবে ইনসার্ট হয়েছে!",
+      );
+    } catch (e) {
+      debugPrint("❌ DatabaseHelper ডামি ডাটা ইনসার্ট এরর: $e");
     }
   }
 }
