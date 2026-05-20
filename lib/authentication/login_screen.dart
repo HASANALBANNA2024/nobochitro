@@ -41,214 +41,220 @@ class _LoginModalSheetState extends State<LoginModalSheet> {
 
         return Material(
           color: Colors.transparent,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white30 : Colors.black26,
-                  borderRadius: BorderRadius.circular(5),
-                ),
+          // 🎯 কিবোর্ড ওপেন হলে বটম শিট যেন ফ্লেক্স এরর না দিয়ে সুন্দরভাবে ওপরে উঠে যায়
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom, // কিবোর্ডের স্পেস হ্যান্ডেলিং
               ),
-              const SizedBox(height: 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white30 : Colors.black26,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
 
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: Container(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: isWeb ? 500 : double.infinity),
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(
-                          isWeb ? 30 : horizontalPadding,
-                          20,
-                          isWeb ? 30 : horizontalPadding,
-                          MediaQuery.of(context).viewInsets.bottom + 10,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset('assets/images/app_icon.png', height: isWeb ? 80 : 70),
-                            const SizedBox(height: 15),
-
-                            Text("Login", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: accent)),
-                            const SizedBox(height: 25),
-
-                            // --- প্রফেশনাল টগল বাটন ---
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  _buildToggleButton(context, "Email", _isEmailMode, () {
-                                    setState(() {
-                                      _isEmailMode = true;
-                                      _identifierController.clear();
-                                    });
-                                  }),
-                                  _buildToggleButton(context, "Phone", !_isEmailMode, () {
-                                    setState(() {
-                                      _isEmailMode = false;
-                                      _identifierController.clear();
-                                    });
-                                  }),
-                                ],
-                              ),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: Container(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: isWeb ? 500 : double.infinity),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              isWeb ? 30 : horizontalPadding,
+                              20,
+                              isWeb ? 30 : horizontalPadding,
+                              20, // বটম প্যাডিং ফিক্সড করা হলো যেহেতু প্যারেন্টে ভিউইনসেট আছে
                             ),
-                            const SizedBox(height: 20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset('assets/images/app_icon.png', height: isWeb ? 80 : 70),
+                                const SizedBox(height: 15),
 
-                            // ইমেইল বা ফোন ইনপুট ফিল্ড
-                            _buildTextField(
-                              context,
-                              _isEmailMode ? "Email Address" : "Phone Number",
-                              _isEmailMode ? Icons.email_outlined : Icons.phone_android_outlined,
-                              isWeb,
-                              controller: _identifierController,
-                              keyboardType: _isEmailMode ? TextInputType.emailAddress : TextInputType.phone,
-                            ),
-                            const SizedBox(height: 15),
+                                Text("Login", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: accent)),
+                                const SizedBox(height: 25),
 
-                            _buildTextField(
-                              context,
-                              "Password",
-                              Icons.lock_outline,
-                              isWeb,
-                              controller: _passController,
-                              isPassword: true,
-                            ),
+                                // --- প্রফেশনাল টগল বাটন ---
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      _buildToggleButton(context, "Email", _isEmailMode, () {
+                                        setState(() {
+                                          _isEmailMode = true;
+                                          _identifierController.clear();
+                                        });
+                                      }),
+                                      _buildToggleButton(context, "Phone", !_isEmailMode, () {
+                                        setState(() {
+                                          _isEmailMode = false;
+                                          _identifierController.clear();
+                                        });
+                                      }),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
 
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (context) => const ForgotPasswordModalSheet(),
-                                  );
-                                },
-                                child: Text("Forgot Password?", style: TextStyle(color: accent, fontSize: isWeb ? 14 : 13)),
-                              ),
-                            ),
-                            const SizedBox(height: 15),
+                                // ইমেইল বা ফোন ইনপুট ফিল্ড
+                                _buildTextField(
+                                  context,
+                                  _isEmailMode ? "Email Address" : "Phone Number",
+                                  _isEmailMode ? Icons.email_outlined : Icons.phone_android_outlined,
+                                  isWeb,
+                                  controller: _identifierController,
+                                  keyboardType: _isEmailMode ? TextInputType.emailAddress : TextInputType.phone,
+                                ),
+                                const SizedBox(height: 15),
 
-                            // login button logic
-                            _isLoading
-                                ? const CircularProgressIndicator()
-                                : ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: accent,
-                                minimumSize: const Size(double.infinity, 50),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                elevation: 0,
-                              ),
-                              onPressed: () async {
-                                String input = _identifierController.text.trim();
-                                String password = _passController.text.trim();
+                                _buildTextField(
+                                  context,
+                                  "Password",
+                                  Icons.lock_outline,
+                                  isWeb,
+                                  controller: _passController,
+                                  isPassword: true,
+                                ),
 
-                                if (input.isEmpty || password.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Please fill all fields!")));
-                                  return;
-                                }
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => const ForgotPasswordModalSheet(),
+                                      );
+                                    },
+                                    child: Text("Forgot Password?", style: TextStyle(color: accent, fontSize: isWeb ? 14 : 13)),
+                                  ),
+                                ),
+                                const SizedBox(height: 15),
 
-                                setState(() => _isLoading = true);
+                                // login button logic
+                                _isLoading
+                                    ? const CircularProgressIndicator()
+                                    : ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: accent,
+                                    minimumSize: const Size(double.infinity, 50),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () async {
+                                    String input = _identifierController.text.trim();
+                                    String password = _passController.text.trim();
 
-                                String loginEmail = input;
-
-                                // ফোন নম্বর মোডে থাকলে বা ইনপুটটি নম্বর হলে ফরম্যাট করে ইমেইল খুঁজে বের করা
-                                if (!_isEmailMode || _isNumeric(input)) {
-                                  // এখানে আপনার AuthService এর ফরম্যাটিং লজিক ব্যবহার করা হয়েছে
-                                  String formattedSearchPhone = input;
-                                  if (!formattedSearchPhone.startsWith('+88')) {
-                                    if (formattedSearchPhone.startsWith('88')) {
-                                      formattedSearchPhone = '+$formattedSearchPhone';
-                                    } else if (formattedSearchPhone.startsWith('0')) {
-                                      formattedSearchPhone = '+88$formattedSearchPhone';
-                                    } else {
-                                      formattedSearchPhone = '+880$formattedSearchPhone';
-                                    }
-                                  }
-
-                                  try {
-                                    var userQuery = await FirebaseFirestore.instance
-                                        .collection('users')
-                                        .where('phone', isEqualTo: formattedSearchPhone) // +88 সহ সার্চ হবে
-                                        .limit(1)
-                                        .get();
-
-                                    if (userQuery.docs.isNotEmpty) {
-                                      loginEmail = userQuery.docs.first.get('email');
-                                    } else {
-                                      setState(() => _isLoading = false);
+                                    if (input.isEmpty || password.isEmpty) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Phone number not found!")));
+                                          const SnackBar(content: Text("Please fill all fields!")));
                                       return;
                                     }
-                                  } catch (e) {
+
+                                    setState(() => _isLoading = true);
+
+                                    String loginEmail = input;
+
+                                    if (!_isEmailMode || _isNumeric(input)) {
+                                      String formattedSearchPhone = input;
+                                      if (!formattedSearchPhone.startsWith('+88')) {
+                                        if (formattedSearchPhone.startsWith('88')) {
+                                          formattedSearchPhone = '+$formattedSearchPhone';
+                                        } else if (formattedSearchPhone.startsWith('0')) {
+                                          formattedSearchPhone = '+88$formattedSearchPhone';
+                                        } else {
+                                          formattedSearchPhone = '+880$formattedSearchPhone';
+                                        }
+                                      }
+
+                                      try {
+                                        var userQuery = await FirebaseFirestore.instance
+                                            .collection('users')
+                                            .where('phone', isEqualTo: formattedSearchPhone)
+                                            .limit(1)
+                                            .get();
+
+                                        if (userQuery.docs.isNotEmpty) {
+                                          loginEmail = userQuery.docs.first.get('email');
+                                        } else {
+                                          setState(() => _isLoading = false);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Phone number not found!")));
+                                          return;
+                                        }
+                                      } catch (e) {
+                                        setState(() => _isLoading = false);
+                                        print("Firestore Query Error: $e");
+                                        return;
+                                      }
+                                    }
+
+                                    var user = await _auth.logIn(loginEmail, password);
+
                                     setState(() => _isLoading = false);
-                                    print("Firestore Query Error: $e");
-                                    return;
-                                  }
-                                }
 
-                                // ইমেইল এবং পাসওয়ার্ড দিয়ে লগইন
-                                var user = await _auth.logIn(loginEmail, password);
-
-                                setState(() => _isLoading = false);
-
-                                if (user != null) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Login Successful!")));
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Login Failed! Check credentials.")));
-                                }
-                              },
-                              child: Text(
-                                "LOGIN",
-                                style: TextStyle(color: isDark ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Don't have an account? ", style: TextStyle(fontSize: isWeb ? 14 : 13)),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (context) => const RegistrationModalSheet(),
-                                    );
+                                    if (user != null) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Login Successful!")));
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Login Failed! Check credentials.")));
+                                    }
                                   },
-                                  child: Text("Sign Up", style: TextStyle(color: accent, fontWeight: FontWeight.bold, fontSize: isWeb ? 14 : 13)),
+                                  child: Text(
+                                    "LOGIN",
+                                    style: TextStyle(color: isDark ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
                                 ),
+                                const SizedBox(height: 20),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text("Don't have an account? ", style: TextStyle(fontSize: isWeb ? 14 : 13)),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) => const RegistrationModalSheet(),
+                                        );
+                                      },
+                                      child: Text("Sign Up", style: TextStyle(color: accent, fontWeight: FontWeight.bold, fontSize: isWeb ? 14 : 13)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
                               ],
                             ),
-                            const SizedBox(height: 10),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

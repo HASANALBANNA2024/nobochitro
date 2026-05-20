@@ -21,7 +21,7 @@ void main() async {
   // await DatabaseHelper.insertDemoPhotographers();
   // await DatabaseHelper.insertDemoPackages();
   // await DatabaseHelper.instance.insertAddons();
-  await DatabaseHelper.insertDemoCampaignOnStart();
+  // await DatabaseHelper.insertDemoCampaignOnStart();
 
   runApp(const PhotographyApp());
 }

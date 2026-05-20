@@ -56,8 +56,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
   /// Fetch reviews from Supabase and apply precise multi-level filtering
   Future<void> _fetchAndFilterReviews() async {
     try {
-      List<Map<String, dynamic>> rawReviews = await DatabaseHelper.instance
-          .getReviews();
+      List<Map<String, dynamic>> rawReviews = await DatabaseHelper.instance.getReviews();
 
       if (!mounted) return;
 
@@ -73,34 +72,23 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
         String? rPhotographer = review['photographer_name'];
         String? rCategory = review['category_name'];
 
-        // 1. Dynamic Category Filter with fallback deduction logic
         if (widget.filterCategoryName != null) {
-          if (rCategory != null &&
-              rCategory.toLowerCase() ==
-                  widget.filterCategoryName!.toLowerCase()) {
+          if (rCategory != null && rCategory.toLowerCase() == widget.filterCategoryName!.toLowerCase()) {
             filtered.add(review);
-          } else if (rPackage != null &&
-              rPackage.toLowerCase().contains(
-                widget.filterCategoryName!.toLowerCase(),
-              )) {
+          } else if (rPackage != null && rPackage.toLowerCase().contains(widget.filterCategoryName!.toLowerCase())) {
             filtered.add(review);
           }
         }
-        // 2. Photographer Profile Filter
         else if (widget.filterPhotographerName != null) {
-          if (rPhotographer?.toLowerCase() ==
-              widget.filterPhotographerName!.toLowerCase()) {
+          if (rPhotographer?.toLowerCase() == widget.filterPhotographerName!.toLowerCase()) {
             filtered.add(review);
           }
         }
-        // 3. Single Specific Package Filter
         else if (widget.filterPackageName != null) {
-          if (rPackage?.toLowerCase() ==
-              widget.filterPackageName!.toLowerCase()) {
+          if (rPackage?.toLowerCase() == widget.filterPackageName!.toLowerCase()) {
             filtered.add(review);
           }
         }
-        // 4. Global Dashboard (Shows everything)
         else {
           filtered.add(review);
         }
@@ -126,16 +114,12 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
         return {
           'id': 'review_dummy_$index',
           'user_id': index == 0 ? (_currentUserId ?? 'user_0') : 'user_$index',
-          'user_name': index == 0
-              ? 'My Review'
-              : (index % 3 == 0 ? 'Anonymous' : 'Client Name $index'),
+          'user_name': index == 0 ? 'My Review' : (index % 3 == 0 ? 'Anonymous' : 'Client Name $index'),
           'comment': index % 2 == 0
-              ? 'Amazing service from #Wedding Luxury package! Highly recommended.'
+              ? 'Amazing service from #Wedding Luxury package! Highly recommended. This content takes dynamic size.'
               : 'The photo quality of my #Birthday Bash was top-notch.',
           'rating': 4.7,
-          'review_image_url': index % 2 == 0
-              ? 'https://picsum.photos/500/500?random=$index'
-              : null,
+          'review_image_url': index % 2 == 0 ? 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg' : null,
           'package_name': index % 2 == 0 ? 'Wedding Luxury' : 'Birthday Bash',
           'category_name': index % 2 == 0 ? 'Wedding' : 'Birthday',
           'photographer_name': 'John_Doe',
@@ -145,14 +129,9 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
 
       if (widget.filterCategoryName != null) {
         _allReviews = _allReviews
-            .where(
-              (r) =>
-                  (r['category_name'] as String).toLowerCase() ==
-                      widget.filterCategoryName!.toLowerCase() ||
-                  (r['package_name'] as String).toLowerCase().contains(
-                    widget.filterCategoryName!.toLowerCase(),
-                  ),
-            )
+            .where((r) =>
+        (r['category_name'] as String).toLowerCase() == widget.filterCategoryName!.toLowerCase() ||
+            (r['package_name'] as String).toLowerCase().contains(widget.filterCategoryName!.toLowerCase()))
             .toList();
       }
 
@@ -182,7 +161,6 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
     super.dispose();
   }
 
-  /// Open Dialog to edit existing review comment and rating configuration
   void _editReviewDialog(Map<String, dynamic> review) {
     final commentController = TextEditingController(text: review['comment']);
     double currentRating = (review['rating'] ?? 5.0).toDouble();
@@ -192,14 +170,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF1E1E1E),
-          title: const Text(
-            "Edit Your Review",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          title: const Text("Edit Your Review", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -207,18 +178,8 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) {
                   return GestureDetector(
-                    onTap: () {
-                      setDialogState(() {
-                        currentRating = index + 1.0;
-                      });
-                    },
-                    child: Icon(
-                      Icons.star_rounded,
-                      color: index < currentRating
-                          ? Colors.amber
-                          : Colors.grey[700],
-                      size: 32,
-                    ),
+                    onTap: () => setDialogState(() => currentRating = index + 1.0),
+                    child: Icon(Icons.star_rounded, color: index < currentRating ? Colors.amber : Colors.grey[700], size: 32),
                   );
                 }),
               ),
@@ -232,26 +193,15 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                   hintStyle: const TextStyle(color: Colors.white30),
                   filled: true,
                   fillColor: Colors.black87,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                "Cancel",
-                style: TextStyle(color: Colors.white54),
-              ),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel", style: TextStyle(color: Colors.white54))),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: widget.primaryAccent,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: widget.primaryAccent),
               onPressed: () async {
                 Navigator.pop(context);
                 setState(() => _isLoading = true);
@@ -260,23 +210,15 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                     table: 'reviews',
                     column: 'id',
                     value: review['id'],
-                    data: {
-                      'comment': commentController.text.trim(),
-                      'rating': currentRating,
-                    },
+                    data: {'comment': commentController.text.trim(), 'rating': currentRating},
                   );
                   _fetchAndFilterReviews();
                 } catch (e) {
                   setState(() => _isLoading = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Failed to update review: $e")),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update review: $e")));
                 }
               },
-              child: const Text(
-                "Update",
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text("Update", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -284,48 +226,26 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
     );
   }
 
-  /// Confirm and delete chosen review from storage schema safely
   void _deleteReviewConfirm(dynamic reviewId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text(
-          "Delete Review",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: const Text(
-          "Are you completely sure you want to remove this review permanently?",
-          style: TextStyle(color: Colors.white70, fontSize: 13),
-        ),
+        title: const Text("Delete Review", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: const Text("Are you completely sure you want to remove this review permanently?", style: TextStyle(color: Colors.white70, fontSize: 13)),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.white54),
-            ),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel", style: TextStyle(color: Colors.white54))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () async {
               Navigator.pop(context);
               setState(() => _isLoading = true);
               try {
-                await DatabaseHelper.instance.deleteReview(
-                  column: 'id',
-                  value: reviewId,
-                );
+                await DatabaseHelper.instance.deleteReview(column: 'id', value: reviewId);
                 _fetchAndFilterReviews();
               } catch (e) {
                 setState(() => _isLoading = false);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Failed to delete review: $e")),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to delete review: $e")));
               }
             },
             child: const Text("Delete", style: TextStyle(color: Colors.white)),
@@ -356,56 +276,33 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
                 width: 40,
                 height: 5,
                 margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                decoration: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(10)),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    widget.sectionTitle,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.white),
-                  ),
+                  Text(widget.sectionTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white)),
                 ],
               ),
               const SizedBox(height: 20),
               Expanded(
                 child: _allReviews.isEmpty
-                    ? const Center(
-                        child: Text(
-                          "No reviews found for this category.",
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                      )
-                    : GridView.builder(
-                        controller: controller,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount:
-                              MediaQuery.of(context).size.width > 900 ? 3 : 1,
-                          mainAxisExtent: 250,
-                          crossAxisSpacing: 15,
-                          mainAxisSpacing: 15,
-                        ),
-                        itemCount: _allReviews.length,
-                        itemBuilder: (context, i) => _ReviewCard(
-                          review: _allReviews[i],
-                          primaryAccent: widget.primaryAccent,
-                          currentUserId: _currentUserId,
-                          onEdit: () => _editReviewDialog(_allReviews[i]),
-                          onDelete: () =>
-                              _deleteReviewConfirm(_allReviews[i]['id']),
-                        ),
-                      ),
+                    ? const Center(child: Text("No reviews found for this category.", style: TextStyle(color: Colors.white54)))
+                    : ListView.builder(
+                  controller: controller,
+                  itemCount: _allReviews.length,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: _ReviewCard(
+                      review: _allReviews[i],
+                      primaryAccent: widget.primaryAccent,
+                      currentUserId: _currentUserId,
+                      onEdit: () => _editReviewDialog(_allReviews[i]),
+                      onDelete: () => _deleteReviewConfirm(_allReviews[i]['id']),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -417,20 +314,15 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    double fraction = screenWidth > 1400
-        ? 0.25
-        : (screenWidth > 1000 ? 0.35 : (screenWidth > 600 ? 0.5 : 1.0));
+    double fraction = screenWidth > 1400 ? 0.25 : (screenWidth > 1000 ? 0.35 : (screenWidth > 600 ? 0.5 : 1.0));
 
     _pageController = PageController(
       viewportFraction: fraction,
-      initialPage:
-          _currentPage % (_allReviews.isEmpty ? 1 : _allReviews.length),
+      initialPage: _currentPage % (_allReviews.isEmpty ? 1 : _allReviews.length),
     );
 
     if (_isLoading) {
-      return const Center(
-        child: CupertinoActivityIndicator(color: Colors.amber),
-      );
+      return const Center(child: CupertinoActivityIndicator(color: Colors.amber));
     }
 
     return Column(
@@ -442,117 +334,56 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
             padding: const EdgeInsets.only(left: 20, bottom: 15),
             child: Text(
               widget.sectionTitle,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ),
         ),
         _allReviews.isEmpty
             ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Text(
-                    "No reviews found.",
-                    style: TextStyle(color: Colors.white54),
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Center(child: Text("No reviews found.", style: TextStyle(color: Colors.white54))),
+        )
+            : ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+          ),
+          child: SizedBox(
+            // 🎯 কন্টেন্ট এর সাইজ অনুযায়ী পুরো রো এর রেসপনসিভ হাইট হ্যান্ডেল
+            height: screenWidth > 600 ? 250 : 210,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _allReviews.length,
+              padEnds: false,
+              onPageChanged: (i) => _currentPage = i,
+              itemBuilder: (context, i) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: _ReviewCard(
+                    review: _allReviews[i],
+                    primaryAccent: widget.primaryAccent,
+                    currentUserId: _currentUserId,
+                    onEdit: () => _editReviewDialog(_allReviews[i]),
+                    onDelete: () => _deleteReviewConfirm(_allReviews[i]['id']),
                   ),
                 ),
-              )
-            : Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    height: 250, // facebook layout height express
-                    child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        dragDevices: {
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.mouse,
-                        },
-                      ),
-                      child: PageView.builder(
-                        controller: _pageController,
-                        itemCount: _allReviews.length,
-                        padEnds: false,
-                        onPageChanged: (i) => _currentPage = i,
-                        itemBuilder: (context, i) => Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: _ReviewCard(
-                            review: _allReviews[i],
-                            primaryAccent: widget.primaryAccent,
-                            currentUserId: _currentUserId,
-                            onEdit: () => _editReviewDialog(_allReviews[i]),
-                            onDelete: () =>
-                                _deleteReviewConfirm(_allReviews[i]['id']),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (screenWidth > 800) ...[
-                    Positioned(
-                      left: 5,
-                      child: _Arrow(
-                        icon: Icons.arrow_back_ios,
-                        onTap: () => _pageController.previousPage(
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.ease,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 5,
-                      child: _Arrow(
-                        icon: Icons.arrow_forward_ios,
-                        onTap: () => _pageController.nextPage(
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.ease,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
               ),
+            ),
+          ),
+        ),
         if (_allReviews.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(right: 10, top: 5),
             child: TextButton.icon(
               onPressed: _showAllReviewsSheet,
               icon: const Icon(Icons.grid_view_rounded, size: 16),
-              label: const Text(
-                "View All",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: widget.primaryAccent,
-              ),
+              label: const Text("View All", style: TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+              style: TextButton.styleFrom(foregroundColor: widget.primaryAccent),
             ),
           ),
       ],
     );
   }
-}
-
-class _Arrow extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _Arrow({required this.icon, required this.onTap});
-  @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.15),
-      shape: BoxShape.circle,
-    ),
-    child: IconButton(
-      onPressed: onTap,
-      icon: Icon(icon, size: 16, color: Colors.white),
-    ),
-  );
 }
 
 class _ReviewCard extends StatelessWidget {
@@ -570,16 +401,11 @@ class _ReviewCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  /// facebook tags formatting
   Widget _buildFormattedComment(String comment) {
     if (!comment.contains('#') && !comment.contains('@')) {
       return Text(
         comment,
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.white70,
-          height: 1.4,
-        ),
+        style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
       );
     }
 
@@ -588,60 +414,34 @@ class _ReviewCard extends StatelessWidget {
 
     for (var word in words) {
       if (word.startsWith('#')) {
-        spans.add(
-          TextSpan(
-            text: '$word ',
-            style: TextStyle(
-              color: primaryAccent,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        );
+        spans.add(TextSpan(text: '$word ', style: TextStyle(color: primaryAccent, fontWeight: FontWeight.bold, fontSize: 12)));
       } else if (word.startsWith('@')) {
-        spans.add(
-          TextSpan(
-            text: '$word ',
-            style: const TextStyle(
-              color: Colors.blueAccent,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        );
+        spans.add(TextSpan(text: '$word ', style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)));
       } else {
-        spans.add(
-          TextSpan(
-            text: '$word ',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-              height: 1.4,
-            ),
-          ),
-        );
+        spans.add(TextSpan(text: '$word ', style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4)));
       }
     }
 
     return RichText(text: TextSpan(children: spans));
   }
 
-  /// সুপাবেস টেক্সট অ্যারে বা সিংগেল ইউআরএল থেকে ক্লিন ইমেজ লিস্ট জেনারেট করা
   List<String> _parseReviewImages(dynamic rawUrl) {
     if (rawUrl == null) return [];
     String urlStr = rawUrl.toString().trim();
-    if (urlStr.isEmpty) return [];
+    if (urlStr.isEmpty || urlStr == 'null' || urlStr == 'EMPTY') return [];
 
-    // পোস্টগ্রেস টেক্সট অ্যারে হলে ফিক্সিং "{url1,url2}"
     if (urlStr.startsWith('{') && urlStr.endsWith('}')) {
       urlStr = urlStr.substring(1, urlStr.length - 1);
-      return urlStr
-          .split(',')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
     }
-    return [urlStr];
+    if (urlStr.startsWith('[') && urlStr.endsWith(']')) {
+      urlStr = urlStr.substring(1, urlStr.length - 1);
+    }
+
+    return urlStr
+        .split(',')
+        .map((e) => e.replaceAll('"', '').replaceAll("'", "").trim())
+        .where((e) => e.isNotEmpty && e.startsWith('http'))
+        .toList();
   }
 
   void _openImageLightbox(BuildContext context, String url) {
@@ -649,7 +449,7 @@ class _ReviewCard extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "Lightbox",
-      barrierColor: Colors.black87, // ফেসবুকের মতো রিয়েল ড্রপ ব্যাকগ্রাউন্ড
+      barrierColor: Colors.black87,
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (context, anim1, anim2) {
         return Center(
@@ -669,11 +469,7 @@ class _ReviewCard extends StatelessWidget {
                   child: Material(
                     color: Colors.transparent,
                     child: IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 22,
-                      ),
+                      icon: const Icon(Icons.close, color: Colors.white, size: 22),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -686,17 +482,10 @@ class _ReviewCard extends StatelessWidget {
                     child: Image.network(
                       url,
                       fit: BoxFit.contain,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const SizedBox(
-                          height: 150,
-                          child: Center(
-                            child: CupertinoActivityIndicator(
-                              color: Colors.amber,
-                            ),
-                          ),
-                        );
-                      },
+                      errorBuilder: (_, __, ___) => const SizedBox(
+                        height: 150,
+                        child: Center(child: Icon(Icons.broken_image, color: Colors.white30, size: 40)),
+                      ),
                     ),
                   ),
                 ),
@@ -717,19 +506,20 @@ class _ReviewCard extends StatelessWidget {
     final String rUserId = review['user_id'] ?? "anonymous_user";
 
     final bool isOwnReview = currentUserId != null && currentUserId == rUserId;
-    final bool isAnonymous =
-        name.toLowerCase() == 'anonymous' || rUserId == 'anonymous_user';
+    final bool isAnonymous = name.toLowerCase() == 'anonymous' || rUserId == 'anonymous_user';
 
-    // সুপাবেস ইমেজ স্ট্রাকচার কলাম ম্যাপিং
-    final List<String> parsedUrls = _parseReviewImages(
-      review['review_image_url'],
-    );
-    final String? userAvatarUrl = review['user_avatar'];
+    final List<String> parsedUrls = _parseReviewImages(review['review_image_url']);
 
-    // ইউজার প্রোফাইল ইমেজ ডাইনামিক ক্যাশ রেন্ডারার
-    final String profileUrl =
-        userAvatarUrl ??
-        "https://ijxtbmgvtwvpkbshunwf.supabase.co/storage/v1/object/public/user_assets/profile_user_image/$rUserId.jpg";
+    // 🎯 সুপাবেস ডাটাবেজের 'user_avatar' কলাম থেকে সরাসরি ভ্যালু রিড করার জন্য জেনারেটর ফিক্স করা হলো
+    final String? userAvatarData = review['user_avatar'];
+    final bool hasValidAvatar = userAvatarData != null &&
+        userAvatarData.toString().trim().isNotEmpty &&
+        userAvatarData.toString().trim() != 'null' &&
+        userAvatarData.toString().trim() != 'EMPTY';
+
+    final String profileUrl = hasValidAvatar
+        ? userAvatarData.toString().trim()
+        : "https://ijxtbmgvtwvpkbshunwf.supabase.co/storage/v1/object/public/user_assets/profile_user_image/$rUserId.jpg";
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -738,72 +528,50 @@ class _ReviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min, // ফেসবুক কমেন্ট স্টাইলের মতো অটোমেটিক কন্টেন্ট সাইজ নেবে
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // 👤 ১০০% ক্রস-প্লাটফর্ম সার্কেল অ্যাভাটার সেফটি
               CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.grey[800],
                 child: ClipOval(
                   child: isAnonymous
-                      ? const Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: Colors.amber,
-                        )
+                      ? const Icon(Icons.person_outline, size: 16, color: Colors.amber)
                       : Image.network(
-                          profileUrl,
-                          width: 32,
-                          height: 32,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.person,
-                            size: 16,
-                            color: Colors.white60,
-                          ),
-                        ),
+                    profileUrl,
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.person, // ইমেজ লোড হতে ফেইলড হলে সেফ ফলব্যাক আইকন শো করবে
+                      size: 16,
+                      color: Colors.white60,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
               Text(
                 " $rating",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.bold),
               ),
-
               if (isOwnReview)
                 PopupMenuButton<String>(
-                  icon: const Icon(
-                    Icons.more_vert_rounded,
-                    color: Colors.white70,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.more_vert_rounded, color: Colors.white70, size: 18),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(maxWidth: 100),
                   color: const Color(0xFF2C2C2C),
@@ -817,16 +585,9 @@ class _ReviewCard extends StatelessWidget {
                       height: 35,
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.edit_rounded,
-                            color: Colors.white70,
-                            size: 14,
-                          ),
+                          Icon(Icons.edit_rounded, color: Colors.white70, size: 14),
                           SizedBox(width: 8),
-                          Text(
-                            "Edit",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
+                          Text("Edit", style: TextStyle(color: Colors.white, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -835,19 +596,9 @@ class _ReviewCard extends StatelessWidget {
                       height: 35,
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.delete_outline_rounded,
-                            color: Colors.redAccent,
-                            size: 14,
-                          ),
+                          Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 14),
                           SizedBox(width: 8),
-                          Text(
-                            "Delete",
-                            style: TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 12,
-                            ),
-                          ),
+                          Text("Delete", style: TextStyle(color: Colors.redAccent, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -857,17 +608,12 @@ class _ReviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // 📝 ফেসবুক স্টাইল টেক্সট ও ট্যাগ কন্টেনার (Scrollable & Responsive)
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: _buildFormattedComment(comment),
-            ),
-          ),
+          // 📝 ফেসবুক কমেন্ট স্টাইল কন্টেন্ট এরিয়া (এখানে Flexible রিমুভ করা হয়েছে যাতে ইমেজ টেক্সটের নিচে নিচে নিখুঁতভাবে বসে)
+          _buildFormattedComment(comment),
 
-          // 📸 রিভিউ টেক্সটের নিচে সুন্দর ফেসবুক স্টাইল থাম্বনেইল গ্যালারি লুপ
+          // 📸 কাস্টম রিভিউ থাম্বনেইল গ্যালারি লোডার (টেক্সট শেষ হওয়ার পরেই এটি রেন্ডার হবে, ওভারল্যাপ হওয়ার কোনো চান্স নেই)
           if (parsedUrls.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             SizedBox(
               height: 48,
               child: ListView.builder(
@@ -893,15 +639,6 @@ class _ReviewCard extends StatelessWidget {
               ),
             ),
           ],
-
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(
-              Icons.format_quote_rounded,
-              size: 14,
-              color: primaryAccent.withOpacity(0.15),
-            ),
-          ),
         ],
       ),
     );
