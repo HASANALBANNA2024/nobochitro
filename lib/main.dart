@@ -45,7 +45,7 @@ class _PhotographyAppState extends State<PhotographyApp> {
     });
   }
 
-  // স্প্ল্যাশ স্ক্রিন শেষ হলে এই ফাংশনটি কল হবে
+  // Splash screen
   void onAppReady() {
     setState(() {
       _showSupportHub = true;
