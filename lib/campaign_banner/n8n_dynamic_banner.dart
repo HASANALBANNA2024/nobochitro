@@ -26,7 +26,6 @@ class BannerData {
 
   // 🎯 সুপাবেসের যেকোনো ফিল্ড null বা খালি থাকলে অ্যাপ ক্র্যাশ করা আটকাবে
   factory BannerData.fromSupabase(Map<String, dynamic>? json) {
-    // পুরো json-ই যদি null আসে তার সেফটি চেইক
     if (json == null) {
       return BannerData(
         campaignId: "COUPON",
@@ -39,15 +38,40 @@ class BannerData {
       );
     }
 
+    // 🎯 ─── কলামের নাম 'targeted_package_id' অনুযায়ী নিখুঁত সাবটাইটেল লজিক ───
+    final int discountPct = json['discount_pct'] ?? 0;
+    final String? targetedCategory = json['targeted_category']?.toString();
+    final String? targetedPackage = json['targeted_package_id']?.toString(); // 👈 স্ক্রিনশট অনুযায়ী কলাম নেম ফিক্স করা হলো
+
+    String dynamicSubtitle = "$discountPct% OFF";
+
+    // 'EMPTY' বা খালি লেখা থাকলে সেটাকে আমরা নো-ডাটা হিসেবে কাউন্ট করব
+    bool hasCategory = targetedCategory != null && targetedCategory.trim().isNotEmpty && targetedCategory.trim().toUpperCase() != "EMPTY";
+    bool hasPackage = targetedPackage != null && targetedPackage.trim().isNotEmpty && targetedPackage.trim().toUpperCase() != "EMPTY";
+
+    if (hasCategory && hasPackage) {
+      // ১. যদি দুইটাই থাকে
+      dynamicSubtitle = "$discountPct% OFF - Category: $targetedCategory ($targetedPackage)";
+    } else if (hasCategory) {
+      // ২. শুধু ক্যাটাগরি থাকলে
+      dynamicSubtitle = "$discountPct% OFF - All Packages under $targetedCategory";
+    } else if (hasPackage) {
+      // ৩. শুধু প্যাকেজ থাকলে
+      dynamicSubtitle = "$discountPct% OFF - Package: $targetedPackage";
+    } else {
+      // ৪. কোনোটিই যদি না থাকে (সব ক্যাটাগরি ও প্যাকেজে কাউন্ট হবে)
+      dynamicSubtitle = "$discountPct% OFF - Applicable for All Packages & Categories";
+    }
+
     return BannerData(
       campaignId: json['campaign_id']?.toString() ?? "COUPON",
       title: json['title']?.toString() ?? "EXCLUSIVE OFFER!",
-      subtitle: "${json['discount_pct'] ?? 0}% OFF - ${json['targeted_category'] ?? 'All Categories'}",
+      subtitle: dynamicSubtitle, // 👈 ডাইনামিক সাবটাইটেল সেটিং
       description: "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching",
       buttonText: json['campaign_id']?.toString() ?? "COPY CODE",
       imageUrl: (json['banner_url'] != null && json['banner_url'].toString().isNotEmpty)
           ? json['banner_url'].toString()
-          : "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg", // ইমেজ নাল বা খালি হলে ডিফল্ট ব্যাকআপ ইমেজ
+          : "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
       endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date'].toString()) : null,
     );
   }
@@ -94,13 +118,12 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
           _currentBanner = BannerData.fromSupabase(campaignData);
           _isLoading = false;
 
-          // End Date অনুযায়ী টাইমার সেট করা (Null এবং ভ্যালিডেশন চেইক সহ)
           if (_currentBanner?.endDate != null) {
             _secondsRemaining = _currentBanner!.endDate!.difference(DateTime.now()).inSeconds;
             if (_secondsRemaining > 0) {
               _startCountdown();
             } else {
-              _secondsRemaining = 0; // মাইনাস টাইমস্ট্যাম্প যেন না দেখায়
+              _secondsRemaining = 0;
             }
           }
         });
@@ -143,7 +166,6 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-    // ডাটা যদি নাল থাকে তবে সেফটি হিসেবে আপনার আগের HeroBanner লোড হবে, অ্যাপ ক্র্যাশ করবে না
     if (_currentBanner == null) return HeroBanner(primaryAccent: widget.primaryAccent);
 
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -160,7 +182,6 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           image: DecorationImage(
-            // ইমেজ নাল বা ব্রোকেন লিঙ্কের এরর হ্যান্ডলিং
             image: NetworkImage(_currentBanner!.imageUrl),
             fit: BoxFit.cover,
             alignment: Alignment.centerRight,
@@ -290,7 +311,6 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
                       height: isWeb ? 45 : 36,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          // কুপন কোড নাল হলে কপি করার সময় ক্র্যাশ এড়ানো
                           if (_currentBanner!.campaignId.isNotEmpty) {
                             await Clipboard.setData(
                               ClipboardData(text: _currentBanner!.campaignId),
@@ -298,7 +318,7 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('🎉 কুপন কোড "${_currentBanner!.campaignId}" কপি হয়েছে!'),
+                                  content: Text('🎉 কুপন কোড "${_currentBanner!.campaignId}" কপি হয়েছে!'),
                                   backgroundColor: Colors.green,
                                   duration: const Duration(seconds: 2),
                                 ),
@@ -332,7 +352,7 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
                 ),
               ),
 
-              // App Icon (ইমেজ পাথ বা লোড এরর হ্যান্ডলিং)
+              // App Icon
               Positioned(
                 top: 12,
                 right: 12,
