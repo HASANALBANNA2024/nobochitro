@@ -84,227 +84,252 @@ class ActiveBookingCard extends StatelessWidget {
 
     bool isHandoverStage = currentStep == 4;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(
-        14,
-      ), // প্যাডিং কিছুটা অপ্টিমাইজ করা হয়েছে যেন অতিরিক্ত স্পেস না নেয়
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize
-            .min, // কার্ডকে কন্টেন্টের সমান টাইট রাখবে, বাড়তি স্পেস নিবে না
-        children: [
-          Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          // 🎯 প্যাডিং কিছুটা কমানো হয়েছে (Top/Bottom 12)
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                "#$bookingId",
-                style: TextStyle(
-                  color: primaryAccent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              const Spacer(),
-              if (upperBadgeText != "Passed")
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: badgeColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    upperBadgeText,
+              Row(
+                children: [
+                  Text(
+                    "#$bookingId",
                     style: TextStyle(
-                      color: badgeColor,
+                      color: primaryAccent,
                       fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                      fontSize: 12,
                     ),
                   ),
-                ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (isCompleted ? Colors.green : Colors.orange)
-                      .withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  paymentStatus,
-                  style: TextStyle(
-                    color: isCompleted ? Colors.green : Colors.orange,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
+                  const Spacer(),
+                  if (upperBadgeText != "Passed")
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        upperBadgeText,
+                        style: TextStyle(
+                          color: badgeColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (isCompleted ? Colors.green : Colors.orange)
+                          .withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      paymentStatus,
+                      style: TextStyle(
+                        color: isCompleted ? Colors.green : Colors.orange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            packageTitle,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.wallet, size: 15, color: Colors.grey),
-              const SizedBox(width: 5),
-              const Text(
-                "Payment: ",
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
+              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
               Text(
-                isCompleted ? "Fully Paid" : "Pending Verification",
-                style: TextStyle(
-                  color: isCompleted ? Colors.green : Colors.blue,
-                  fontSize: 12,
+                packageTitle,
+                style: const TextStyle(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const Spacer(),
-              Text(
-                amountStr,
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                  color: primaryAccent,
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 20, thickness: 0.5),
-          Row(
-            children: [
-              Expanded(child: _infoTile(Icons.calendar_today, dateStr)),
-              const SizedBox(width: 10),
-              Expanded(child: _infoTile(Icons.access_time, timeStr)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _infoTile(
-            Icons.camera_alt_outlined,
-            "Photographer: $photographerName",
-          ),
-          const SizedBox(height: 8),
-          _infoTile(Icons.location_on_outlined, locationStr),
-          const Divider(height: 20, thickness: 0.5),
-
-          // 🎯 টাইমলাইন রো যা স্ক্রিন সাইজ অনুযায়ী সংকুচিত হতে পারবে (No Overflow)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(child: _buildTimelineStep("Pending", currentStep >= 0)),
-              _buildTimelineArrow(currentStep >= 1),
-              Expanded(child: _buildTimelineStep("Approved", currentStep >= 1)),
-              _buildTimelineArrow(currentStep >= 2),
-              Expanded(child: _buildTimelineStep("Shooting", currentStep >= 2)),
-              _buildTimelineArrow(currentStep >= 3),
-              Expanded(
-                child: _buildTimelineStep("Final Draft", currentStep >= 3),
-              ),
-              _buildTimelineArrow(currentStep >= 4),
-              Expanded(child: _buildTimelineStep("Handover", currentStep >= 4)),
-            ],
-          ),
-          const SizedBox(
-            height: 12,
-          ), // টাইমলাইন ও বাটনের মাঝের স্পেস টাইট করা হলো যেন নিচে উপচে না পড়ে
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
-                    if (isHandoverStage &&
-                        driveLink != null &&
-                        driveLink.isNotEmpty) {
-                      final Uri url = Uri.parse(driveLink);
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(
-                          url,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    } else {
-                      if (onViewDetails != null) onViewDetails!();
-                    }
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: primaryAccent),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
+              Row(
+                children: [
+                  const Icon(Icons.wallet, size: 15, color: Colors.grey),
+                  const SizedBox(width: 5),
+                  const Text(
+                    "Payment: ",
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
-                  child: Text(
-                    isHandoverStage ? "Drive Link" : "View Details",
-                    style: const TextStyle(
+                  Text(
+                    isCompleted ? "Fully Paid" : "Pending Verification",
+                    style: TextStyle(
+                      color: isCompleted ? Colors.green : Colors.blue,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
+                  const Spacer(),
+                  Text(
+                    amountStr,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: primaryAccent,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: isHandoverStage
-                    ? ElevatedButton(
-                        onPressed: () {
-                          ReviewService.showReviewSheet(
-                            context,
-                            booking: booking,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryAccent,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 1,
-                        ),
-                        child: const Text(
-                          "Review",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      )
-                    : OutlinedButton(
-                        onPressed: onCancel,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.redAccent),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
+              const Divider(
+                height: 12,
+                thickness: 0.5,
+              ), // 🎯 20 থেকে 12 করা হয়েছে
+              Row(
+                children: [
+                  Expanded(child: _infoTile(Icons.calendar_today, dateStr)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _infoTile(Icons.access_time, timeStr)),
+                ],
+              ),
+              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
+              _infoTile(
+                Icons.camera_alt_outlined,
+                "Photographer: $photographerName",
+              ),
+              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
+              _infoTile(Icons.location_on_outlined, locationStr),
+              const Divider(
+                height: 12,
+                thickness: 0.5,
+              ), // 🎯 20 থেকে 12 করা হয়েছে
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _buildTimelineStep("Pending", currentStep >= 0),
+                  ),
+                  _buildTimelineArrow(currentStep >= 1),
+                  Expanded(
+                    child: _buildTimelineStep("Approved", currentStep >= 1),
+                  ),
+                  _buildTimelineArrow(currentStep >= 2),
+                  Expanded(
+                    child: _buildTimelineStep("Shooting", currentStep >= 2),
+                  ),
+                  _buildTimelineArrow(currentStep >= 3),
+                  Expanded(
+                    child: _buildTimelineStep("Final Draft", currentStep >= 3),
+                  ),
+                  _buildTimelineArrow(currentStep >= 4),
+                  Expanded(
+                    child: _buildTimelineStep("Handover", currentStep >= 4),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10), // 🎯 12 থেকে 10 করা হয়েছে
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        if (isHandoverStage &&
+                            driveLink != null &&
+                            driveLink.isNotEmpty) {
+                          final Uri url = Uri.parse(driveLink);
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        } else {
+                          if (onViewDetails != null) onViewDetails!();
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: primaryAccent),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                        ), // 🎯 10 থেকে 8 করা হয়েছে
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+                      child: Text(
+                        isHandoverStage ? "Drive Link" : "View Details",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: isHandoverStage
+                        ? ElevatedButton(
+                            onPressed: () {
+                              ReviewService.showReviewSheet(
+                                context,
+                                booking: booking,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryAccent,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                              ), // 🎯 10 থেকে 8 করা হয়েছে
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 1,
+                            ),
+                            child: const Text(
+                              "Review",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          )
+                        : OutlinedButton(
+                            onPressed: onCancel,
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.redAccent),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                              ), // 🎯 10 থেকে 8 করা হয়েছে
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -320,7 +345,6 @@ class ActiveBookingCard extends StatelessWidget {
               : (isDark ? Colors.white30 : Colors.black26),
         ),
         const SizedBox(height: 1),
-        // 🎯 FittedBox ছোট স্ক্রিনে টেক্সট সাইজ অটোমেটিক ছোট করে রেন্ডার করবে
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
