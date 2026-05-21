@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/admin_panel/addons_view.dart';
 import 'package:nobochitro/admin_panel/packages_view.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
@@ -67,7 +68,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         PackagesView(), // বাকিগুলো এখানে বসাও
         PackagesView(),
         PackagesView(),
-        PackagesView(),
+        AddonsView(),
       ],
     );
   }
