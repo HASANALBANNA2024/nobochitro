@@ -31,7 +31,7 @@ class DatabaseHelper {
 
   static final _client = Supabase.instance.client;
 
-  // ১. ডাটা ইনসার্ট করা (Create)
+  /// data insert (Create)
   static Future<void> insert({
     required String table,
     required Map<String, dynamic> data,
@@ -43,7 +43,7 @@ class DatabaseHelper {
     }
   }
 
-  // ২. ডাটা আপডেট করা (Update)
+  ///(Update)
   static Future<void> update({
     required String table,
     required String column,
@@ -57,7 +57,7 @@ class DatabaseHelper {
     }
   }
 
-  // ৩. ডাটা ডিলিট করা (Delete)
+  /// Data Delete  (Delete)
   static Future<void> delete({
     required String table,
     required String column,
@@ -70,7 +70,7 @@ class DatabaseHelper {
     }
   }
 
-  // Image Storage
+  /// Image Storage
   static Future<String?> uploadImage({
     required String folder,
     required String userId,
@@ -119,7 +119,7 @@ class DatabaseHelper {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  /// result screen for cateogry by use packages
+  /// result screen for category by use packages
   Future<List<Map<String, dynamic>>> getPackagesByCategory(
     String categoryName,
   ) async {

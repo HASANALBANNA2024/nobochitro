@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/admin_panel/campaigns/campaigns_view.dart';
-// import 'package:nobochitro/admin_panel/addons_view.dart';
-import 'package:nobochitro/admin_panel/packages_view.dart';
+import 'package:nobochitro/admin_panel/packages/package_view.dart';
+import 'package:nobochitro/admin_panel/addons/addons_view.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
-
-import 'addons/addons_view.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -70,8 +68,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       index: _selectedIndex,
       children: const [
         PackagesView(),
-        PackagesView(), // বাকিগুলো এখানে বসাও
-        PackagesView(),
+        // PackagesView(),
+        // PackagesView(),
         CampaignsView(),
         PackagesView(),
         AddonsView(),
