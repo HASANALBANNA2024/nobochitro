@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/admin_panel/campaigns/campaigns_view.dart';
 // import 'package:nobochitro/admin_panel/addons_view.dart';
 import 'package:nobochitro/admin_panel/packages_view.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
@@ -17,6 +18,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     "Packages",
     "Photographers",
     "Payments",
+    "Campaigns",
     "Reviews",
     "Addons",
   ];
@@ -25,6 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Icons.camera_alt,
     Icons.payment,
     Icons.star,
+    Icons.campaign_outlined,
     Icons.add_circle_outline,
   ];
 
@@ -69,6 +72,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         PackagesView(),
         PackagesView(), // বাকিগুলো এখানে বসাও
         PackagesView(),
+        CampaignsView(),
         PackagesView(),
         AddonsView(),
       ],

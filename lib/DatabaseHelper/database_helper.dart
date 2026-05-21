@@ -70,30 +70,7 @@ class DatabaseHelper {
     }
   }
 
-  // ৪. এক টেবিল থেকে অন্য টেবিলে ডাটা ট্রান্সফার (Replace Logic)
-  static Future<void> moveRow({
-    required String fromTable,
-    required String toTable,
-    required String column,
-    required dynamic value,
-  }) async {
-    try {
-      final data = await _client
-          .from(fromTable)
-          .select()
-          .eq(column, value)
-          .single();
-
-      if (data != null) {
-        await _client.from(toTable).insert(data);
-        await _client.from(fromTable).delete().eq(column, value);
-      }
-    } catch (e) {
-      throw Exception("Move Row Error: $e");
-    }
-  }
-
-  // ৫. ইমেজ আপলোড সার্ভিস (Storage)
+  // Image Storage
   static Future<String?> uploadImage({
     required String folder,
     required String userId,
@@ -115,7 +92,7 @@ class DatabaseHelper {
     }
   }
 
-  // ডাটা রিয়েল-টাইম পাওয়ার জন্য স্ট্রিম মেথড
+  /// get photographer data receive
   static Stream<List<Map<String, dynamic>>> getPhotographerStream() {
     return _client
         .from('photographers')
@@ -136,13 +113,13 @@ class DatabaseHelper {
     }
   }
 
-  // get photographers
+  ///  Get Photographers
   Future<List<Map<String, dynamic>>> getPhotographers() async {
     final response = await _client.from('photographers').select();
     return List<Map<String, dynamic>>.from(response);
   }
 
-  // result screen for cateogry by use packages
+  /// result screen for cateogry by use packages
   Future<List<Map<String, dynamic>>> getPackagesByCategory(
     String categoryName,
   ) async {
@@ -195,7 +172,7 @@ class DatabaseHelper {
     }
   }
 
-  // My Bookings screen and user ar list
+  /// My Bookings screen and user ar list
   Future<List<Map<String, dynamic>>> getUserBookings(String userId) async {
     try {
       print("Log: Fetching bookings for User ID: $userId");
@@ -266,7 +243,7 @@ class DatabaseHelper {
     }
   }
 
-  // 📥 ১. আপিল ইমেজ/স্ক্রিনশট 'user_assets' বাকেটের আন্ডারে আপলোড করার মেথড
+  /// Appeal image initiative initialization
   Future<String?> uploadAppealImage(
     dynamic file,
     String imageName,
@@ -393,10 +370,6 @@ class DatabaseHelper {
     }
   }
 
-  // ==========================================
-  // 📸 NEW METHODS ADDED BELOW FOR REVIEWS
-  // ==========================================
-
   /// Fetch all reviews from Supabase 'reviews' table
   Future<List<Map<String, dynamic>>> getReviews() async {
     try {
@@ -422,15 +395,14 @@ class DatabaseHelper {
     }
   }
 
-  // campaign
-  // Get active campaign from Supabase
+  /// Active Campaigns
   Future<Map<String, dynamic>?> getActiveCampaign() async {
     try {
       final response = await _client
           .from('campaigns')
           .select()
-          .eq('is_active', true) // শুধুমাত্র অ্যাক্টিভ ক্যাম্পেইন
-          .order('created_at', ascending: false) // সবচেয়ে লেটেস্ট
+          .eq('is_active', true)
+          .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
 
@@ -441,69 +413,9 @@ class DatabaseHelper {
     }
   }
 
-  // campaign data(dummy)
-  static Future<void> insertDemoCampaignOnStart() async {
-    try {
-      // ১. প্রথমে চেক করে দেখা অলরেডি কোনো একটিভ ক্যাম্পেইন আছে কি না
-      final activeCampaign = await instance.getActiveCampaign();
 
-      if (activeCampaign != null) {
-        debugPrint(
-          "ℹ️ Supabase-এ অলরেডি একটিভ ক্যাম্পেইন আছে। নতুন করে ডামি ডাটা লাগবে না।",
-        );
-        return;
-      }
 
-      // ২. জেনেরিক এবং র‍্যান্ডম campaign_id তৈরি লজিক (NSRB + ৪ ডিজিট)
-      final random = Random();
-      final int randomNumber = 1000 + random.nextInt(9000);
-      final String generatedCampaignId = "NSRB$randomNumber";
-
-      // ৩. আজকের তারিখ এবং ২ দিন পরের তারিখ তৈরি
-      final now = DateTime.now();
-
-      // 🎯 YYYY-MM-DD ফরম্যাটে রূপান্তর (সুপাবেস date কলামের জন্য পারফেক্ট)
-      final String formattedStartDate =
-          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-      final endDate = now.add(const Duration(days: 2));
-      final String formattedEndDate =
-          "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
-
-      // ৪. ডামি ডাটা স্ট্রাকচার (টেবিলের প্রতিটি কলামের নাম ও টাইপ হুবহু মেইনটেইন করা হয়েছে)
-      final Map<String, dynamic> demoCampaign = {
-        'campaign_id': generatedCampaignId, // text কলাম
-        'title': 'EXCLUSIVE CAMPAIGN! 50% OFF', // text কলাম
-        'banner_url':
-            'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg', // text কলাম
-        'discount_pct': 50, // int4 কলাম
-        // 🎯 নতুন লজিক অনুযায়ী কমা দিয়ে আলাদা করা মাল্টিপল ক্যাটাগরি দেওয়া হলো
-        'targeted_category': 'Portrait, Wedding, Event', // text কলাম
-
-        'is_active': true, // bool কলাম
-        'start_date': formattedStartDate, // date কলাম
-        'end_date': formattedEndDate, // date কলাম
-        'created_at': now.toIso8601String(), // timestamptz কলাম
-      };
-
-      // ৫. ডাটাবেজে ইনসার্ট করা
-      await insert(table: 'campaigns', data: demoCampaign);
-
-      debugPrint("✅ সফলভাবে সব কলাম মেইনটেইন করে ডামি ডাটা ইনসার্ট হয়েছে!");
-      debugPrint(
-        "🎟️ কুপন কোড: $generatedCampaignId | ক্যাটাগরি: Portrait, Wedding, Event",
-      );
-    } catch (e) {
-      debugPrint("❌ DatabaseHelper ডামি ডাটা ইনসার্ট এরর: $e");
-    }
-  }
-
-  // addons
-  // ==========================================
-  // 📸 ADDONS OPERATIONS (CRUD)
-  // ==========================================
-
-  /// ১. Addons লিস্ট পাওয়ার জন্য
+  /// Addons list receive for display
   Future<List<Map<String, dynamic>>> getAddons() async {
     try {
       // তুমি যদি সব ডাটা চাও, তবে .eq('is_active', true) অংশটুকু বাদ দিতে পারো
@@ -515,6 +427,17 @@ class DatabaseHelper {
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       debugPrint("❌ Error fetching addons: $e");
+      return [];
+    }
+  }
+
+  ///getData
+  Future<List<Map<String, dynamic>>> getData({required String table}) async {
+    try {
+      final response = await _client.from(table).select();
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      debugPrint("❌ Error fetching $table: $e");
       return [];
     }
   }
