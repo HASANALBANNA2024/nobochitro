@@ -152,7 +152,7 @@ class _SettingsContent extends StatelessWidget {
             onTap: () {},
           ),
 
-          // ৪. প্রাইভেসি ও সিকিউরিটি
+          // Privacy & Security
           ListTile(
             leading: Icon(Icons.lock_outline_rounded, color: primaryAccent),
             title: const Text('Privacy & Security'),
@@ -161,7 +161,7 @@ class _SettingsContent extends StatelessWidget {
             onTap: () {},
           ),
 
-          // ৫. হেল্প ও সাপোর্ট
+          // Help Support
           ListTile(
             leading: Icon(Icons.help_outline_rounded, color: primaryAccent),
             title: const Text('Help Center'),
@@ -170,7 +170,7 @@ class _SettingsContent extends StatelessWidget {
 
           const Divider(),
 
-          // ৬. অ্যাপ ইনফো
+          // App Info
           ListTile(
             leading: const Icon(Icons.info_outline_rounded),
             title: const Text('About NoboChitro'),

@@ -135,12 +135,12 @@ class CustomSideNavigation extends StatelessWidget {
                     primaryAccent: primaryAccent,
                     onTap: () {
                       onDestinationSelected(5);
-                      Navigator.pop(context);
-                      Navigator.push(
+                      Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => AdminDashboardScreen(),
+                          builder: (context) => const AdminDashboardScreen(),
                         ),
+                        (route) => false,
                       );
                     },
                   ),

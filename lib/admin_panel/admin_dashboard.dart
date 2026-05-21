@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/admin_panel/packages_view.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
-
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
-
   final List<String> _tabs = [
     "Packages",
     "Photographers",
@@ -18,7 +17,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     "Reviews",
     "Addons",
   ];
-  // এখানে ৫টি ট্যাবের জন্য ৫টি আইকন নিশ্চিত করা হয়েছে
   final List<IconData> _icons = [
     Icons.grid_view,
     Icons.camera_alt,
@@ -31,30 +29,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-
     final primaryAccent = isDarkMode
         ? const Color(0xFFD4AF37)
         : const Color(0xFF008080);
-    final backgroundColor = isDarkMode
-        ? const Color(0xFF0F0F0F)
-        : theme.scaffoldBackgroundColor;
+
+    // safe area এবং media query হ্যান্ডেল করা
     bool isLargeScreen = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
       appBar: buildCustomAppBar(context, primaryAccent, "Admin Dashboard"),
-      drawer: isLargeScreen
+      bottomNavigationBar: isLargeScreen
           ? null
-          : Drawer(child: _buildSidebar(isDarkMode, primaryAccent)),
+          : _buildBottomNavBar(isDarkMode, primaryAccent),
       body: Row(
         children: [
           if (isLargeScreen) _buildSidebar(isDarkMode, primaryAccent),
           Expanded(
-            child: Center(
+            child: SafeArea(
+              // SafeArea ব্যবহার করা জরুরি যাতে স্ক্রিন কাট না যায়
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 1100),
-                padding: const EdgeInsets.all(20),
-                child: _buildContent(theme, primaryAccent),
+                child: _getSelectedWidget(),
               ),
             ),
           ),
@@ -63,81 +58,64 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Widget _getSelectedWidget() {
+    // এখানে IndexedStack ব্যবহার করলে ব্যাক করলেও ট্যাব স্টেট ঠিক থাকে
+    return IndexedStack(
+      index: _selectedIndex,
+      children: const [
+        PackagesView(),
+        PackagesView(), // বাকিগুলো এখানে বসাও
+        PackagesView(),
+        PackagesView(),
+        PackagesView(),
+      ],
+    );
+  }
+
   Widget _buildSidebar(bool isDarkMode, Color primaryAccent) {
     return Container(
       width: 250,
-      color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+        border: Border(
+          right: BorderSide(
+            color: isDarkMode ? Colors.white10 : Colors.black12,
+          ),
+        ),
+      ),
       child: ListView.builder(
-        padding: const EdgeInsets.only(top: 50),
         itemCount: _tabs.length,
         itemBuilder: (context, index) => ListTile(
           leading: Icon(
             _icons[index],
             color: _selectedIndex == index
                 ? primaryAccent
-                : (isDarkMode ? Colors.white70 : Colors.black54),
+                : (isDarkMode ? Colors.white54 : Colors.black54),
           ),
           title: Text(
             _tabs[index],
             style: TextStyle(
-              color: _selectedIndex == index
-                  ? primaryAccent
-                  : (isDarkMode ? Colors.white : Colors.black),
+              color: _selectedIndex == index ? primaryAccent : null,
             ),
           ),
-          selected: _selectedIndex == index,
-          selectedTileColor: primaryAccent.withOpacity(0.1),
-          onTap: () {
-            setState(() => _selectedIndex = index);
-            if (MediaQuery.of(context).size.width <= 800)
-              Navigator.pop(context);
-          },
+          onTap: () => setState(() => _selectedIndex = index),
         ),
       ),
     );
   }
 
-  Widget _buildContent(ThemeData theme, Color primaryAccent) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _tabs[_selectedIndex],
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: primaryAccent,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Expanded(
-          child: ListView.builder(
-            itemCount: 10,
-            itemBuilder: (context, index) => Card(
-              elevation: 2,
-              color: theme.cardColor,
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                title: Text("${_tabs[_selectedIndex]} Item ${index + 1}"),
-                subtitle: const Text("Details for this item..."),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.redAccent),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildBottomNavBar(bool isDarkMode, Color primaryAccent) {
+    return BottomNavigationBar(
+      currentIndex: _selectedIndex,
+      onTap: (index) => setState(() => _selectedIndex = index),
+      selectedItemColor: primaryAccent,
+      unselectedItemColor: isDarkMode ? Colors.white54 : Colors.black54,
+      backgroundColor: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+      type: BottomNavigationBarType.fixed,
+      items: List.generate(
+        _tabs.length,
+        (i) => BottomNavigationBarItem(icon: Icon(_icons[i]), label: _tabs[i]),
+      ),
     );
   }
 }
