@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 class SettingsUtils {
-  /// ওয়েব এবং মোবাইল ভিউর জন্য সেটিংস ওপেন করার মেইন ফাংশন
-  static void showSettings(BuildContext context, Color primaryAccent, Function(bool) onThemeChanged) {
+  static void showSettings(
+    BuildContext context,
+    Color primaryAccent,
+    Function(bool) onThemeChanged,
+  ) {
     bool isLargeScreen = MediaQuery.of(context).size.width > 800;
 
     if (isLargeScreen) {
@@ -13,13 +16,20 @@ class SettingsUtils {
   }
 
   // ওয়েবের জন্য সেটিংস ডায়ালগ
-  static void _showSettingsDialog(BuildContext context, Color primaryAccent, Function(bool) onThemeChanged) {
+  static void _showSettingsDialog(
+    BuildContext context,
+    Color primaryAccent,
+    Function(bool) onThemeChanged,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Settings',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: SizedBox(
           width: 450, // ওয়েবের জন্য একটু বড় করা হয়েছে
           child: _SettingsContent(
@@ -39,7 +49,11 @@ class SettingsUtils {
   }
 
   // মোবাইলের জন্য বটম শিট
-  static void _showSettingsSheet(BuildContext context, Color primaryAccent, Function(bool) onThemeChanged) {
+  static void _showSettingsSheet(
+    BuildContext context,
+    Color primaryAccent,
+    Function(bool) onThemeChanged,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -88,7 +102,10 @@ class _SettingsContent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            const Text('Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Settings',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
             const Divider(),
           ],
@@ -96,7 +113,10 @@ class _SettingsContent extends StatelessWidget {
           // ১. ডার্ক মোড সুইচ (শুধুমাত্র মোবাইলের জন্য, ওয়েবে এটি হাইড থাকবে)
           if (isSheet)
             SwitchListTile(
-              secondary: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode, color: primaryAccent),
+              secondary: Icon(
+                isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: primaryAccent,
+              ),
               title: const Text('Dark Mode'),
               subtitle: const Text('Switch visual theme'),
               value: isDarkMode,
@@ -109,7 +129,10 @@ class _SettingsContent extends StatelessWidget {
 
           // ২. নোটিফিকেশন সেটিংস
           ListTile(
-            leading: Icon(Icons.notifications_none_rounded, color: primaryAccent),
+            leading: Icon(
+              Icons.notifications_none_rounded,
+              color: primaryAccent,
+            ),
             title: const Text('Notifications'),
             subtitle: const Text('Manage alerts & updates'),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
@@ -122,7 +145,10 @@ class _SettingsContent extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.language_rounded, color: primaryAccent),
             title: const Text('Language'),
-            trailing: const Text('English (US)', style: TextStyle(color: Colors.grey, fontSize: 13)),
+            trailing: const Text(
+              'English (US)',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
             onTap: () {},
           ),
 
@@ -152,7 +178,8 @@ class _SettingsContent extends StatelessWidget {
             onTap: () {},
           ),
 
-          if (!isSheet) const SizedBox(height: 10), // ডায়ালগের ক্ষেত্রে নিচের স্পেসিং
+          if (!isSheet)
+            const SizedBox(height: 10), // ডায়ালগের ক্ষেত্রে নিচের স্পেসিং
         ],
       ),
     );

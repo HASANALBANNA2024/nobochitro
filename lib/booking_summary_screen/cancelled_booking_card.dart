@@ -130,10 +130,10 @@ class CancelledBookingCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color:
-                      (chipLabel == "PENDING"
-                          ? Colors.orange
-                          : Colors.green)
-                          .withOpacity(0.15),
+                          (chipLabel == "PENDING"
+                                  ? Colors.orange
+                                  : Colors.green)
+                              .withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -154,7 +154,7 @@ class CancelledBookingCard extends StatelessWidget {
                 packageTitle,
                 style: const TextStyle(
                   fontSize:
-                  18, // 🎯 20 থেকে 18 (পূর্বের কার্ডের সাথে মিল রাখতে)
+                      18, // 🎯 20 থেকে 18 (পূর্বের কার্ডের সাথে মিল রাখতে)
                   fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,
@@ -259,7 +259,7 @@ class CancelledBookingCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12,),
+              const SizedBox(height: 12),
             ],
           ),
         ),

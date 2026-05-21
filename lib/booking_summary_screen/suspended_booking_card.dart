@@ -86,10 +86,10 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
   }
 
   void _openInternalAppealSheet(
-      BuildContext context,
-      String bookingId,
-      int currentCount,
-      ) {
+    BuildContext context,
+    String bookingId,
+    int currentCount,
+  ) {
     final TextEditingController noteController = TextEditingController();
     final ImagePicker picker = ImagePicker();
 
@@ -217,39 +217,39 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                         ),
                         child: pickedXFile == null
                             ? const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo_outlined,
-                              color: Colors.grey,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              "Upload Image from Gallery",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        )
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo_outlined,
+                                    color: Colors.grey,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "Upload Image from Gallery",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              )
                             : ClipRRect(
-                          borderRadius: BorderRadius.circular(11),
-                          child: kIsWeb
-                              ? Image.memory(
-                            fileToUpload,
-                            width: double.infinity,
-                            height: 180,
-                            fit: BoxFit.cover,
-                          )
-                              : Image.file(
-                            fileToUpload as File,
-                            width: double.infinity,
-                            height: 180,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                                borderRadius: BorderRadius.circular(11),
+                                child: kIsWeb
+                                    ? Image.memory(
+                                        fileToUpload,
+                                        width: double.infinity,
+                                        height: 180,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        fileToUpload as File,
+                                        width: double.infinity,
+                                        height: 180,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -259,70 +259,70 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                         onPressed: isUploading
                             ? null
                             : () async {
-                          String note = noteController.text.trim();
-                          if (note.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Please write an appeal note first!",
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                          setModalState(() => isUploading = true);
-                          try {
-                            String? uploadedUrl;
-                            if (fileToUpload != null &&
-                                selectedFileName != null) {
-                              String userId = await DatabaseHelper
-                                  .instance
-                                  .getCurrentUserId();
-                              DateTime now = DateTime.now();
-                              String timestamp =
-                                  "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_"
-                                  "${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}";
-                              String customBucketPath =
-                                  "appeal_files/$userId/${timestamp}_$selectedFileName";
-                              uploadedUrl = await DatabaseHelper.instance
-                                  .uploadAppealImageWithPath(
-                                fileToUpload,
-                                customBucketPath,
-                              );
-                            }
+                                String note = noteController.text.trim();
+                                if (note.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Please write an appeal note first!",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                setModalState(() => isUploading = true);
+                                try {
+                                  String? uploadedUrl;
+                                  if (fileToUpload != null &&
+                                      selectedFileName != null) {
+                                    String userId = await DatabaseHelper
+                                        .instance
+                                        .getCurrentUserId();
+                                    DateTime now = DateTime.now();
+                                    String timestamp =
+                                        "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_"
+                                        "${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}";
+                                    String customBucketPath =
+                                        "appeal_files/$userId/${timestamp}_$selectedFileName";
+                                    uploadedUrl = await DatabaseHelper.instance
+                                        .uploadAppealImageWithPath(
+                                          fileToUpload,
+                                          customBucketPath,
+                                        );
+                                  }
 
-                            int newCount = currentCount + 1;
+                                  int newCount = currentCount + 1;
 
-                            await DatabaseHelper.instance
-                                .submitSuspensionAppeal(
-                              bookingId: bookingId,
-                              appealNote: note,
-                              appealImageUrl: uploadedUrl,
-                              appealCount: newCount,
-                            );
+                                  await DatabaseHelper.instance
+                                      .submitSuspensionAppeal(
+                                        bookingId: bookingId,
+                                        appealNote: note,
+                                        appealImageUrl: uploadedUrl,
+                                        appealCount: newCount,
+                                      );
 
-                            setState(() {
-                              currentBooking['appeal_status'] = null;
-                              currentBooking['appeal_note'] = note;
-                              currentBooking['appeal_count'] = newCount;
-                              currentBooking['appeal_cancel_notes'] =
-                              null;
-                              if (uploadedUrl != null)
-                                currentBooking['appeal_image_url'] =
-                                    uploadedUrl;
-                            });
+                                  setState(() {
+                                    currentBooking['appeal_status'] = null;
+                                    currentBooking['appeal_note'] = note;
+                                    currentBooking['appeal_count'] = newCount;
+                                    currentBooking['appeal_cancel_notes'] =
+                                        null;
+                                    if (uploadedUrl != null)
+                                      currentBooking['appeal_image_url'] =
+                                          uploadedUrl;
+                                  });
 
-                            if (widget.onAppeal != null)
-                              widget.onAppeal!();
-                            Navigator.pop(context);
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("❌ Error: $e")),
-                            );
-                          } finally {
-                            setModalState(() => isUploading = false);
-                          }
-                        },
+                                  if (widget.onAppeal != null)
+                                    widget.onAppeal!();
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("❌ Error: $e")),
+                                  );
+                                } finally {
+                                  setModalState(() => isUploading = false);
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -332,20 +332,20 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                         ),
                         child: isUploading
                             ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Text(
-                          "Submit Appeal",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                                "Submit Appeal",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -387,18 +387,18 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
 
     bool isApprovedAndActive =
         (bookingStatus == "approved" || bookingStatus == "active") &&
-            (paymentStatus == "approved") &&
-            (appealStatus == "approved");
+        (paymentStatus == "approved") &&
+        (appealStatus == "approved");
 
     bool isAppealCancelled =
         appealStatus == "cancel" ||
-            appealStatus == "cancelled" ||
-            appealStatus == "rejected" ||
-            currentBooking['appeal_cancel_notes'] != null;
+        appealStatus == "cancelled" ||
+        appealStatus == "rejected" ||
+        currentBooking['appeal_cancel_notes'] != null;
     bool isCurrentlyInFlight =
         appealStatus == "pending" ||
-            appealStatus == "appealed" ||
-            appealStatus == "processing";
+        appealStatus == "appealed" ||
+        appealStatus == "processing";
 
     bool isLimitExceeded = appealCount >= 3;
 
@@ -434,19 +434,15 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
       statusBadgeText = "APPEALED";
     }
 
-    // 🎯 মূল সমাধান: Column এর ভেতরে রেখে ওভারফ্লো আটকানো হয়েছে
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          margin: const EdgeInsets.only(bottom: 12), // 🎯 16 থেকে কমানো হয়েছে
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ), // 🎯 18 থেকে কমানো হয়েছে
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: widget.isDark ? const Color(0xFF1A1A1A) : Colors.white,
-            borderRadius: BorderRadius.circular(20), // 🎯 24 থেকে 20 করা হয়েছে
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isApprovedAndActive
                   ? Colors.green.withOpacity(0.5)
@@ -508,7 +504,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8), // 🎯 12 থেকে কমানো হয়েছে
+              const SizedBox(height: 8),
               Text(
                 packageTitle,
                 style: const TextStyle(
@@ -517,8 +513,8 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-              ), // 🎯 20 থেকে 18
-              const SizedBox(height: 8), // 🎯 12 থেকে কমানো হয়েছে
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   const Icon(Icons.wallet, size: 16, color: Colors.grey),
@@ -540,11 +536,11 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                     child: Text(
                       isAppealCancelled
                           ? (currentBooking['appeal_cancel_notes'] ??
-                          "No notes provided")
-                          .toString()
+                                    "No notes provided")
+                                .toString()
                           : (currentBooking['suspended_note'] ??
-                          "fraud payment")
-                          .toString(),
+                                    "fraud payment")
+                                .toString(),
                       style: TextStyle(
                         fontSize: 13,
                         color: widget.isDark ? Colors.white70 : Colors.black87,
@@ -556,30 +552,24 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                   ),
                 ],
               ),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-              ), // 🎯 25 থেকে কমানো হয়েছে
+              const Divider(height: 16, thickness: 0.5),
               Row(
                 children: [
                   Expanded(child: _infoTile(Icons.calendar_today, dateStr)),
-                  const SizedBox(width: 10), // 🎯 20 থেকে কমানো হয়েছে
+                  const SizedBox(width: 10),
                   Expanded(child: _infoTile(Icons.access_time, timeStr)),
                 ],
               ),
-              const SizedBox(height: 8), // 🎯 12 থেকে কমানো হয়েছে
+              const SizedBox(height: 8),
               _infoTile(
                 Icons.camera_alt_outlined,
                 "Photographer: $photographerName",
               ),
-              const SizedBox(height: 8), // 🎯 12 থেকে কমানো হয়েছে
+              const SizedBox(height: 8),
               _infoTile(Icons.location_on_outlined, locationStr),
               if (!isApprovedAndActive) ...[
-                const Divider(
-                  height: 16,
-                  thickness: 0.5,
-                ), // 🎯 25 থেকে কমানো হয়েছে
-                const SizedBox(height: 12), // 🎯 20 থেকে কমানো হয়েছে
+                const Divider(height: 16, thickness: 0.5),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -609,7 +599,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                   ],
                 ),
               ],
-              const SizedBox(height: 12), // 🎯 20 থেকে কমানো হয়েছে
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -617,12 +607,10 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                       onPressed: widget.onViewDetails ?? () {},
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: statusBadgeColor),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                        ), // 🎯 11 থেকে কমানো হয়েছে
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                        ), // 🎯 12 থেকে কমানো হয়েছে
+                        ),
                       ),
                       child: Text(
                         "View Details",
@@ -635,64 +623,64 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                     ),
                   ),
                   if (!isApprovedAndActive) ...[
-                    const SizedBox(width: 10), // 🎯 12 থেকে কমানো হয়েছে
+                    const SizedBox(width: 10),
                     Expanded(
                       child: isCurrentlyInFlight
                           ? ElevatedButton(
-                        onPressed: null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.withOpacity(0.3),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          appealStatus == "processing"
-                              ? "Processing"
-                              : "Appealed",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white60,
-                          ),
-                        ),
-                      )
+                              onPressed: null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey.withOpacity(0.3),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Text(
+                                appealStatus == "processing"
+                                    ? "Processing"
+                                    : "Appealed",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white60,
+                                ),
+                              ),
+                            )
                           : ElevatedButton(
-                        onPressed: isLimitExceeded
-                            ? () => _showLimitExceededDialog(context)
-                            : () => _openInternalAppealSheet(
-                          context,
-                          bookingId,
-                          appealCount,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isLimitExceeded
-                              ? Colors.grey.withOpacity(0.5)
-                              : (isAppealCancelled
-                              ? Colors.orangeAccent
-                              : Colors.blueAccent),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          isLimitExceeded
-                              ? "Limit Exceeded"
-                              : (isAppealCancelled
-                              ? "Re-Appeal"
-                              : "Appeal"),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
+                              onPressed: isLimitExceeded
+                                  ? () => _showLimitExceededDialog(context)
+                                  : () => _openInternalAppealSheet(
+                                      context,
+                                      bookingId,
+                                      appealCount,
+                                    ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isLimitExceeded
+                                    ? Colors.grey.withOpacity(0.5)
+                                    : (isAppealCancelled
+                                          ? Colors.orangeAccent
+                                          : Colors.blueAccent),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Text(
+                                isLimitExceeded
+                                    ? "Limit Exceeded"
+                                    : (isAppealCancelled
+                                          ? "Re-Appeal"
+                                          : "Appeal"),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
                     ),
                   ],
                 ],
@@ -704,7 +692,6 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
     );
   }
 
-  // 🎯 FittedBox ব্যবহার করা হয়েছে টেক্সট ওভারফ্লো আটকানোর জন্য
   Widget _buildTimelineStep(String label, bool isActive, bool isErrorState) {
     Color stepColor = isActive
         ? (isErrorState ? Colors.red : Colors.green)
@@ -730,8 +717,8 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               color: isActive
                   ? (isErrorState
-                  ? Colors.red
-                  : (widget.isDark ? Colors.white : Colors.black87))
+                        ? Colors.red
+                        : (widget.isDark ? Colors.white : Colors.black87))
                   : Colors.grey,
             ),
           ),

@@ -1,8 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:nobochitro/admin_panel/admin_dashboard.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/client_profile/client_profile_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:nobochitro/photographer_section/photographer_profile_screen.dart';
 
 import '../authentication/login_screen.dart';
 
@@ -25,6 +25,10 @@ class CustomSideNavigation extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDarkMode = theme.brightness == Brightness.dark;
+
+    bool isSpecialUser =
+        FirebaseAuth.instance.currentUser?.email ==
+        "albannamdhasan48@gmail.com";
 
     final primaryAccent = isDarkMode
         ? const Color(0xFFD4AF37)
@@ -70,22 +74,20 @@ class CustomSideNavigation extends StatelessWidget {
                   primaryAccent: primaryAccent,
                   onTap: () {
                     onDestinationSelected(2);
-                    if(FirebaseAuth.instance.currentUser != null)
-                      {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MyBookingScreen(
-                              primaryAccent: primaryAccent,
-                              selectedIndex: selectedIndex,
-                              onDestinationSelected: onDestinationSelected,
-                              onThemeChanged: onThemeChanged,
-                              onSettingsPressed: onSettingsPressed,
-                            ),
+                    if (FirebaseAuth.instance.currentUser != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MyBookingScreen(
+                            primaryAccent: primaryAccent,
+                            selectedIndex: selectedIndex,
+                            onDestinationSelected: onDestinationSelected,
+                            onThemeChanged: onThemeChanged,
+                            onSettingsPressed: onSettingsPressed,
                           ),
-                        );
-                      }
-                    else{
+                        ),
+                      );
+                    } else {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
@@ -93,8 +95,6 @@ class CustomSideNavigation extends StatelessWidget {
                         builder: (context) => const LoginModalSheet(),
                       );
                     }
-
-
                   },
                 ),
                 // Account
@@ -105,15 +105,16 @@ class CustomSideNavigation extends StatelessWidget {
                   selectedIcon: Icons.person_rounded,
                   label: "Profile",
                   primaryAccent: primaryAccent,
-                 onTap: (){
+                  onTap: () {
                     onDestinationSelected(3);
-                    if(FirebaseAuth.instance.currentUser!=null)
-                      {
-                        Navigator.push(context, MaterialPageRoute(builder: (_)=>
-                            ClientProfileScreen()
-                        ));
-                      }
-                    else{
+                    if (FirebaseAuth.instance.currentUser != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ClientProfileScreen(),
+                        ),
+                      );
+                    } else {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
@@ -121,8 +122,28 @@ class CustomSideNavigation extends StatelessWidget {
                         builder: (context) => const LoginModalSheet(),
                       );
                     }
-                 }
+                  },
                 ),
+
+                if (isSpecialUser)
+                  _buildDrawerItem(
+                    context,
+                    isSelected: selectedIndex == 5, // নতুন ইন্ডেক্স
+                    icon: Icons.admin_panel_settings_outlined,
+                    selectedIcon: Icons.admin_panel_settings_rounded,
+                    label: "Admin Dashboard",
+                    primaryAccent: primaryAccent,
+                    onTap: () {
+                      onDestinationSelected(5);
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AdminDashboardScreen(),
+                        ),
+                      );
+                    },
+                  ),
 
                 const Padding(
                   padding: EdgeInsets.symmetric(
