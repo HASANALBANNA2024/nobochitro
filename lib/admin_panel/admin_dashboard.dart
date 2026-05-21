@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:nobochitro/admin_panel/addons_view.dart';
+// import 'package:nobochitro/admin_panel/addons_view.dart';
 import 'package:nobochitro/admin_panel/packages_view.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
+
+import 'addons/addons_view.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});

@@ -518,46 +518,4 @@ class DatabaseHelper {
       return [];
     }
   }
-
-  /// ২. নতুন Addon যোগ করার জন্য (ইমেজ আপলোডসহ ডাটা ইনসার্ট)
-  Future<void> insertAddon(Map<String, dynamic> addonData) async {
-    try {
-      await _client.from('addons').insert(addonData);
-      debugPrint("✅ Addon successfully inserted!");
-    } catch (e) {
-      debugPrint("❌ Error inserting addon: $e");
-      throw Exception("Failed to insert addon: $e");
-    }
-  }
-
-  /// ৩. নির্দিষ্ট Addon আপডেট করার জন্য (সঠিক করা হয়েছে)
-  Future<void> updateAddon({
-    required dynamic id, // এখানে 'addon_id' এর বদলে 'id' দিয়েছি
-    required Map<String, dynamic> updatedData,
-  }) async {
-    try {
-      await _client
-          .from('addons')
-          .update(updatedData)
-          .eq('id', id); // এখানে 'addon_id' এর বদলে 'id' ব্যবহার করেছি
-      debugPrint("✅ Addon successfully updated!");
-    } catch (e) {
-      debugPrint("❌ Error updating addon: $e");
-      throw Exception("Failed to update addon: $e");
-    }
-  }
-
-  /// ৪. নির্দিষ্ট Addon ডিলিট করার জন্য (সঠিক করা হয়েছে)
-  Future<void> deleteAddon(dynamic id) async {
-    try {
-      await _client
-          .from('addons')
-          .delete()
-          .eq('id', id); // এখানেও 'addon_id' এর বদলে 'id' ব্যবহার করেছি
-      debugPrint("✅ Addon successfully deleted!");
-    } catch (e) {
-      debugPrint("❌ Error deleting addon: $e");
-      throw Exception("Failed to delete addon: $e");
-    }
-  }
 }
