@@ -142,21 +142,6 @@ class DatabaseHelper {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  // get addons
-  Future<List<Map<String, dynamic>>> getAddons() async {
-    try {
-      final response = await _client
-          .from('addons')
-          .select()
-          .eq('is_active', true);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      print("Error fetching addons: $e");
-      return [];
-    }
-  }
-
   // result screen for cateogry by use packages
   Future<List<Map<String, dynamic>>> getPackagesByCategory(
     String categoryName,
@@ -463,7 +448,9 @@ class DatabaseHelper {
       final activeCampaign = await instance.getActiveCampaign();
 
       if (activeCampaign != null) {
-        debugPrint("ℹ️ Supabase-এ অলরেডি একটিভ ক্যাম্পেইন আছে। নতুন করে ডামি ডাটা লাগবে না।");
+        debugPrint(
+          "ℹ️ Supabase-এ অলরেডি একটিভ ক্যাম্পেইন আছে। নতুন করে ডামি ডাটা লাগবে না।",
+        );
         return;
       }
 
@@ -476,37 +463,101 @@ class DatabaseHelper {
       final now = DateTime.now();
 
       // 🎯 YYYY-MM-DD ফরম্যাটে রূপান্তর (সুপাবেস date কলামের জন্য পারফেক্ট)
-      final String formattedStartDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final String formattedStartDate =
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
       final endDate = now.add(const Duration(days: 2));
-      final String formattedEndDate = "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
+      final String formattedEndDate =
+          "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
 
       // ৪. ডামি ডাটা স্ট্রাকচার (টেবিলের প্রতিটি কলামের নাম ও টাইপ হুবহু মেইনটেইন করা হয়েছে)
       final Map<String, dynamic> demoCampaign = {
-        'campaign_id': generatedCampaignId,      // text কলাম
-        'title': 'EXCLUSIVE CAMPAIGN! 50% OFF',    // text কলাম
-        'banner_url': 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg', // text কলাম
-        'discount_pct': 50,                       // int4 কলাম
-
+        'campaign_id': generatedCampaignId, // text কলাম
+        'title': 'EXCLUSIVE CAMPAIGN! 50% OFF', // text কলাম
+        'banner_url':
+            'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg', // text কলাম
+        'discount_pct': 50, // int4 কলাম
         // 🎯 নতুন লজিক অনুযায়ী কমা দিয়ে আলাদা করা মাল্টিপল ক্যাটাগরি দেওয়া হলো
         'targeted_category': 'Portrait, Wedding, Event', // text কলাম
 
-        'is_active': true,                        // bool কলাম
-        'start_date': formattedStartDate,         // date কলাম
-        'end_date': formattedEndDate,             // date কলাম
-        'created_at': now.toIso8601String(),      // timestamptz কলাম
+        'is_active': true, // bool কলাম
+        'start_date': formattedStartDate, // date কলাম
+        'end_date': formattedEndDate, // date কলাম
+        'created_at': now.toIso8601String(), // timestamptz কলাম
       };
 
       // ৫. ডাটাবেজে ইনসার্ট করা
-      await insert(
-        table: 'campaigns',
-        data: demoCampaign,
-      );
+      await insert(table: 'campaigns', data: demoCampaign);
 
       debugPrint("✅ সফলভাবে সব কলাম মেইনটেইন করে ডামি ডাটা ইনসার্ট হয়েছে!");
-      debugPrint("🎟️ কুপন কোড: $generatedCampaignId | ক্যাটাগরি: Portrait, Wedding, Event");
+      debugPrint(
+        "🎟️ কুপন কোড: $generatedCampaignId | ক্যাটাগরি: Portrait, Wedding, Event",
+      );
     } catch (e) {
       debugPrint("❌ DatabaseHelper ডামি ডাটা ইনসার্ট এরর: $e");
+    }
+  }
+
+  // addons
+  // ==========================================
+  // 📸 ADDONS OPERATIONS (CRUD)
+  // ==========================================
+
+  /// ১. Addons লিস্ট পাওয়ার জন্য
+  Future<List<Map<String, dynamic>>> getAddons() async {
+    try {
+      // তুমি যদি সব ডাটা চাও, তবে .eq('is_active', true) অংশটুকু বাদ দিতে পারো
+      final response = await _client
+          .from('addons')
+          .select()
+          .order('addon_id', ascending: true); // আইডি অনুযায়ী সাজিয়ে আনবে
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint("❌ Error fetching addons: $e");
+      return [];
+    }
+  }
+
+  /// ২. নতুন Addon যোগ করার জন্য (ইমেজ আপলোডসহ ডাটা ইনসার্ট)
+  Future<void> insertAddon(Map<String, dynamic> addonData) async {
+    try {
+      await _client.from('addons').insert(addonData);
+      debugPrint("✅ Addon successfully inserted!");
+    } catch (e) {
+      debugPrint("❌ Error inserting addon: $e");
+      throw Exception("Failed to insert addon: $e");
+    }
+  }
+
+  /// ৩. নির্দিষ্ট Addon আপডেট করার জন্য (সঠিক করা হয়েছে)
+  Future<void> updateAddon({
+    required dynamic id, // এখানে 'addon_id' এর বদলে 'id' দিয়েছি
+    required Map<String, dynamic> updatedData,
+  }) async {
+    try {
+      await _client
+          .from('addons')
+          .update(updatedData)
+          .eq('id', id); // এখানে 'addon_id' এর বদলে 'id' ব্যবহার করেছি
+      debugPrint("✅ Addon successfully updated!");
+    } catch (e) {
+      debugPrint("❌ Error updating addon: $e");
+      throw Exception("Failed to update addon: $e");
+    }
+  }
+
+  /// ৪. নির্দিষ্ট Addon ডিলিট করার জন্য (সঠিক করা হয়েছে)
+  Future<void> deleteAddon(dynamic id) async {
+    try {
+      await _client
+          .from('addons')
+          .delete()
+          .eq('id', id); // এখানেও 'addon_id' এর বদলে 'id' ব্যবহার করেছি
+      debugPrint("✅ Addon successfully deleted!");
+    } catch (e) {
+      debugPrint("❌ Error deleting addon: $e");
+      throw Exception("Failed to delete addon: $e");
     }
   }
 }
