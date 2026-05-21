@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nobochitro/admin_panel/campaigns/campaigns_view.dart';
 import 'package:nobochitro/admin_panel/packages/package_view.dart';
 import 'package:nobochitro/admin_panel/addons/addons_view.dart';
+import 'package:nobochitro/admin_panel/reviews/reviews_view.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -68,10 +69,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       index: _selectedIndex,
       children: const [
         PackagesView(),
-        // PackagesView(),
-        // PackagesView(),
-        CampaignsView(),
         PackagesView(),
+        PackagesView(),
+        CampaignsView(),
+        ReviewsView(),
         AddonsView(),
       ],
     );
