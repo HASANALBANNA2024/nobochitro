@@ -20,13 +20,9 @@ class _PhotographerViewState extends State<PhotographerView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Manage Photographers"),
-        centerTitle: true,
-      ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
+          constraints: const BoxConstraints(maxWidth: 1000),
           child: FutureBuilder<List<Map<String, dynamic>>>(
             // ডাটাবেস থেকে ডাটা আনা
             future: DatabaseHelper.instance.getData(table: 'photographers'),

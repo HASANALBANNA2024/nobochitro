@@ -6,10 +6,54 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DatabaseHelper {
   DatabaseHelper._();
-
   static final DatabaseHelper instance = DatabaseHelper._();
 
-  // get categories of under of banner
+  static final _client = Supabase.instance.client;
+
+  // বাইরের ক্লাস থেকে ক্লায়েন্ট ব্যবহারের জন্য
+  static SupabaseClient get client => _client;
+
+  // --- আগের সব লজিক এখানে হুবহু থাকবে ---
+
+  static Future<void> insert({required String table, required Map<String, dynamic> data}) async {
+    try { await _client.from(table).insert(data); } catch (e) { throw Exception("Insert Error: $e"); }
+  }
+
+  static Future<void> update({required String table, required String column, required dynamic value, required Map<String, dynamic> data}) async {
+    try { await _client.from(table).update(data).eq(column, value); } catch (e) { throw Exception("Update Error: $e"); }
+  }
+
+  static Future<void> delete({required String table, required String column, required dynamic value}) async {
+    try { await _client.from(table).delete().eq(column, value); } catch (e) { throw Exception("Delete Error: $e"); }
+  }
+
+  static Future<Map<String, String>?> uploadImageBytes({required String folder, required String userId, required Uint8List bytes}) async {
+    try {
+      final String fileName = '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String fullPath = '$folder/$fileName';
+      await _client.storage.from('user_assets').uploadBinary(fullPath, bytes);
+      final String url = _client.storage.from('user_assets').getPublicUrl(fullPath);
+      return {'url': url, 'path': fullPath};
+    } catch (e) { return null; }
+  }
+
+  static Future<void> deleteFolder(String folderPath) async {
+    try {
+      // এখানে .list() এর রেজাল্টকে List<FileObject> হিসেবে ধরুন
+      final List<FileObject> list = await _client.storage.from('user_assets').list(path: folderPath);
+
+      for (var file in list) {
+        // file.name সরাসরি এক্সেস করুন, কারণ এটি একটি Object
+        await _client.storage.from('user_assets').remove(['$folderPath/${file.name}']);
+      }
+      debugPrint("✅ Folder deleted: $folderPath");
+    } catch (e) {
+      debugPrint("❌ Folder delete error: $e");
+    }
+  }
+
+  ///Get Unique categories
+
   Future<List<String>> getUniqueCategories() async {
     try {
       final response = await _client.from('packages').select('category');
@@ -27,70 +71,6 @@ class DatabaseHelper {
       return [];
     }
   }
-
-  static final _client = Supabase.instance.client;
-
-  /// data insert (Create)
-  static Future<void> insert({
-    required String table,
-    required Map<String, dynamic> data,
-  }) async {
-    try {
-      await _client.from(table).insert(data);
-    } catch (e) {
-      throw Exception("Insert Error in $table: $e");
-    }
-  }
-
-  ///(Update)
-  static Future<void> update({
-    required String table,
-    required String column,
-    required dynamic value,
-    required Map<String, dynamic> data,
-  }) async {
-    try {
-      await _client.from(table).update(data).eq(column, value);
-    } catch (e) {
-      throw Exception("Update Error in $table: $e");
-    }
-  }
-
-  /// Data Delete  (Delete)
-  static Future<void> delete({
-    required String table,
-    required String column,
-    required dynamic value,
-  }) async {
-    try {
-      await _client.from(table).delete().eq(column, value);
-    } catch (e) {
-      throw Exception("Delete Error in $table: $e");
-    }
-  }
-
-  /// Image Storage
-  static Future<String?> uploadImage({
-    required String folder,
-    required String userId,
-    required dynamic file,
-  }) async {
-    try {
-      final String fileName =
-          '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final String path = await _client.storage
-          .from('user_assets')
-          .upload('$folder/$fileName', file);
-
-      return _client.storage
-          .from('user_assets')
-          .getPublicUrl('$folder/$fileName');
-    } catch (e) {
-      print("Upload Error: $e");
-      return null;
-    }
-  }
-
   /// get photographer data receive
   static Stream<List<Map<String, dynamic>>> getPhotographerStream() {
     return _client
@@ -348,28 +328,6 @@ class DatabaseHelper {
     }
   }
 
-  static Future<Map<String, String>?> uploadImageBytes({
-    required String folder,
-    required String userId,
-    required Uint8List bytes,
-  }) async {
-    try {
-      final String fileName =
-          '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final String fullPath = '$folder/$fileName';
-      const String bucketName = 'user_assets';
-
-      await _client.storage.from(bucketName).uploadBinary(fullPath, bytes);
-      final String url = _client.storage
-          .from(bucketName)
-          .getPublicUrl(fullPath);
-
-      return {'url': url, 'path': fullPath};
-    } catch (e) {
-      debugPrint("❌ Error in uploadImageBytes: $e");
-      return null;
-    }
-  }
 
   /// Fetch all reviews from Supabase 'reviews' table
   Future<List<Map<String, dynamic>>> getReviews() async {
@@ -467,27 +425,4 @@ class DatabaseHelper {
     }
   }
 
-  /// folder delete
-  /// ফোল্ডারের সব ইমেজ ডিলিট করার জন্য এটি যোগ করো
-  static Future<void> deleteFolder(String folderPath) async {
-    try {
-      final client = Supabase.instance.client;
-      // ফোল্ডারের ভেতরে থাকা সব ফাইলের লিস্ট আনা
-      final List<dynamic> list = await client.storage
-          .from('user_assets')
-          .list(path: folderPath);
-
-      // প্রতিটা ফাইল ডিলিট করা
-      for (var file in list) {
-        final fileName = file['name'];
-        await client.storage.from('user_assets').remove([
-          '$folderPath/$fileName',
-        ]);
-      }
-      debugPrint("✅ Folder deleted: $folderPath");
-    } catch (e) {
-      debugPrint("❌ Error deleting folder: $e");
-      throw Exception("Delete Folder Operation Failed: $e");
-    }
-  }
 }
