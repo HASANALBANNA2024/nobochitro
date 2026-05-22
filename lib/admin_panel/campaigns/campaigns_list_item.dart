@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'show_campaign_form.dart';
+
 import 'campaigns_logic.dart';
+import 'show_campaign_form.dart';
 
 class CampaignsListItem extends StatelessWidget {
   final Map<String, dynamic> item;
   final VoidCallback onUpdate;
-  const CampaignsListItem({super.key, required this.item, required this.onUpdate});
+  const CampaignsListItem({
+    super.key,
+    required this.item,
+    required this.onUpdate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +25,15 @@ class CampaignsListItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
                 item['banner_url'] ?? '',
-                width: 100, height: 80, fit: BoxFit.cover,
-                errorBuilder: (c, o, s) => Container(width: 100, height: 80, color: Colors.grey[300], child: const Icon(Icons.broken_image)),
+                width: 100,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (c, o, s) => Container(
+                  width: 100,
+                  height: 80,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.broken_image),
+                ),
               ),
             ),
             const SizedBox(width: 15),
@@ -31,19 +43,36 @@ class CampaignsListItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item['title'] ?? 'No Title', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(
+                    item['title'] ?? 'No Title',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                   const SizedBox(height: 5),
                   // গ্রিড বা র‍্যাপ আকারে সব ডাটা
                   Wrap(
-                    spacing: 10, runSpacing: 5,
+                    spacing: 10,
+                    runSpacing: 5,
                     children: [
                       _infoChip("🎟️ ${item['campaign_id'] ?? 'N/A'}"),
                       _infoChip("💰 ${item['discount_pct']}% OFF"),
-                      _infoChip("📂 Cat: ${item['targeted_category'] ?? 'All'}"),
-                      _infoChip("📦 Pkg: ${item['targeted_package_id'] ?? 'All'}"),
-                      _infoChip("📅 ${item['start_date']} - ${item['end_date']}"),
-                      _infoChip(item['is_active'] == true ? "✅ Active" : "❌ Inactive",
-                          color: item['is_active'] == true ? Colors.green[100] : Colors.red[100]),
+                      _infoChip(
+                        "📂 Cat: ${item['targeted_category'] ?? 'All'}",
+                      ),
+                      _infoChip(
+                        "📦 Pkg: ${item['targeted_package_id'] ?? 'All'}",
+                      ),
+                      _infoChip(
+                        "📅 ${item['start_date']} - ${item['end_date']}",
+                      ),
+                      _infoChip(
+                        item['is_active'] == true ? "✅ Active" : "❌ Inactive",
+                        color: item['is_active'] == true
+                            ? Colors.green[100]
+                            : Colors.red[100],
+                      ),
                     ],
                   ),
                 ],
@@ -53,8 +82,45 @@ class CampaignsListItem extends StatelessWidget {
             // ৩. এডিট/ডিলিট বাটন
             Column(
               children: [
-                IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () => showCampaignForm(context, item: item, onComplete: onUpdate)),
-                IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () async { await CampaignsLogic.delete(item['id']); onUpdate(); }),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  onPressed: () => showCampaignForm(
+                    context,
+                    item: item,
+                    onComplete: onUpdate,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () async {
+                    // ডিলিট করার আগে কনফার্মেশন নেওয়া ভালো
+                    bool? confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text("Delete Campaign"),
+                        content: const Text(
+                          "Are you sure? This will also delete the campaign banner image.",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text("Cancel"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text("Delete"),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      // এখানে CampaignsLogic.delete এর বদলে deleteCampaign ব্যবহার করো
+                      await CampaignsLogic.deleteCampaign(item);
+                      onUpdate();
+                    }
+                  },
+                ),
               ],
             ),
           ],
@@ -63,7 +129,7 @@ class CampaignsListItem extends StatelessWidget {
     );
   }
 
-  /// helper widget for display info 
+  /// helper widget for display info
   Widget _infoChip(String text, {Color? color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

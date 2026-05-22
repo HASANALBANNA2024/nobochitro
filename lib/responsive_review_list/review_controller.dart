@@ -82,7 +82,7 @@ class ReviewController {
   }) async {
     if (rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("⚠️ Please select a rating star!")),
+        SnackBar(content: Text("⚠️ Please select a rating star!")),
       );
       return false;
     }
@@ -92,6 +92,7 @@ class ReviewController {
 
     try {
       List<String> uploadedUrls = [];
+      List<String> uploadedPaths = []; // পাথ সেভ করার জন্য
       final userIdForUpload =
           customNsrId ??
           FirebaseAuth.instance.currentUser?.uid ??
@@ -101,55 +102,49 @@ class ReviewController {
       if (selectedImages.isNotEmpty) {
         for (int i = 0; i < selectedImages.length; i++) {
           final bytes = await selectedImages[i].readAsBytes();
-          String? url = await DatabaseHelper.uploadImageBytes(
+
+          // এখানে খেয়াল করো: আমরা Map গ্রহণ করছি
+          final imageData = await DatabaseHelper.uploadImageBytes(
             folder: 'review_images',
             userId:
                 "${userIdForUpload}_img_${DateTime.now().millisecondsSinceEpoch}_$i",
             bytes: bytes,
           );
-          if (url != null) {
-            uploadedUrls.add(url);
+
+          if (imageData != null && imageData.containsKey('url')) {
+            uploadedUrls.add(imageData['url']!);
+            uploadedPaths.add(imageData['path']!); // পাথটি সংগ্রহ করলাম
           }
         }
       }
 
-      // 🎯 Supabase Text Array ফরম্যাট
-      dynamic finalReviewImages;
-      if (uploadedUrls.isNotEmpty) {
-        finalReviewImages = "{${uploadedUrls.join(',')}}";
-      } else {
-        finalReviewImages = null;
-      }
-
-      // 🟢 টেবিলের কলাম স্ক্রিনশট অনুযায়ী ডাটা ম্যাপ ফিক্সিং
-      final String? bookingId =
-          bookingData?['booking_id']?.toString() ??
-          bookingData?['id']?.toString();
-      final String? packageId = bookingData?['package_id']?.toString();
-      final String? packageName = bookingData?['package_name']?.toString();
-      final String? photographerId = bookingData?['photographer_id']
-          ?.toString();
-      final String? photographerName = bookingData?['photographer_name']
-          ?.toString();
-      final String? categoryName =
-          bookingData?['package_category']?.toString() ??
-          bookingData?['category_name']?.toString();
+      // 🎯 Supabase Array ফরম্যাট (PostgreSQL Array এর জন্য)
+      dynamic finalReviewImages = uploadedUrls.isNotEmpty
+          ? "{${uploadedUrls.join(',')}}"
+          : null;
+      dynamic finalReviewPaths = uploadedPaths.isNotEmpty
+          ? "{${uploadedPaths.join(',')}}"
+          : null;
 
       final Map<String, dynamic> reviewData = {
-        'booking_id': bookingId,
-        'photographer_id': photographerId,
+        'booking_id':
+            bookingData?['booking_id']?.toString() ??
+            bookingData?['id']?.toString(),
+        'photographer_id': bookingData?['photographer_id']?.toString(),
         'user_id': userIdForUpload,
         'user_name': displayName,
         'rating': rating,
         'comment': reviewController.text.trim(),
         'created_at': DateTime.now().toIso8601String(),
-        'package_id': packageId, // 🎯 স্ক্রিনশট অনুযায়ী ফিক্সড কলাম
-        'review_image_url':
-            finalReviewImages, // 🎯 স্ক্রিনশট অনুযায়ী ARRAY টাইপ কলাম
-        'package_name': packageName,
-        'photographer_name': photographerName,
-        'category_name': categoryName,
-        'user_avatar': userPhotoUrl, // 🎯 স্ক্রিনশট অনুযায়ী কলাম
+        'package_id': bookingData?['package_id']?.toString(),
+        'review_image_url': finalReviewImages,
+        'review_image_path': finalReviewPaths, // 🟢 নতুন পাথ কলাম
+        'package_name': bookingData?['package_name']?.toString(),
+        'photographer_name': bookingData?['photographer_name']?.toString(),
+        'category_name':
+            bookingData?['package_category']?.toString() ??
+            bookingData?['category_name']?.toString(),
+        'user_avatar': userPhotoUrl,
         'user_email': displayEmail.isNotEmpty ? displayEmail : null,
       };
 

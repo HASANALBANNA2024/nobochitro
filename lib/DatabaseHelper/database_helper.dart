@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -349,7 +348,7 @@ class DatabaseHelper {
     }
   }
 
-  static Future<String?> uploadImageBytes({
+  static Future<Map<String, String>?> uploadImageBytes({
     required String folder,
     required String userId,
     required Uint8List bytes,
@@ -357,13 +356,15 @@ class DatabaseHelper {
     try {
       final String fileName =
           '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String fullPath = '$folder/$fileName';
       const String bucketName = 'user_assets';
 
-      await _client.storage
+      await _client.storage.from(bucketName).uploadBinary(fullPath, bytes);
+      final String url = _client.storage
           .from(bucketName)
-          .uploadBinary('$folder/$fileName', bytes);
+          .getPublicUrl(fullPath);
 
-      return _client.storage.from(bucketName).getPublicUrl('$folder/$fileName');
+      return {'url': url, 'path': fullPath};
     } catch (e) {
       debugPrint("❌ Error in uploadImageBytes: $e");
       return null;
@@ -413,8 +414,6 @@ class DatabaseHelper {
     }
   }
 
-
-
   /// Addons list receive for display
   Future<List<Map<String, dynamic>>> getAddons() async {
     try {
@@ -439,6 +438,30 @@ class DatabaseHelper {
     } catch (e) {
       debugPrint("❌ Error fetching $table: $e");
       return [];
+    }
+  }
+
+  /// all table data deleted with images
+
+  Future<void> deleteWithStorage({
+    required String table,
+    required String column,
+    required dynamic value,
+    required String bucketName, // এখানে 'user_assets' দাও
+    required String?
+    imagePath, // সরাসরি ফাইলের পাথ (যেমন: review_images/filename.jpg)
+  }) async {
+    try {
+      // ১. স্টোরেজ থেকে ডিলিট
+      if (imagePath != null && imagePath.isNotEmpty) {
+        await _client.storage.from(bucketName).remove([imagePath]);
+        debugPrint("✅ Storage Image deleted: $imagePath");
+      }
+
+      // ২. ডাটাবেস থেকে ডিলিট
+      await _client.from(table).delete().eq(column, value);
+    } catch (e) {
+      debugPrint("❌ Delete Error: $e");
     }
   }
 }
