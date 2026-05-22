@@ -1,12 +1,16 @@
 import 'dart:convert'; // এটি অবশ্যই লাগবে
+import 'dart:math';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PhotographerLogic {
 
-  static String generatePhotographerId() => 'PH-${DateTime.now().millisecondsSinceEpoch}';
+  static String generatePhotographerId() {
+    final random = Random().nextInt(900000) + 100000;
+    return 'PH-$random';
+  }
 
   static Future<void> addPhotographer(Map<String, dynamic> data) async {
-    // ডাটা সেভ করার সময় লিস্টকে স্ট্রিংয়ে রূপান্তর করা হচ্ছে
     final Map<String, dynamic> preparedData = Map<String, dynamic>.from(data);
     if (preparedData['recent_image_gallary_path'] is List) {
       preparedData['recent_image_gallary_path'] = jsonEncode(preparedData['recent_image_gallary_path']);
@@ -25,7 +29,7 @@ class PhotographerLogic {
     const String bucketName = 'user_assets';
     final storage = DatabaseHelper.client.storage.from(bucketName);
 
-    // ইমেজ ডিলিট লজিক (আগের মতোই)
+    /// image delete logic
     if (oldProfile != null && oldProfile != data['profile_image_path'] && oldProfile.isNotEmpty) {
       await storage.remove([oldProfile]);
     }
@@ -39,7 +43,7 @@ class PhotographerLogic {
       }
     }
 
-    // ডাটা আপডেট করার সময় লিস্টকে স্ট্রিংয়ে রূপান্তর
+    /// data update
     final Map<String, dynamic> preparedData = Map<String, dynamic>.from(data);
     if (preparedData['recent_image_gallary_path'] is List) {
       preparedData['recent_image_gallary_path'] = jsonEncode(preparedData['recent_image_gallary_path']);
@@ -49,10 +53,28 @@ class PhotographerLogic {
   }
 
   static Future<void> deletePhotographer(Map<String, dynamic> item) async {
-    final String currentId = item['photographer_id'] ?? '';
+    final String currentId = item['photographer_id'] ?? ''; /// id path
     if (currentId.isEmpty) return;
 
+    /// database row delete
     await DatabaseHelper.delete(table: 'photographers', column: 'id', value: item['id']);
-    await DatabaseHelper.deleteFolder('photographers/$currentId');
+
+    /// delete of storage of logic
+    final storage = DatabaseHelper.client.storage.from('user_assets');
+
+    try {
+      /// folders
+      final List<FileObject> files = await storage.list(path: 'photographers/$currentId');
+
+      if (files.isNotEmpty) {
+        /// remove list
+        List<String> pathsToDelete = files.map((file) => 'photographers/$currentId/${file.name}').toList();
+
+        /// remove
+        await storage.remove(pathsToDelete);
+      }
+    } catch (e) {
+      print("File delete error: $e");
+    }
   }
 }
