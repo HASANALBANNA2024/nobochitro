@@ -91,7 +91,10 @@ class PhotographerListItem extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.edit, color: Colors.blue),
-                onPressed: () => showPhotographerForm(context, item: item),
+                onPressed: () async {
+                  await showPhotographerForm(context, item: item);
+                  onUpdate();
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),

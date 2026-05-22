@@ -12,57 +12,53 @@ class PhotographerView extends StatefulWidget {
 }
 
 class _PhotographerViewState extends State<PhotographerView> {
-  // ডাটা রিফ্রেশ করার জন্য একটি ফাংশন
-  void _refreshData() {
-    setState(() {});
+  List<Map<String, dynamic>> _photographers = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData(); // শুরুতে ডাটা আনা
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final data = await DatabaseHelper.instance.getData(table: 'photographers');
+    if (mounted) {
+      setState(() {
+        _photographers = data;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      body: Center( // পুরো বডিকে সেন্টার করার জন্য
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            // ডাটাবেস থেকে ডাটা আনা
-            future: DatabaseHelper.instance.getData(table: 'photographers'),
-            builder: (ctx, snap) {
-              // লোডিং স্টেট
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          constraints: const BoxConstraints(maxWidth: 1000), // ওয়েবে সর্বোচ্চ ১০০০পিক্সেল
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _photographers.isEmpty
+              ? const Center(child: Text("No photographers found"))
+              : ListView.builder(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 100),
+            itemCount: _photographers.length,
+            itemBuilder: (ctx, i) => PhotographerListItem(
+              item: _photographers[i],
+              onUpdate: _fetchData,
+            ),
 
-              // এরর হ্যান্ডলিং
-              if (snap.hasError) {
-                return Center(child: Text("Error: ${snap.error}"));
-              }
-
-              // ডাটা না থাকলে
-              if (!snap.hasData || snap.data!.isEmpty) {
-                return const Center(
-                  child: Text("No photographers found. Add one!"),
-                );
-              }
-
-              // লিস্ট ভিউ
-              return ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80),
-                itemCount: snap.data!.length,
-                itemBuilder: (ctx, i) => PhotographerListItem(
-                  item: snap.data![i],
-                  onUpdate:
-                      _refreshData, // ডিলিট বা এডিটের পর ইউআই রিফ্রেশ করবে
-                ),
-              );
-            },
           ),
+
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // নতুন ফটোগ্রাফার যোগ করার পর লিস্ট আপডেট হবে
           await showPhotographerForm(context);
-          _refreshData();
+          _fetchData();
         },
         label: const Text("Add New"),
         icon: const Icon(Icons.add),

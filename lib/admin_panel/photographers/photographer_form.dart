@@ -73,12 +73,14 @@ Future<void> showPhotographerForm(BuildContext context, {Map<String, dynamic>? i
                 }, child: const Text("Upload")),),
                 if (bannerPath != null) Image.network(DatabaseHelper.client.storage.from('user_assets').getPublicUrl(bannerPath!), height: 80),
 
-                // গ্যালারি
+                /// Gallery image
                 const ListTile(title: Text("Gallery Images")),
                 Wrap(spacing: 10, children: gallery.map((path) => Stack(children: [
-                  Image.network(DatabaseHelper.client.storage.from('user_assets').getPublicUrl(path), width: 60, height: 60),
+                  if (path.isNotEmpty)
+                    Image.network(DatabaseHelper.client.storage.from('user_assets').getPublicUrl(path), width: 60, height: 60),
                   IconButton(icon: const Icon(Icons.close, color: Colors.red), onPressed: () => setDialog(() => gallery.remove(path))),
                 ])).toList()),
+
                 ElevatedButton(onPressed: () async {
                   final files = await ImagePicker().pickMultiImage();
                   for (var f in files) {
@@ -102,8 +104,26 @@ Future<void> showPhotographerForm(BuildContext context, {Map<String, dynamic>? i
                   if (item == null) {
                     await PhotographerLogic.addPhotographer(data);
                   } else {
-                    // এডিট ঠিক করার জন্য item['id'] ব্যবহার নিশ্চিত করা হয়েছে
-                    await PhotographerLogic.updatePhotographerFull(id: item['id'], data: data, oldProfile: item['profile_image_path'], oldBanner: item['banner_image_path'], oldGallery: List<String>.from(item['recent_image_gallary_path'] ?? []));
+                    var rawOldGallery = item!['recent_image_gallary_path'];
+                    List<String> oldGalleryList = [];
+
+                    if (rawOldGallery is String) {
+                      try {
+                        oldGalleryList = List<String>.from(jsonDecode(rawOldGallery));
+                      } catch (e) {
+                        oldGalleryList = [];
+                      }
+                    } else if (rawOldGallery is List) {
+                      oldGalleryList = List<String>.from(rawOldGallery);
+                    }
+
+                    await PhotographerLogic.updatePhotographerFull(
+                      id: item!['id'],
+                      data: data,
+                      oldProfile: item!['profile_image_path'],
+                      oldBanner: item!['banner_image_path'],
+                      oldGallery: oldGalleryList,
+                    );
                   }
                   Navigator.pop(ctx);
                 }, child: const Text("Save Data")),

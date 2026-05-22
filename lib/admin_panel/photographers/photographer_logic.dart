@@ -10,6 +10,8 @@ class PhotographerLogic {
     return 'PH-$random';
   }
 
+
+  /// add photographer
   static Future<void> addPhotographer(Map<String, dynamic> data) async {
     final Map<String, dynamic> preparedData = Map<String, dynamic>.from(data);
     if (preparedData['recent_image_gallary_path'] is List) {
@@ -19,6 +21,7 @@ class PhotographerLogic {
     await DatabaseHelper.insert(table: 'photographers', data: preparedData);
   }
 
+  /// update photographer
   static Future<void> updatePhotographerFull({
     required dynamic id,
     required Map<String, dynamic> data,
@@ -29,29 +32,55 @@ class PhotographerLogic {
     const String bucketName = 'user_assets';
     final storage = DatabaseHelper.client.storage.from(bucketName);
 
-    /// image delete logic
-    if (oldProfile != null && oldProfile != data['profile_image_path'] && oldProfile.isNotEmpty) {
-      await storage.remove([oldProfile]);
-    }
-    if (oldBanner != null && oldBanner != data['banner_image_path'] && oldBanner.isNotEmpty) {
-      await storage.remove([oldBanner]);
-    }
-    List<String> newGallery = List<String>.from(data['recent_image_gallary_path'] ?? []);
-    for (var path in oldGallery) {
-      if (!newGallery.contains(path) && path.isNotEmpty) {
-        await storage.remove([path]);
+    /// ১. ইমেজ রিপ্লেস লজিক (পুরনো ডিলিট, নতুন আসবে)
+    // প্রোফাইল ছবি চেঞ্জ হলে
+    if (oldProfile != null && oldProfile.isNotEmpty && oldProfile != data['profile_image_path']) {
+      try {
+        await storage.remove([oldProfile]);
+      } catch (e) {
+        print("Profile delete error: $e");
       }
     }
 
-    /// data update
+    // ব্যানার ছবি চেঞ্জ হলে
+    if (oldBanner != null && oldBanner.isNotEmpty && oldBanner != data['banner_image_path']) {
+      try {
+        await storage.remove([oldBanner]);
+      } catch (e) {
+        print("Banner delete error: $e");
+      }
+    }
+
+    /// ২. গ্যালারি ইমেজ ডিলিট লজিক (যা নতুন লিস্টে নেই, তা ডিলিট)
+    List<String> newGallery = List<String>.from(data['recent_image_gallary_path'] ?? []);
+    for (var path in oldGallery) {
+      if (!newGallery.contains(path) && path.isNotEmpty) {
+        try {
+          await storage.remove([path]);
+        } catch (e) {
+          print("Gallery delete error: $e");
+        }
+      }
+    }
+
+    /// ৩. ডাটা প্রিপারেশন (এখানে preparedData ডিক্লেয়ার করা হয়েছে)
     final Map<String, dynamic> preparedData = Map<String, dynamic>.from(data);
+
+    // ডাটাবেসে পাঠানোর আগে গ্যালারি লিস্টকে স্ট্রিংয়ে রূপান্তর
     if (preparedData['recent_image_gallary_path'] is List) {
       preparedData['recent_image_gallary_path'] = jsonEncode(preparedData['recent_image_gallary_path']);
     }
 
-    await DatabaseHelper.update(table: 'photographers', column: 'id', value: id, data: preparedData);
+    /// ৪. ডাটাবেস আপডেট
+    await DatabaseHelper.update(
+        table: 'photographers',
+        column: 'id',
+        value: id,
+        data: preparedData
+    );
   }
 
+  ///delete photographer
   static Future<void> deletePhotographer(Map<String, dynamic> item) async {
     final String currentId = item['photographer_id'] ?? ''; /// id path
     if (currentId.isEmpty) return;
