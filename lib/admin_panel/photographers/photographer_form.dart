@@ -17,7 +17,6 @@ Future<void> showPhotographerForm(
     item?['recent_image_gallary_path'] ?? [],
   );
 
-  // ডাটাবেস থেকে প্রাপ্ত ID বা নতুন ID
   final String currentId =
       item?['photographer_id'] ?? PhotographerLogic.generatePhotographerId();
 
@@ -40,64 +39,98 @@ Future<void> showPhotographerForm(
                   controller: specCtrl,
                   decoration: const InputDecoration(labelText: "Specialty"),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
 
-                // ইমেজ বাটনসমূহ
-                Wrap(
-                  spacing: 10,
+                // ইমেজ প্রিভিউ এবং আপলোড বাটন
+                Row(
                   children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        final file = await ImagePicker().pickImage(
-                          source: ImageSource.gallery,
-                        );
-                        if (file != null) {
-                          final res = await DatabaseHelper.uploadImageBytes(
-                            folder: 'photographers/profile/$currentId',
-                            userId: 'profile',
-                            bytes: await file.readAsBytes(),
-                          );
-                          profilePath = res?['path'];
-                          setDialog(() {});
-                        }
-                      },
-                      child: const Text("Profile"),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          if (profilePath != null)
+                            Image.network(profilePath!, height: 80),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final file = await ImagePicker().pickImage(
+                                source: ImageSource.gallery,
+                              );
+                              if (file != null) {
+                                final res =
+                                    await DatabaseHelper.uploadImageBytes(
+                                      folder: 'photographers/$currentId',
+                                      userId: 'profile',
+                                      bytes: await file.readAsBytes(),
+                                    );
+                                setDialog(() => profilePath = res?['path']);
+                              }
+                            },
+                            child: const Text("Profile"),
+                          ),
+                        ],
+                      ),
                     ),
-
-                    ElevatedButton(
-                      onPressed: () async {
-                        final file = await ImagePicker().pickImage(
-                          source: ImageSource.gallery,
-                        );
-                        if (file != null) {
-                          final res = await DatabaseHelper.uploadImageBytes(
-                            folder: 'photographers/profile/$currentId',
-                            userId: 'banner',
-                            bytes: await file.readAsBytes(),
-                          );
-                          bannerPath = res?['path'];
-                          setDialog(() {});
-                        }
-                      },
-                      child: const Text("Banner"),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          if (bannerPath != null)
+                            Image.network(bannerPath!, height: 80),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final file = await ImagePicker().pickImage(
+                                source: ImageSource.gallery,
+                              );
+                              if (file != null) {
+                                final res =
+                                    await DatabaseHelper.uploadImageBytes(
+                                      folder: 'photographers/$currentId',
+                                      userId: 'banner',
+                                      bytes: await file.readAsBytes(),
+                                    );
+                                setDialog(() => bannerPath = res?['path']);
+                              }
+                            },
+                            child: const Text("Banner"),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
 
-                ElevatedButton(
-                  onPressed: () async {
-                    final files = await ImagePicker().pickMultiImage();
-                    for (var f in files) {
-                      final res = await DatabaseHelper.uploadImageBytes(
-                        folder: 'photographers/profile/$currentId',
-                        userId: 'gal_${DateTime.now().millisecondsSinceEpoch}',
-                        bytes: await f.readAsBytes(),
-                      );
-                      if (res?['path'] != null) gallery.add(res!['path']!);
-                    }
-                    setDialog(() {});
-                  },
-                  child: const Text("Add Gallery Images"),
+                const Divider(),
+                const Text("Gallery"),
+                Wrap(
+                  spacing: 10,
+                  children: [
+                    ...gallery.map(
+                      (path) => Stack(
+                        children: [
+                          Image.network(path, width: 60, height: 60),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            onPressed: () =>
+                                setDialog(() => gallery.remove(path)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_photo_alternate),
+                      onPressed: () async {
+                        final files = await ImagePicker().pickMultiImage();
+                        for (var f in files) {
+                          final res = await DatabaseHelper.uploadImageBytes(
+                            folder: 'photographers/$currentId',
+                            userId:
+                                'gal_${DateTime.now().millisecondsSinceEpoch}',
+                            bytes: await f.readAsBytes(),
+                          );
+                          if (res?['path'] != null)
+                            setDialog(() => gallery.add(res!['path']!));
+                        }
+                      },
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 20),
@@ -109,7 +142,7 @@ Future<void> showPhotographerForm(
                       'profile_image_path': profilePath,
                       'banner_image_path': bannerPath,
                       'recent_image_gallary_path': gallery,
-                      'photographer_id': currentId, // নতুন আইডি সেভ হচ্ছে
+                      'photographer_id': currentId,
                     };
 
                     if (item == null) {
