@@ -36,9 +36,9 @@ class _PhotographerViewState extends State<PhotographerView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center( // পুরো বডিকে সেন্টার করার জন্য
+      body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000), // ওয়েবে সর্বোচ্চ ১০০০পিক্সেল
+          constraints: const BoxConstraints(maxWidth: 1000),
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _photographers.isEmpty
