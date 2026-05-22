@@ -443,25 +443,51 @@ class DatabaseHelper {
 
   /// all table data deleted with images
 
-  Future<void> deleteWithStorage({
+  /// সব টেবিলের ডাটা এবং ইমেজ ডিলিট করার জন্য এটি ব্যবহার করো
+  static Future<void> deleteWithStorage({
     required String table,
     required String column,
     required dynamic value,
-    required String bucketName, // এখানে 'user_assets' দাও
-    required String?
-    imagePath, // সরাসরি ফাইলের পাথ (যেমন: review_images/filename.jpg)
+    required String bucketName,
+    required String? imagePath,
   }) async {
     try {
-      // ১. স্টোরেজ থেকে ডিলিট
+      // ১. স্টোরেজ থেকে ইমেজ ডিলিট (যদি পাথ থাকে)
       if (imagePath != null && imagePath.isNotEmpty) {
         await _client.storage.from(bucketName).remove([imagePath]);
         debugPrint("✅ Storage Image deleted: $imagePath");
       }
 
-      // ২. ডাটাবেস থেকে ডিলিট
+      // ২. ডাটাবেস থেকে রো ডিলিট
       await _client.from(table).delete().eq(column, value);
+      debugPrint("✅ Data deleted from $table");
     } catch (e) {
       debugPrint("❌ Delete Error: $e");
+      throw Exception("Delete Operation Failed: $e");
+    }
+  }
+
+  /// folder delete
+  /// ফোল্ডারের সব ইমেজ ডিলিট করার জন্য এটি যোগ করো
+  static Future<void> deleteFolder(String folderPath) async {
+    try {
+      final client = Supabase.instance.client;
+      // ফোল্ডারের ভেতরে থাকা সব ফাইলের লিস্ট আনা
+      final List<dynamic> list = await client.storage
+          .from('user_assets')
+          .list(path: folderPath);
+
+      // প্রতিটা ফাইল ডিলিট করা
+      for (var file in list) {
+        final fileName = file['name'];
+        await client.storage.from('user_assets').remove([
+          '$folderPath/$fileName',
+        ]);
+      }
+      debugPrint("✅ Folder deleted: $folderPath");
+    } catch (e) {
+      debugPrint("❌ Error deleting folder: $e");
+      throw Exception("Delete Folder Operation Failed: $e");
     }
   }
 }

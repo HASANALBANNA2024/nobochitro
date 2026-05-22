@@ -17,7 +17,7 @@ class CampaignsLogic {
     // যদি ইমেজ পাথ থাকে, তবে আগে স্টোরেজ থেকে ডিলিট করো
     if (item['image_path'] != null &&
         item['image_path'].toString().isNotEmpty) {
-      await DatabaseHelper.instance.deleteWithStorage(
+      await DatabaseHelper.deleteWithStorage(
         table: 'campaigns',
         column: 'id',
         value: item['id'],

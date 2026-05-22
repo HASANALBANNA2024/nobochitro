@@ -16,7 +16,7 @@ class PackageLogic {
   static Future<void> deletePackage(Map<String, dynamic> package) async {
     // ১. প্রোফাইল ইমেজ ডিলিট
     if (package['image_path'] != null) {
-      await DatabaseHelper.instance.deleteWithStorage(
+      await DatabaseHelper.deleteWithStorage(
         table: 'packages',
         column: 'id',
         value: package['id'],
@@ -30,7 +30,7 @@ class PackageLogic {
       List<String> paths = package['gallery_paths'].toString().split(',');
       for (String path in paths) {
         if (path.isNotEmpty) {
-          await DatabaseHelper.instance.deleteWithStorage(
+          await DatabaseHelper.deleteWithStorage(
             table: 'packages',
             column: 'id',
             value: package['id'],
@@ -60,7 +60,7 @@ class PackageLogic {
     if (newData['image_path'] != null &&
         newData['image_path'] != oldData['image_path']) {
       if (oldData['image_path'] != null) {
-        await DatabaseHelper.instance.deleteWithStorage(
+        await DatabaseHelper.deleteWithStorage(
           table: 'packages',
           column: 'id',
           value: id,
@@ -77,7 +77,7 @@ class PackageLogic {
         List<String> oldPaths = oldData['gallery_paths'].toString().split(',');
         for (String path in oldPaths) {
           if (path.isNotEmpty) {
-            await DatabaseHelper.instance.deleteWithStorage(
+            await DatabaseHelper.deleteWithStorage(
               table: 'packages',
               column: 'id',
               value: id,

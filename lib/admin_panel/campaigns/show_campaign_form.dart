@@ -25,7 +25,7 @@ void showCampaignForm(
   final startDateCtrl = TextEditingController(text: item?['start_date'] ?? '');
   final endDateCtrl = TextEditingController(text: item?['end_date'] ?? '');
 
-  // পাথ সংরক্ষণের জন্য ভেরিয়েবল
+  /// path variable
   String bannerPath = item?['image_path'] ?? '';
 
   bool isActive = item?['is_active'] ?? true;

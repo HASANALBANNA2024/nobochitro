@@ -3,7 +3,7 @@ import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 class ReviewLogic {
   /// Review Delete Logic (Database + Storage)
   static Future<void> deleteReview(Map<String, dynamic> review) async {
-    await DatabaseHelper.instance.deleteWithStorage(
+    await DatabaseHelper.deleteWithStorage(
       table: 'reviews',
       column: 'id',
       value: review['id'],

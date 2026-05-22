@@ -15,9 +15,10 @@ void showAddonsForm(
   );
   final catCtrl = TextEditingController(text: item?['category'] ?? '');
 
-  // নতুন: পাথ ট্র্যাক করার জন্য ভেরিয়েবল
   String? imageUrl = item?['image_url'];
   String? imagePath = item?['image_path'];
+  // 🟢 সুইচ স্ট্যাটাসের জন্য ভেরিয়েবল
+  bool isActive = item?['is_active'] ?? true;
 
   final ImagePicker picker = ImagePicker();
 
@@ -37,18 +38,15 @@ void showAddonsForm(
                   );
                   if (file != null) {
                     final bytes = await file.readAsBytes();
-
-                    // DatabaseHelper থেকে এখন ম্যাপ রেজাল্ট পাবো
                     final result = await DatabaseHelper.uploadImageBytes(
                       folder: 'addons',
                       userId: 'admin_${DateTime.now().millisecondsSinceEpoch}',
                       bytes: bytes,
                     );
-
                     if (result != null) {
                       setDialog(() {
                         imageUrl = result['url'];
-                        imagePath = result['path']; // 🟢 পাথটি সেভ হলো
+                        imagePath = result['path'];
                       });
                     }
                   }
@@ -63,7 +61,42 @@ void showAddonsForm(
                       : null,
                 ),
               ),
-              // ... টেক্সট ফিল্ডগুলো আগের মতোই থাকবে ...
+              const SizedBox(height: 15),
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Title",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: priceCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Price",
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: catCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Category",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+
+              // 🟢 সুইচ লিস্ট টাইল যোগ করা হয়েছে
+              const SizedBox(height: 10),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text("Is Active"),
+                value: isActive,
+                onChanged: (bool value) {
+                  setDialog(() => isActive = value);
+                },
+              ),
             ],
           ),
         ),
@@ -79,8 +112,8 @@ void showAddonsForm(
                 'price': int.tryParse(priceCtrl.text) ?? 0,
                 'category': catCtrl.text,
                 'image_url': imageUrl,
-                'image_path': imagePath, // 🟢 ডাটাবেসে পাথ পাঠানো হচ্ছে
-                'is_active': true,
+                'image_path': imagePath,
+                'is_active': isActive, // 🟢 সুইচের ভ্যালু ডাটাতে যোগ করা হয়েছে
               };
 
               if (item == null) {
