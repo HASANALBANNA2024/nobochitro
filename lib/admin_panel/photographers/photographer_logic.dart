@@ -6,42 +6,54 @@ class PhotographerLogic {
   static String generatePhotographerId() =>
       'N-${100000 + Random().nextInt(899999)}';
 
-  // নতুন ডাটা যোগ
   static Future<void> addPhotographer(Map<String, dynamic> data) async {
     final Map<String, dynamic> finalData = Map.from(data);
     finalData['photographer_id'] = generatePhotographerId();
     await DatabaseHelper.insert(table: 'photographers', data: finalData);
   }
 
-  // আপডেট: নতুন ইমেজ আসলে পুরানোটা মুছে ফেলবে
-  static Future<void> updatePhotographerWithImage({
+  // আপডেট লজিক: এখানে আগের ইমেজ পাথগুলো পাঠিয়ে ডিলিট করতে হবে
+  static Future<void> updatePhotographerFull({
     required dynamic id,
     required Map<String, dynamic> data,
-    String? oldProfilePath,
-    String? oldBannerPath,
+    String? oldProfile,
+    String? oldBanner,
+    List<String>? oldGallery,
   }) async {
-    // প্রোফাইল ইমেজ পরিবর্তন হলে পুরানোটা ডিলিট
-    if (oldProfilePath != null &&
-        data['profile_image_path'] != oldProfilePath) {
+    // প্রোফাইল ও ব্যানার চেক
+    if (oldProfile != null && data['profile_image_path'] != oldProfile) {
       await DatabaseHelper.deleteWithStorage(
         table: 'photographers',
         column: 'id',
         value: id,
         bucketName: 'user_assets',
-        imagePath: oldProfilePath,
+        imagePath: oldProfile,
       );
     }
-    // ব্যানার ইমেজ পরিবর্তন হলে পুরানোটা ডিলিট
-    if (oldBannerPath != null && data['banner_image_path'] != oldBannerPath) {
+    if (oldBanner != null && data['banner_image_path'] != oldBanner) {
       await DatabaseHelper.deleteWithStorage(
         table: 'photographers',
         column: 'id',
         value: id,
         bucketName: 'user_assets',
-        imagePath: oldBannerPath,
+        imagePath: oldBanner,
       );
     }
 
+    // গ্যালারি চেক
+    if (oldGallery != null) {
+      for (var path in oldGallery) {
+        if (!(data['recent_image_gallary_path'] as List).contains(path)) {
+          await DatabaseHelper.deleteWithStorage(
+            table: 'photographers',
+            column: 'id',
+            value: id,
+            bucketName: 'user_assets',
+            imagePath: path,
+          );
+        }
+      }
+    }
     await DatabaseHelper.update(
       table: 'photographers',
       column: 'id',
@@ -50,7 +62,6 @@ class PhotographerLogic {
     );
   }
 
-  // ডিলিট: ফোল্ডারসহ সব মুছে ফেলা
   static Future<void> deletePhotographer(Map<String, dynamic> item) async {
     final String folderPath =
         'photographers/profile/${item['photographer_id']}';
