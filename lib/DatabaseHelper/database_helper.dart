@@ -425,4 +425,15 @@ class DatabaseHelper {
     }
   }
 
+
+  /// review image delete
+  static Future<void> deleteFileFromStorage(String path) async {
+    try {
+      // Supabase storage delete logic
+      await _client.storage.from('review_images').remove([path]);
+    } catch (e) {
+      debugPrint("Storage Delete Error: $e");
+    }
+  }
+
 }

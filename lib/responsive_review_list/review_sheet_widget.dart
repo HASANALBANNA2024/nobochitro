@@ -59,6 +59,13 @@ class _DynamicReviewSheetState extends State<_DynamicReviewSheet> {
     });
   }
 
+  @override
+  void dispose() {
+    _webImageCache.clear();
+    _controller.reviewController.dispose();
+    super.dispose();
+  }
+
   void _initializeSheet() async {
     if (widget.booking != null && widget.booking is Map) {
       final Map<String, dynamic> bData = Map<String, dynamic>.from(
