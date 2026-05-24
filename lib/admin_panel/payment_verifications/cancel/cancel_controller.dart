@@ -10,9 +10,11 @@ class CancelController {
       await CancelService.getCancelledPayments();
 
   // ১. Cancellation Approved লজিক (সাথে অটো ১২% কাটছাট ক্যালকুলেশন)
-  Future<void> approveCancellation(String id, double bookingAmount, VoidCallback onDone) async {
-    print("Attempting to approve booking: $id"); // এটি কনসোলে চেক করো
-    double refundAmount = bookingAmount - (bookingAmount * 0.12);
+  Future<void> approveCancellation(String id, double basePrice, double paymentAmount, VoidCallback onUpdate) async {
+    print("Attempting to approve booking: $id");
+    double deduction = basePrice * 0.12;
+
+    double refundAmount = paymentAmount - deduction;
 
     try {
       await CancelService.updateRefundData(id, {
@@ -21,7 +23,7 @@ class CancelController {
         'refund_amount': refundAmount.toString(),
       });
       print("Update successful!"); // এটি প্রিন্ট হলে বুঝবে ডাটাবেস আপডেট হয়েছে
-      onDone();
+      onUpdate();
     } catch (e) {
       print("Error during update: $e"); // কোন এরর থাকলে এখানে দেখা যাবে
     }

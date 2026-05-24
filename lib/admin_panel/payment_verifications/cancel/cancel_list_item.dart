@@ -15,7 +15,7 @@ class CancelListItem extends StatelessWidget {
     List<Widget> widgets = [];
     item.forEach((key, value) {
       if (value != null && value.toString().isNotEmpty &&
-          !['booking_id', 'booking_status', 'refund_status', 'refund_transaction', 'refund_transaction_image', 'transaction_image_url', 'booking_amount', 'refund_amount'].contains(key)) {
+          !['booking_id', 'booking_status', 'refund_status', 'refund_transaction', 'refund_transaction_image', 'transaction_image_url', 'booking_amount', 'refund_amount', 'user_id'].contains(key)) {
         widgets.add(Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(children: [
@@ -28,7 +28,6 @@ class CancelListItem extends StatelessWidget {
     return widgets;
   }
 
-  // --- রিফান্ড ডায়ালগ ---
   void _showRefundDialog(BuildContext context, String status) {
     TextEditingController transCtrl = TextEditingController(text: item['refund_transaction'] ?? "");
     File? selectedImage;
@@ -87,16 +86,25 @@ class CancelListItem extends StatelessWidget {
                   ..._buildDataList(),
                   const Divider(height: 30),
 
-                  // অ্যাপ্রুভ বাটন
+                  // শুধুমাত্র এখানে বাটনটি রাখা হয়েছে
                   if (item['booking_status'] == 'cancellation pending')
-                    SizedBox(width: double.infinity, child: ElevatedButton(
-                        onPressed: () => _controller.approveCancellation(item['booking_id'], double.tryParse(item['booking_amount'].toString()) ?? 0.0, onUpdate),
-                        child: const Text("Approve Cancellation")
-                    )),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15),
+                      child: SizedBox(width: double.infinity, child: ElevatedButton(
+                          onPressed: () async {
+                            double basePrice = double.tryParse(item['base_price']?.toString() ?? "0") ?? 0.0;
+                            double paymentAmount = double.tryParse(item['payment_amount']?.toString() ?? "0") ?? 0.0;
+                                await _controller.approveCancellation(
+                                item['booking_id'],
+                                basePrice,
+                                paymentAmount,
+                                onUpdate
+                            );
+                          },
+                          child: const Text("Approve Cancellation")
+                      )),
+                    ),
 
-                  const SizedBox(height: 15),
-
-                  // রেডিও চিপস
                   Wrap(spacing: 8, runSpacing: 8, children: steps.map((s) {
                     int i = steps.indexOf(s);
                     int cur = steps.indexOf(current);
@@ -104,17 +112,16 @@ class CancelListItem extends StatelessWidget {
                       label: Text(s.toUpperCase(), style: const TextStyle(fontSize: 11)),
                       selected: i <= cur,
                       selectedColor: isRefunded ? Colors.green : Colors.blue.shade200,
-                      onSelected: (i < cur) ? null : (_) {
+                      onSelected: (i < cur) ? null : (_) async {
                         if (s == 'refunded') {
                           _showRefundDialog(context, s);
                         } else {
-                          _controller.updateRefundStatusOnly(item['booking_id'], s, onUpdate);
+                          await _controller.updateRefundStatusOnly(item['booking_id'], s, onUpdate);
                         }
                       },
                     );
                   }).toList()),
 
-                  // ইমেজ ভিউ
                   if (item['refund_transaction_image'] != null) ...[
                     const SizedBox(height: 20),
                     const Text("Refund Transaction Receipt:", style: TextStyle(fontWeight: FontWeight.bold)),
