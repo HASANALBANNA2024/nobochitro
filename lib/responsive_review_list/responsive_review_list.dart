@@ -320,26 +320,26 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
               Expanded(
                 child: _allReviews.isEmpty
                     ? const Center(
-                        child: Text(
-                          "No reviews found for this category.",
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                      )
+                  child: Text(
+                    "No reviews found for this category.",
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                )
                     : ListView.builder(
-                        controller: controller,
-                        itemCount: _allReviews.length,
-                        itemBuilder: (context, i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: _ReviewCard(
-                            review: _allReviews[i],
-                            primaryAccent: widget.primaryAccent,
-                            currentUserId: _currentUserId,
-                            onEdit: () => _editReviewDialog(_allReviews[i]),
-                            onDelete: () =>
-                                _deleteReviewConfirm(_allReviews[i]['id']),
-                          ),
-                        ),
-                      ),
+                  controller: controller,
+                  itemCount: _allReviews.length,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: _ReviewCard(
+                      review: _allReviews[i],
+                      primaryAccent: widget.primaryAccent,
+                      currentUserId: _currentUserId,
+                      onEdit: () => _editReviewDialog(_allReviews[i]),
+                      onDelete: () =>
+                          _deleteReviewConfirm(_allReviews[i]['id']),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -358,7 +358,7 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
     _pageController = PageController(
       viewportFraction: fraction,
       initialPage:
-          _currentPage % (_allReviews.isEmpty ? 1 : _allReviews.length),
+      _currentPage % (_allReviews.isEmpty ? 1 : _allReviews.length),
     );
 
     if (_isLoading) {
@@ -386,46 +386,46 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
         ),
         _allReviews.isEmpty
             ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Text(
-                    "No reviews found.",
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ),
-              )
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Center(
+            child: Text(
+              "No reviews found.",
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+        )
             : ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(
-                  dragDevices: {
-                    PointerDeviceKind.touch,
-                    PointerDeviceKind.mouse,
-                  },
-                ),
-                child: SizedBox(
-                  // 🎯 কন্টেন্ট এর সাইজ অনুযায়ী পুরো রো এর রেসপনসিভ হাইট হ্যান্ডেল
-                  height: screenWidth > 600 ? 250 : 210,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _allReviews.length,
-                    padEnds: false,
-                    onPageChanged: (i) => _currentPage = i,
-                    itemBuilder: (context, i) => Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: _ReviewCard(
-                          review: _allReviews[i],
-                          primaryAccent: widget.primaryAccent,
-                          currentUserId: _currentUserId,
-                          onEdit: () => _editReviewDialog(_allReviews[i]),
-                          onDelete: () =>
-                              _deleteReviewConfirm(_allReviews[i]['id']),
-                        ),
-                      ),
-                    ),
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+            },
+          ),
+          child: SizedBox(
+            // 🎯 কন্টেন্ট এর সাইজ অনুযায়ী পুরো রো এর রেসপনসিভ হাইট হ্যান্ডেল
+            height: screenWidth > 600 ? 250 : 210,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _allReviews.length,
+              padEnds: false,
+              onPageChanged: (i) => _currentPage = i,
+              itemBuilder: (context, i) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: _ReviewCard(
+                    review: _allReviews[i],
+                    primaryAccent: widget.primaryAccent,
+                    currentUserId: _currentUserId,
+                    onEdit: () => _editReviewDialog(_allReviews[i]),
+                    onDelete: () =>
+                        _deleteReviewConfirm(_allReviews[i]['id']),
                   ),
                 ),
               ),
+            ),
+          ),
+        ),
         if (_allReviews.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(right: 10, top: 5),
@@ -621,9 +621,9 @@ class _ReviewCard extends StatelessWidget {
     final String? userAvatarData = review['user_avatar'];
     final bool hasValidAvatar =
         userAvatarData != null &&
-        userAvatarData.toString().trim().isNotEmpty &&
-        userAvatarData.toString().trim() != 'null' &&
-        userAvatarData.toString().trim() != 'EMPTY';
+            userAvatarData.toString().trim().isNotEmpty &&
+            userAvatarData.toString().trim() != 'null' &&
+            userAvatarData.toString().trim() != 'EMPTY';
 
     final String profileUrl = hasValidAvatar
         ? userAvatarData.toString().trim()
@@ -656,22 +656,22 @@ class _ReviewCard extends StatelessWidget {
                 child: ClipOval(
                   child: isAnonymous
                       ? const Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: Colors.amber,
-                        )
+                    Icons.person_outline,
+                    size: 16,
+                    color: Colors.amber,
+                  )
                       : Image.network(
-                          profileUrl,
-                          width: 32,
-                          height: 32,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons
-                                .person, // ইমেজ লোড হতে ফেইলড হলে সেফ ফলব্যাক আইকন শো করবে
-                            size: 16,
-                            color: Colors.white60,
-                          ),
-                        ),
+                    profileUrl,
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons
+                          .person, // ইমেজ লোড হতে ফেইলড হলে সেফ ফলব্যাক আইকন শো করবে
+                      size: 16,
+                      color: Colors.white60,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nobochitro/admin_panel/addons/addons_view.dart';
 import 'package:nobochitro/admin_panel/campaigns/campaigns_view.dart';
 import 'package:nobochitro/admin_panel/packages/package_view.dart';
+import 'package:nobochitro/admin_panel/payment_verifications/payment_dashboard.dart';
 import 'package:nobochitro/admin_panel/photographers/photographer_view.dart';
 import 'package:nobochitro/admin_panel/reviews/reviews_view.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
@@ -38,8 +39,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final primaryAccent = isDarkMode
         ? const Color(0xFFD4AF37)
         : const Color(0xFF008080);
-
-    // safe area এবং media query হ্যান্ডেল করা
+    /// safe area
     bool isLargeScreen = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
@@ -52,7 +52,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           if (isLargeScreen) _buildSidebar(isDarkMode, primaryAccent),
           Expanded(
             child: SafeArea(
-              // SafeArea ব্যবহার করা জরুরি যাতে স্ক্রিন কাট না যায়
+              // SafeArea
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 1100),
                 child: _getSelectedWidget(),
@@ -71,7 +71,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       children: const [
         PackagesView(),
         PhotographerView(),
-        PackagesView(),
+        PaymentDashboard(),
         CampaignsView(),
         ReviewsView(),
         AddonsView(),

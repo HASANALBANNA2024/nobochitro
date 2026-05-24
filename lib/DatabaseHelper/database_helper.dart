@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DatabaseHelper {
-  DatabaseHelper._();
-  static final DatabaseHelper instance = DatabaseHelper._();
+  DatabaseHelper();
+  static final DatabaseHelper instance = DatabaseHelper();
 
   static final _client = Supabase.instance.client;
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'review_logic.dart';
 
 class ReviewsListView extends StatelessWidget {
