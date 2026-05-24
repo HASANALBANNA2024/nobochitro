@@ -8,105 +8,129 @@ class PaymentListItem extends StatelessWidget {
 
   PaymentListItem({super.key, required this.item, required this.onUpdate});
 
+  // --- সব ডায়ালগ এবং হেল্পার মেথড ---
+  void _showSuspendDialog(BuildContext context) {
+    TextEditingController noteController = TextEditingController();
+    showDialog(context: context, builder: (context) => AlertDialog(
+      title: const Text("Suspend Reason"),
+      content: TextField(controller: noteController, decoration: const InputDecoration(hintText: "Enter reason...")),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+        ElevatedButton(onPressed: () {
+          _controller.suspendPayment(item['booking_id'], noteController.text, onUpdate);
+          Navigator.pop(context);
+        }, child: const Text("Confirm")),
+      ],
+    ));
+  }
+
+  void _showHandoverDialog(BuildContext context) {
+    TextEditingController driveController = TextEditingController();
+    driveController.text = item['drive_link_handover'] ?? "";
+    showDialog(context: context, builder: (context) => AlertDialog(
+      title: const Text("Enter Drive Link"),
+      content: TextField(controller: driveController, decoration: const InputDecoration(hintText: "Google Drive Link")),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+        ElevatedButton(onPressed: () {
+          if (driveController.text.isNotEmpty) {
+            _controller.updateHandover(item['booking_id'], driveController.text, onUpdate);
+            Navigator.pop(context);
+          }
+        }, child: const Text("Submit"))
+      ],
+    ));
+  }
+
+  void _showExpandedImage(BuildContext context) {
+    showDialog(context: context, builder: (context) => Dialog(
+      backgroundColor: Colors.black,
+      child: Stack(children: [
+        InteractiveViewer(child: Center(child: Image.network(item['transaction_image_url']))),
+        Positioned(top: 10, right: 10, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context))),
+      ]),
+    ));
+  }
+
+  // --- ইনফো লিস্ট বিল্ডার ---
   List<Widget> _buildDataList() {
     List<Widget> widgets = [];
     item.forEach((key, value) {
-      if (value != null &&
-          value.toString().isNotEmpty &&
-          key != 'transaction_image_url' &&
-          key != 'id' &&
-          key != 'selected_addons_breakdown') {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    key.replaceAll('_', ' ').toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    ": $value",
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+      if (value != null && value.toString().isNotEmpty &&
+          key != 'transaction_image_url' && key != 'id' &&
+          key != 'selected_addons_breakdown' && key != 'booking_status' && key != 'booking_id') {
+        widgets.add(Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(children: [
+            Expanded(flex: 2, child: Text(key.replaceAll('_', ' ').toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey))),
+            Expanded(flex: 3, child: Text(": $value", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
+          ]),
+        ));
       }
     });
     return widgets;
   }
 
+  // --- স্ট্যাটাস রেডিও লিস্ট ---
+  Widget _buildStatusRadioGroup(BuildContext context) {
+    final List<String> statusOrder = ['pending', 'approved', 'shooting', 'final_draft', 'handover'];
+    int currentIndex = statusOrder.indexOf(item['booking_status'] ?? 'pending');
+
+    return Wrap(spacing: 8, children: statusOrder.map((status) {
+      int chipIndex = statusOrder.indexOf(status);
+      return ChoiceChip(
+        label: Text(status.toUpperCase(), style: const TextStyle(fontSize: 11)),
+        selected: chipIndex <= currentIndex,
+        selectedColor: status == item['booking_status'] ? Colors.green : Colors.blue.shade200,
+        onSelected: (val) {
+          if (chipIndex > currentIndex + 1) return;
+          if (status == 'handover') _showHandoverDialog(context);
+          else if (chipIndex > currentIndex) _controller.updateBookingStatusOnly(item['booking_id'], status, onUpdate);
+        },
+      );
+    }).toList());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-        title: Text(
-          "Booking ID: ${item['booking_id'] ?? 'N/A'}",
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Chip(
-          label: Text(item['booking_status'] ?? 'N/A', style: const TextStyle(color: Colors.white, fontSize: 10)),
-          backgroundColor: (item['booking_status'] == 'approved') ? Colors.green : Colors.orange,
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    bool isApproved = item['booking_status'] != 'pending';
+    return Center(
+      child: Container(
+        width: MediaQuery.of(context).size.width > 1000 ? 1000 : double.infinity,
+        child: Card(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          child: ExpansionTile(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ..._buildDataList(),
-
-                if (item['transaction_image_url'] != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    child: Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(item['transaction_image_url'], height: 250),
-                      ),
-                    ),
-                  ),
-
-                const Divider(height: 30),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.check, color: Colors.white),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(vertical: 12)),
-                        onPressed: () => _controller.updateStatus(item['booking_id'], 'approved', onUpdate),
-                        label: const Text("Approve", style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, padding: const EdgeInsets.symmetric(vertical: 12)),
-                        onPressed: () => _controller.updateStatus(item['booking_id'], 'suspended', onUpdate),
-                        label: const Text("Suspend", style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
-                  ],
-                ),
+                Text("Booking-ID: ${item['booking_id'] ?? 'N/A'}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Chip(label: Text(item['booking_status']?.toUpperCase() ?? 'N/A', style: const TextStyle(color: Colors.white, fontSize: 10)), backgroundColor: isApproved ? Colors.green : Colors.orange),
               ],
             ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ..._buildDataList(), // সব তথ্য এখানে দেখা যাবে
+                    if (item['transaction_image_url'] != null)
+                      GestureDetector(
+                        onTap: () => _showExpandedImage(context),
+                        child: Center(child: Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Image.network(item['transaction_image_url'], height: 150))),
+                      ),
+                    const Divider(height: 30),
+                    isApproved ? _buildStatusRadioGroup(context) : Row(children: [
+                      Expanded(child: ElevatedButton.icon(icon: const Icon(Icons.check), style: ElevatedButton.styleFrom(backgroundColor: Colors.green), onPressed: () => _controller.updateStatus(item['booking_id'], 'approved', onUpdate), label: const Text("Approve"))),
+                      const SizedBox(width: 10),
+                      Expanded(child: ElevatedButton.icon(icon: const Icon(Icons.close), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), onPressed: () => _showSuspendDialog(context), label: const Text("Suspend"))),
+                    ]),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
