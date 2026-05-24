@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 class ReviewController {
   int rating = 0;
@@ -22,11 +22,48 @@ class ReviewController {
     if (avatarUrl != null && avatarUrl.trim().isNotEmpty) userPhotoUrl = avatarUrl;
   }
 
+  // Future<void> loadUserInformation() async {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   if (user != null) {
+  //     customNsrId = await DatabaseHelper.instance.getCurrentUserNsrId();
+  //     displayName = user.displayName ?? (user.email != null ? user.email!.split('@')[0] : "anonymous_user");
+  //     displayEmail = user.email ?? "";
+  //     userPhotoUrl = customNsrId != null
+  //         ? "https://ijxtbmgvtwvpkbshunwf.supabase.co/storage/v1/object/public/user_assets/profile_user_image/$customNsrId.jpg"
+  //         : user.photoURL;
+  //   }
+  // }
+
   Future<void> loadUserInformation() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
+      // ১. প্রথমে NSR ID এবং সুপাবেস থেকে ডাটা আনার চেষ্টা করি
       customNsrId = await DatabaseHelper.instance.getCurrentUserNsrId();
-      displayName = user.displayName ?? (user.email != null ? user.email!.split('@')[0] : "anonymous_user");
+
+      if (customNsrId != null) {
+        try {
+          // সুপাবেস থেকে full_name ফেচ করছি
+          final response = await DatabaseHelper.client
+              .from('users')
+              .select('full_name') // তোমার কলামের নাম full_name
+              .eq('id', customNsrId!) // এখানে নিশ্চিত হও তোমার কলামের নাম 'id' নাকি 'user_id'
+              .maybeSingle();
+
+          if (response != null && response['full_name'] != null) {
+            displayName = response['full_name'].toString(); // সুপাবেসের নাম সেট হলো
+          } else {
+            // সুপাবেস থেকে না পেলে ফায়ারবেস থেকে নিবে
+            displayName = user.displayName ?? (user.email != null ? user.email!.split('@')[0] : "anonymous_user");
+          }
+        } catch (e) {
+          debugPrint("Error fetching full_name from Supabase: $e");
+          displayName = user.displayName ?? "anonymous_user";
+        }
+      } else {
+        // যদি customNsrId না থাকে
+        displayName = user.displayName ?? (user.email != null ? user.email!.split('@')[0] : "anonymous_user");
+      }
+
       displayEmail = user.email ?? "";
       userPhotoUrl = customNsrId != null
           ? "https://ijxtbmgvtwvpkbshunwf.supabase.co/storage/v1/object/public/user_assets/profile_user_image/$customNsrId.jpg"

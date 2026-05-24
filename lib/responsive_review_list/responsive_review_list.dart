@@ -104,48 +104,6 @@ class _ResponsiveReviewListState extends State<ResponsiveReviewList> {
     }
   }
 
-  void _loadDummyData() {
-    if (!mounted) return;
-    setState(() {
-      _allReviews = List.generate(8, (index) {
-        return {
-          'id': 'review_dummy_$index',
-          'user_id': index == 0 ? (_currentUserId ?? 'user_0') : 'user_$index',
-          'user_name': index == 0
-              ? 'My Review'
-              : (index % 3 == 0 ? 'Anonymous' : 'Client Name $index'),
-          'comment': index % 2 == 0
-              ? 'Amazing service from #Wedding Luxury package! Highly recommended. This content takes dynamic size.'
-              : 'The photo quality of my #Birthday Bash was top-notch.',
-          'rating': 4.7,
-          'review_image_url': index % 2 == 0
-              ? 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg'
-              : null,
-          'package_name': index % 2 == 0 ? 'Wedding Luxury' : 'Birthday Bash',
-          'category_name': index % 2 == 0 ? 'Wedding' : 'Birthday',
-          'photographer_name': 'John_Doe',
-          'user_avatar': null,
-        };
-      });
-
-      if (widget.filterCategoryName != null) {
-        _allReviews = _allReviews
-            .where(
-              (r) =>
-                  (r['category_name'] as String).toLowerCase() ==
-                      widget.filterCategoryName!.toLowerCase() ||
-                  (r['package_name'] as String).toLowerCase().contains(
-                    widget.filterCategoryName!.toLowerCase(),
-                  ),
-            )
-            .toList();
-      }
-
-      _isLoading = false;
-      _startAutoScroll();
-    });
-  }
-
   void _startAutoScroll() {
     _autoTimer?.cancel();
     _autoTimer = Timer.periodic(const Duration(seconds: 6), (timer) {

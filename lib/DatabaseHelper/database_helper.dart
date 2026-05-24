@@ -10,10 +10,8 @@ class DatabaseHelper {
 
   static final _client = Supabase.instance.client;
 
-  // বাইরের ক্লাস থেকে ক্লায়েন্ট ব্যবহারের জন্য
+  /// to client use
   static SupabaseClient get client => _client;
-
-  // --- আগের সব লজিক এখানে হুবহু থাকবে ---
 
   static Future<void> insert({required String table, required Map<String, dynamic> data}) async {
     try { await _client.from(table).insert(data); } catch (e) { throw Exception("Insert Error: $e"); }
@@ -246,6 +244,7 @@ class DatabaseHelper {
     }
   }
 
+  /// Get getCurrentUserId
   Future<String> getCurrentUserId() async {
     try {
       final String? nsrId = await getCurrentUserNsrId();

@@ -107,30 +107,32 @@ class EditProfileSheet {
                           child: ClipOval(
                             child: localPreviewPath != null
                                 ? (kIsWeb
-                                      ? Image.network(
-                                          localPreviewPath!,
-                                          width: 110,
-                                          height: 110,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Image.file(
-                                          File(localPreviewPath!),
-                                          width: 110,
-                                          height: 110,
-                                          fit: BoxFit.cover,
-                                        ))
+                                ? Image.network(
+                              localPreviewPath!,
+                              width: 110,
+                              height: 110,
+                              fit: BoxFit.cover,
+                            )
+                                : Image.file(
+                              File(localPreviewPath!),
+                              width: 110,
+                              height: 110,
+                              fit: BoxFit.cover,
+                            ))
                                 : (currentUserData?['profile_image'] != null
-                                      ? Image.network(
-                                          currentUserData!['profile_image'],
-                                          width: 110,
-                                          height: 110,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Icon(
-                                          Icons.person,
-                                          size: 55,
-                                          color: goldColor,
-                                        )),
+                                ? Image.network(
+                              // এখানে টাইমস্ট্যাম্প যুক্ত করো, এতে অ্যাপ নতুন ইমেজটি লোড করবে
+                              "${currentUserData!['profile_image']}?t=${DateTime.now().millisecondsSinceEpoch}",
+                              key: ValueKey(currentUserData['profile_image']), // কি (key) দেওয়ার ফলে নতুন ইমেজ আসলে এটি রি-বিল্ড হবে
+                              width: 110,
+                              height: 110,
+                              fit: BoxFit.cover,
+                            )
+                                : Icon(
+                              Icons.person,
+                              size: 55,
+                              color: goldColor,
+                            )),
                           ),
                         ),
                         if (isProcessing)
@@ -181,102 +183,70 @@ class EditProfileSheet {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        // Save Button Logic
+
                         onPressed: isProcessing
                             ? null
                             : () async {
-                                setSheetState(() => isProcessing = true);
+                          setSheetState(() => isProcessing = true);
 
-                                String? finalImageUrl =
-                                    currentUserData?['profile_image'];
+                          final String customerId = currentUserData?['id']?.toString() ?? "unknown";
+                          String? newImageUrl = currentUserData?['profile_image'];
 
-                                try {
-                                  // to image select image upload
-                                  if (selectedImageFile != null) {
-                                    final String fileName =
-                                        'profile_user_image/profile_${firebaseUid}.jpg';
-                                    final storage = Supabase
-                                        .instance
-                                        .client
-                                        .storage
-                                        .from('user_assets');
+                          try {
+                            if (selectedImageFile != null) {
+                              if (customerId == "unknown") throw Exception("Customer ID not found!");
 
-                                    // file upload
-                                    if (kIsWeb) {
-                                      final bytes = await selectedImageFile!
-                                          .readAsBytes();
-                                      await storage.uploadBinary(
-                                        fileName,
-                                        bytes,
-                                        fileOptions: const FileOptions(
-                                          upsert: true,
-                                          contentType: 'image/jpeg',
-                                        ),
-                                      );
-                                    } else {
-                                      await storage.upload(
-                                        fileName,
-                                        File(selectedImageFile!.path),
-                                        fileOptions: const FileOptions(
-                                          upsert: true,
-                                          contentType: 'image/jpeg',
-                                        ),
-                                      );
-                                    }
+                              final String fileName = 'profile_user_image/$customerId.jpg';
+                              final storage = Supabase.instance.client.storage.from('user_assets');
 
-                                    // upload success
-                                    finalImageUrl = storage.getPublicUrl(
-                                      fileName,
-                                    );
-                                    debugPrint(
-                                      "Log: Image uploaded successfully. URL: $finalImageUrl",
-                                    );
-                                  }
+                              // cacheControl: '0' যোগ করা হলো যাতে সার্ভার ক্যাশ না রাখে
+                              final fileOptions = const FileOptions(
+                                upsert: true,
+                                contentType: 'image/jpeg',
+                                cacheControl: '0',
+                              );
 
-                                  // database update image link and adress
-                                  final response = await Supabase
-                                      .instance
-                                      .client
-                                      .from('users')
-                                      .update({
-                                        'address': addressController.text
-                                            .trim(),
-                                        'profile_image':
-                                            finalImageUrl, // right link setup
-                                      })
-                                      .eq('user_id', firebaseUid!);
+                              if (kIsWeb) {
+                                final bytes = await selectedImageFile!.readAsBytes();
+                                await storage.uploadBinary(fileName, bytes, fileOptions: fileOptions);
+                              } else {
+                                await storage.upload(fileName, File(selectedImageFile!.path), fileOptions: fileOptions);
+                              }
 
-                                  debugPrint(
-                                    "Log: Database update status: $response",
-                                  );
+                              // টাইমস্ট্যাম্পসহ নতুন URL সেট করা
+                              newImageUrl = "${storage.getPublicUrl(fileName)}?t=${DateTime.now().millisecondsSinceEpoch}";
+                            }
 
-                                  if (context.mounted) {
-                                    if (onUpdate != null)
-                                      onUpdate(); // main profile screen refreash
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Profile Updated Successfully!",
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  // to display in error
-                                  debugPrint("Final Error Log: $e");
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text("Update Failed: $e"),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                } finally {
-                                  setSheetState(() => isProcessing = false);
-                                }
-                              },
+                            // ডাটাবেস আপডেট
+                            await Supabase.instance.client
+                                .from('users')
+                                .update({
+                              'address': addressController.text.trim(),
+                              'profile_image': newImageUrl,
+                            })
+                                .eq('user_id', firebaseUid!);
+
+                            debugPrint("Log: Database updated successfully with image: $newImageUrl");
+
+                            if (context.mounted) {
+                              if (onUpdate != null) onUpdate();
+                              Navigator.pop(context);
+                              // ScaffoldMessenger.(
+                              //   const SnackBar(content: Text("Profile Updated Successfully!")),
+                              // );
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile Updated Successfully!")));
+                            }
+                          } catch (e) {
+                            debugPrint("Final Error Log: $e");
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Update Failed: $e"), backgroundColor: Colors.red),
+                              );
+                            }
+                          } finally {
+                            setSheetState(() => isProcessing = false);
+                          }
+                        },
                         child: isProcessing
                             ? const SizedBox(
                                 width: 20,
