@@ -1,5 +1,7 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb; // ওয়েব ডিটেক্ট করার জন্য
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cancel_service.dart';
 
@@ -30,36 +32,40 @@ class CancelController {
   }
 
   // ২. রিফান্ড স্ট্যাটাস আপডেট লজিক (ইমেজ এবং ট্রানজ্যাকশন সহ)
-  Future<void> saveRefund(String id, String userId, String status, String trans, File? image, VoidCallback onDone) async {
+  Future<void> saveRefund(String id, String userId, String status, String trans, dynamic image, VoidCallback onDone) async {
     String? imageUrl;
 
     if (image != null) {
       final now = DateTime.now();
-      final date = "${now.year}-${now.month}-${now.day}";
-      final time = "${now.hour}-${now.minute}-${now.second}";
-
-      final fileName = '$userId-$date-$time-$id.jpg';
+      final fileName = '$userId-${now.millisecondsSinceEpoch}.jpg';
       final path = 'refunded/images/$fileName';
 
-      await Supabase.instance.client.storage.from('user_assets').upload(
-          path,
-          image,
-          fileOptions: const FileOptions(upsert: true)
-      );
+      if (kIsWeb) {
+        // --- ওয়েবের জন্য লজিক ---
+        await Supabase.instance.client.storage.from('user_assets').uploadBinary(
+            path,
+            image as Uint8List, // ওয়েব থেকে বাইট আসছে
+            fileOptions: const FileOptions(upsert: true)
+        );
+      } else {
+        // --- মোবাইলের জন্য লজিক ---
+        await Supabase.instance.client.storage.from('user_assets').upload(
+            path,
+            image as File, // মোবাইল থেকে ফাইল আসছে
+            fileOptions: const FileOptions(upsert: true)
+        );
+      }
 
       imageUrl = Supabase.instance.client.storage.from('user_assets').getPublicUrl(path);
     }
 
-    Map<String, dynamic> updateData = {
+    // ডাটাবেস আপডেট
+    await CancelService.updateRefundData(id, {
       'refund_status': status.toLowerCase(),
       'refund_transaction': trans,
-    };
+      if (imageUrl != null) 'refund_transaction_image': imageUrl,
+    });
 
-    if (imageUrl != null) {
-      updateData['refund_transaction_image'] = imageUrl;
-    }
-
-    await CancelService.updateRefundData(id, updateData);
     onDone();
   }
 

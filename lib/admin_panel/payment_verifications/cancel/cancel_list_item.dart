@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'cancel_controller.dart';
@@ -8,7 +8,6 @@ class CancelListItem extends StatelessWidget {
   final Map<String, dynamic> item;
   final VoidCallback onUpdate;
   final CancelController _controller = CancelController();
-
   CancelListItem({super.key, required this.item, required this.onUpdate});
 
   /// data filed builder
@@ -31,28 +30,24 @@ class CancelListItem extends StatelessWidget {
   /// refunded dialogue box
   void _showRefundDialog(BuildContext context, String status) {
     TextEditingController transCtrl = TextEditingController(text: item['refund_transaction'] ?? "");
-    Uint8List? webImage; // Web এর জন্য বাইট লিস্ট
+
+    // ওয়েব এবং মোবাইলের জন্য আলাদা ভেরিয়েবল
+    Uint8List? webImage;
+    File? mobileFile;
 
     showDialog(
       context: context,
-      // ডায়ালগের বাইরের অংশে ক্লিক করলে যেন বন্ধ না হয় (ইমেজ পিক করার সময় যেন সমস্যা না হয়)
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
             title: Text("Confirm: ${status.toUpperCase()}"),
-            // ডায়ালগ যেন পুরো স্ক্রিন না নিয়ে নেয়
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            // --- কন্টেন্ট অংশ (সবচেয়ে গুরুত্বপূর্ণ পরিবর্তন) ---
             content: Container(
-              // কন্টেন্টের একটা নির্দিষ্ট প্রস্থ দিন
               width: 400,
-              // SingleChildScrollView ব্যবহার করছি যাতে কন্টেন্ট বেশি হলে স্ক্রল করা যায়
               child: SingleChildScrollView(
                 child: Column(
-                  // কন্টেন্ট অনুযায়ী প্রস্থ সেট হবে
                   mainAxisSize: MainAxisSize.min,
-                  // বাম দিক থেকে অ্যালাইন
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
@@ -65,84 +60,57 @@ class CancelListItem extends StatelessWidget {
                       icon: const Icon(Icons.camera_alt),
                       label: const Text("Pick Receipt Image"),
                       onPressed: () async {
-                        try {
-                          final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-                          if (picked != null) {
-                            // ওয়েব এর জন্য বাইট হিসেবে রিড করা
-                            var f = await picked.readAsBytes();
-                            setDialogState(() {
-                              webImage = f;
-                            });
+                        final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                        if (picked != null) {
+                          if (kIsWeb) {
+                            var bytes = await picked.readAsBytes();
+                            setDialogState(() => webImage = bytes);
+                          } else {
+                            setDialogState(() => mobileFile = File(picked.path));
                           }
-                        } catch (e) {
-                          print("Error picking image: $e");
-                          // ব্যবহারকারীকে এরর মেসেজ দেখান
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Could not pick image: $e")),
-                          );
                         }
                       },
                     ),
 
-                    // --- ইমেজ প্রিভিউ অংশ (এটি স্ক্রিনশটে হিডেন ছিল) ---
-                    if (webImage != null)
+                    // ইমেজ প্রিভিউ লজিক
+                    if (webImage != null || mobileFile != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 15, bottom: 5),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Receipt Preview:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                            const SizedBox(height: 5),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              // Image.memory ব্যবহার করছি Web এর জন্য
-                              child: Image.memory(
-                                webImage!,
-                                height: 150, // একটি নির্দিষ্ট উচ্চতা দিন
-                                width: double.infinity, // কন্টেনারের সমান প্রস্থ
-                                fit: BoxFit.cover, // ইমেজটিকে কন্টেনারের ভেতর ফিট করবে
-                              ),
-                            ),
-                          ],
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: kIsWeb
+                              ? Image.memory(webImage!, height: 150, width: double.infinity, fit: BoxFit.cover)
+                              : Image.file(mobileFile!, height: 150, width: double.infinity, fit: BoxFit.cover),
                         ),
                       ),
-                    // একটি স্পেস যাতে বাটনগুলো কন্টেন্টের সাথে লেগে না থাকে
-                    const SizedBox(height: 10),
                   ],
                 ),
               ),
             ),
-            // --- বাটন অংশ ---
             actions: [
               TextButton(
-                  onPressed: () {
-                    // কন্ট্রোলার রিলিজ করে দিন ডায়ালগ বন্ধ করার আগে
-                    // transCtrl.dispose();
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: const Text("Cancel")
               ),
               ElevatedButton(
                 onPressed: () async {
                   if (transCtrl.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Please enter Transaction ID"))
-                    );
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter Transaction ID")));
                     return;
                   }
 
-                  // সেভ কল করছি। লক্ষ্য করুন, আমি null পাঠাচ্ছি selectedImage এর বদলে।
-                  // আপনার কন্ট্রোলার Uint8List (webImage) গ্রহণ করার জন্য আপডেট করতে হবে।
+                  // প্ল্যাটফর্ম অনুযায়ী ইমেজ পাঠানো হচ্ছে
+                  dynamic finalImage = kIsWeb ? webImage : mobileFile;
+
                   await _controller.saveRefund(
                       item['booking_id'],
                       item['user_id'].toString(),
                       status,
                       transCtrl.text,
-                      null, // কন্ট্রোলারের Uint8List সাপোর্টের জন্য এটি চেক করুন
+                      finalImage, // এখানে ইমেজটি পাস করা হচ্ছে
                           () {
-                        // transCtrl.dispose();
-                        onUpdate(); // লিস্ট রিফ্রেশ হবে
-                        Navigator.pop(context); // ডায়লগ বন্ধ হবে
+                        onUpdate();
+                        Navigator.pop(context);
                       }
                   );
                 },
@@ -154,7 +122,7 @@ class CancelListItem extends StatelessWidget {
       ),
     );
   }
-
+  /// main context
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -183,7 +151,7 @@ class CancelListItem extends StatelessWidget {
                   ..._buildDataList(),
                   const Divider(height: 30),
 
-                  // শুধুমাত্র এখানে বাটনটি রাখা হয়েছে
+
                   if (item['booking_status'] == 'cancellation pending')
                     Padding(
                       padding: const EdgeInsets.only(bottom: 15),
@@ -202,6 +170,18 @@ class CancelListItem extends StatelessWidget {
                       )),
                     ),
 
+                  Wrap(
+                    spacing: 20,
+                    children: [
+                      // যদি ইমেজ থাকে তবেই দেখাবে, নাহলে কিছুই হবে না
+                      if (item['transaction_image_url'] != null && item['transaction_image_url'].toString().isNotEmpty)
+                        _buildImagePreview(context, item['transaction_image_url'], "User Payment Receipt:"),
+
+                      if (item['refund_transaction_image'] != null && item['refund_transaction_image'].toString().isNotEmpty)
+                        _buildImagePreview(context, item['refund_transaction_image'], "Refund Transaction Receipt:"),
+                    ],
+                  ),
+
                   Wrap(spacing: 8, runSpacing: 8, children: steps.map((s) {
                     int i = steps.indexOf(s);
                     int cur = steps.indexOf(current);
@@ -219,18 +199,40 @@ class CancelListItem extends StatelessWidget {
                     );
                   }).toList()),
 
-                  if (item['refund_transaction_image'] != null) ...[
-                    const SizedBox(height: 20),
-                    const Text("Refund Transaction Receipt:", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 5),
-                    Image.network(item['refund_transaction_image'], width: double.infinity, fit: BoxFit.cover),
-                  ]
+
                 ]),
               )
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// build image preview of transaction and refund transaction image
+  Widget _buildImagePreview(BuildContext context, String imageUrl, String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 15),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => showDialog(
+              context: context,
+              builder: (_) => Dialog(child: InteractiveViewer(child: Image.network(imageUrl)))
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              imageUrl,
+              height: 120, // মিডিয়াম সাইজ
+              width: 180,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
