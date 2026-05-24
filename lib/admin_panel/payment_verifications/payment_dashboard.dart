@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/admin_panel/payment_verifications/active/active_payments_tab.dart';
 import 'package:nobochitro/admin_panel/payment_verifications/cancel/cancel_view.dart';
+import 'package:nobochitro/admin_panel/payment_verifications/suspended/suspended_view.dart';
 
 
 class PaymentDashboard extends StatelessWidget {
@@ -25,7 +26,7 @@ class PaymentDashboard extends StatelessWidget {
           children: [
             ActivePaymentsTab(),
             CancelView(),
-            Center(child: Text("Suspended Data")),
+            SuspendedView(),
           ],
         ),
       ),

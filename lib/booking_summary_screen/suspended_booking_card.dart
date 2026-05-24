@@ -39,9 +39,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: widget.isDark
-              ? const Color(0xFF1E1E1E)
-              : Colors.white,
+          backgroundColor: widget.isDark ? const Color(0xFF1E1E1E) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -86,10 +84,10 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
   }
 
   void _openInternalAppealSheet(
-    BuildContext context,
-    String bookingId,
-    int currentCount,
-  ) {
+      BuildContext context,
+      String bookingId,
+      int currentCount,
+      ) {
     final TextEditingController noteController = TextEditingController();
     final ImagePicker picker = ImagePicker();
 
@@ -156,14 +154,9 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                       ),
                       decoration: InputDecoration(
                         hintText: "Explain your issue clearly to the admin...",
-                        hintStyle: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey,
-                        ),
+                        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
                         filled: true,
-                        fillColor: widget.isDark
-                            ? Colors.white10
-                            : Colors.black12,
+                        fillColor: widget.isDark ? Colors.white10 : Colors.black12,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -182,9 +175,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () async {
-                        final XFile? image = await picker.pickImage(
-                          source: ImageSource.gallery,
-                        );
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
                         if (image != null) {
                           selectedFileName = image.name;
                           if (kIsWeb) {
@@ -205,9 +196,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                         width: double.infinity,
                         height: pickedXFile == null ? 65 : 180,
                         decoration: BoxDecoration(
-                          color: widget.isDark
-                              ? Colors.white10
-                              : Colors.black12,
+                          color: widget.isDark ? Colors.white10 : Colors.black12,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: pickedXFile == null
@@ -217,39 +206,19 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                         ),
                         child: pickedXFile == null
                             ? const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_a_photo_outlined,
-                                    color: Colors.grey,
-                                    size: 18,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    "Upload Image from Gallery",
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              )
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo_outlined, color: Colors.grey, size: 18),
+                            SizedBox(width: 8),
+                            Text("Upload Image from Gallery", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                          ],
+                        )
                             : ClipRRect(
-                                borderRadius: BorderRadius.circular(11),
-                                child: kIsWeb
-                                    ? Image.memory(
-                                        fileToUpload,
-                                        width: double.infinity,
-                                        height: 180,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.file(
-                                        fileToUpload as File,
-                                        width: double.infinity,
-                                        height: 180,
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
+                          borderRadius: BorderRadius.circular(11),
+                          child: kIsWeb
+                              ? Image.memory(fileToUpload, width: double.infinity, height: 180, fit: BoxFit.cover)
+                              : Image.file(fileToUpload as File, width: double.infinity, height: 180, fit: BoxFit.cover),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -259,93 +228,54 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                         onPressed: isUploading
                             ? null
                             : () async {
-                                String note = noteController.text.trim();
-                                if (note.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Please write an appeal note first!",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                setModalState(() => isUploading = true);
-                                try {
-                                  String? uploadedUrl;
-                                  if (fileToUpload != null &&
-                                      selectedFileName != null) {
-                                    String userId = await DatabaseHelper
-                                        .instance
-                                        .getCurrentUserId();
-                                    DateTime now = DateTime.now();
-                                    String timestamp =
-                                        "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_"
-                                        "${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}";
-                                    String customBucketPath =
-                                        "appeal_files/$userId/${timestamp}_$selectedFileName";
-                                    uploadedUrl = await DatabaseHelper.instance
-                                        .uploadAppealImageWithPath(
-                                          fileToUpload,
-                                          customBucketPath,
-                                        );
-                                  }
+                          String note = noteController.text.trim();
+                          if (note.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please write an appeal note first!")));
+                            return;
+                          }
+                          setModalState(() => isUploading = true);
+                          try {
+                            String? uploadedUrl;
+                            if (fileToUpload != null && selectedFileName != null) {
+                              String userId = await DatabaseHelper.instance.getCurrentUserId();
+                              DateTime now = DateTime.now();
+                              String timestamp = "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}";
+                              String customBucketPath = "appeal_files/$userId/${timestamp}_$selectedFileName";
+                              uploadedUrl = await DatabaseHelper.instance.uploadAppealImageWithPath(fileToUpload, customBucketPath);
+                            }
 
-                                  int newCount = currentCount + 1;
+                            int newCount = currentCount + 1;
+                            await DatabaseHelper.instance.submitSuspensionAppeal(
+                              bookingId: bookingId,
+                              appealNote: note,
+                              appealImageUrl: uploadedUrl,
+                              appealCount: newCount,
+                            );
 
-                                  await DatabaseHelper.instance
-                                      .submitSuspensionAppeal(
-                                        bookingId: bookingId,
-                                        appealNote: note,
-                                        appealImageUrl: uploadedUrl,
-                                        appealCount: newCount,
-                                      );
+                            setState(() {
+                              currentBooking['appeal_status'] = "pending";
+                              currentBooking['appeal_note'] = note;
+                              currentBooking['appeal_count'] = newCount;
+                              currentBooking['appeal_cancel_notes'] = null;
+                              if (uploadedUrl != null) currentBooking['appeal_image_url'] = uploadedUrl;
+                            });
 
-                                  setState(() {
-                                    currentBooking['appeal_status'] = null;
-                                    currentBooking['appeal_note'] = note;
-                                    currentBooking['appeal_count'] = newCount;
-                                    currentBooking['appeal_cancel_notes'] =
-                                        null;
-                                    if (uploadedUrl != null)
-                                      currentBooking['appeal_image_url'] =
-                                          uploadedUrl;
-                                  });
-
-                                  if (widget.onAppeal != null)
-                                    widget.onAppeal!();
-                                  Navigator.pop(context);
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text("❌ Error: $e")),
-                                  );
-                                } finally {
-                                  setModalState(() => isUploading = false);
-                                }
-                              },
+                            if (widget.onAppeal != null) widget.onAppeal!();
+                            Navigator.pop(context);
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("❌ Error: $e")));
+                          } finally {
+                            setModalState(() => isUploading = false);
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: isUploading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                "Submit Appeal",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Text("Submit Appeal", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -361,44 +291,22 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
   @override
   Widget build(BuildContext context) {
     String bookingId = currentBooking['booking_id'] ?? "NB-00000";
-    String packageTitle =
-        currentBooking['package_name'] ?? "Photography Session";
+    String packageTitle = currentBooking['package_name'] ?? "Photography Session";
     String dateStr = currentBooking['event_date'] ?? "N/A";
     String timeStr = currentBooking['event_time'] ?? "N/A";
     String locationStr = currentBooking['event_location'] ?? "N/A";
-    String photographerName =
-        currentBooking['photographer_name'] ?? "Not Assigned";
+    String photographerName = currentBooking['photographer_name'] ?? "Not Assigned";
 
-    int appealCount =
-        int.tryParse(currentBooking['appeal_count']?.toString() ?? '0') ?? 0;
+    int appealCount = int.tryParse(currentBooking['appeal_count']?.toString() ?? '0') ?? 0;
 
-    String bookingStatus = (currentBooking['booking_status'] ?? "")
-        .toString()
-        .trim()
-        .toLowerCase();
-    String paymentStatus = (currentBooking['payment_status'] ?? "")
-        .toString()
-        .trim()
-        .toLowerCase();
-    String appealStatus = (currentBooking['appeal_status'] ?? "")
-        .toString()
-        .trim()
-        .toLowerCase();
+    String bookingStatus = (currentBooking['booking_status'] ?? "").toString().trim().toLowerCase();
+    String paymentStatus = (currentBooking['payment_status'] ?? "").toString().trim().toLowerCase();
+    String appealStatus = (currentBooking['appeal_status'] ?? "").toString().trim().toLowerCase();
 
-    bool isApprovedAndActive =
-        (bookingStatus == "approved" || bookingStatus == "active") &&
-        (paymentStatus == "approved") &&
-        (appealStatus == "approved");
+    bool isApprovedAndActive = (bookingStatus == "approved" || bookingStatus == "active") && (paymentStatus == "approved") && (appealStatus == "approved");
 
-    bool isAppealCancelled =
-        appealStatus == "cancel" ||
-        appealStatus == "cancelled" ||
-        appealStatus == "rejected" ||
-        currentBooking['appeal_cancel_notes'] != null;
-    bool isCurrentlyInFlight =
-        appealStatus == "pending" ||
-        appealStatus == "appealed" ||
-        appealStatus == "processing";
+    bool isAppealCancelled = appealStatus == "cancel" || appealStatus == "cancelled" || appealStatus == "rejected" || currentBooking['appeal_cancel_notes'] != null;
+    bool isCurrentlyInFlight = appealStatus == "pending" || appealStatus == "appealed" || appealStatus == "processing";
 
     bool isLimitExceeded = appealCount >= 3;
 
@@ -407,9 +315,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
       currentStep = 0;
     } else if (appealStatus == "processing") {
       currentStep = 1;
-    } else if (appealStatus == "approved" ||
-        isApprovedAndActive ||
-        isAppealCancelled) {
+    } else if (appealStatus == "approved" || isApprovedAndActive || isAppealCancelled) {
       currentStep = 2;
     }
 
@@ -423,15 +329,12 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
       accountStatusText = "Active State";
     } else if (isAppealCancelled) {
       statusBadgeColor = isLimitExceeded ? Colors.red : Colors.orange;
-      statusBadgeText = isLimitExceeded
-          ? "PERMANENT LOCKED"
-          : "APPEAL CANCELLED";
-      accountStatusText = isLimitExceeded
-          ? "Max Limit Exceeded"
-          : "Appeal Cancelled";
+      statusBadgeText = isLimitExceeded ? "PERMANENT LOCKED" : "APPEAL CANCELLED";
+      accountStatusText = isLimitExceeded ? "Max Limit Exceeded" : "Appeal Cancelled";
     } else if (isCurrentlyInFlight) {
       statusBadgeColor = Colors.blue;
       statusBadgeText = "APPEALED";
+      accountStatusText = "Reviewing Appeal";
     }
 
     return Column(
@@ -443,12 +346,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
           decoration: BoxDecoration(
             color: widget.isDark ? const Color(0xFF1A1A1A) : Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isApprovedAndActive
-                  ? Colors.green.withOpacity(0.5)
-                  : Colors.red.withOpacity(0.3),
-              width: 1,
-            ),
+            border: Border.all(color: isApprovedAndActive ? Colors.green.withOpacity(0.5) : Colors.red.withOpacity(0.3), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,95 +354,37 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
             children: [
               Row(
                 children: [
-                  Text(
-                    "#$bookingId",
-                    style: TextStyle(
-                      color: widget.primaryAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                  Text("#$bookingId", style: TextStyle(color: widget.primaryAccent, fontWeight: FontWeight.bold, fontSize: 12)),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     margin: const EdgeInsets.only(right: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      "$appealCount/3 Appeals",
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    decoration: BoxDecoration(color: Colors.grey.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                    child: Text("$appealCount/3 Appeals", style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusBadgeColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      statusBadgeText,
-                      style: TextStyle(
-                        color: statusBadgeColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: statusBadgeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                    child: Text(statusBadgeText, style: TextStyle(color: statusBadgeColor, fontWeight: FontWeight.bold, fontSize: 10)),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                packageTitle,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Text(packageTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 8),
               Row(
                 children: [
                   const Icon(Icons.wallet, size: 16, color: Colors.grey),
                   const SizedBox(width: 5),
-                  const Text(
-                    "Account Status: ",
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                  Text(
-                    accountStatusText,
-                    style: TextStyle(
-                      color: statusBadgeColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  const Text("Account Status: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  Text(accountStatusText, style: TextStyle(color: statusBadgeColor, fontSize: 13, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   Expanded(
                     child: Text(
                       isAppealCancelled
-                          ? (currentBooking['appeal_cancel_notes'] ??
-                                    "No notes provided")
-                                .toString()
-                          : (currentBooking['suspended_note'] ??
-                                    "fraud payment")
-                                .toString(),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: widget.isDark ? Colors.white70 : Colors.black87,
-                      ),
+                          ? (currentBooking['appeal_cancel_notes'] ?? "No notes provided").toString()
+                          : (currentBooking['suspended_note'] ?? "fraud payment").toString(),
+                      style: TextStyle(fontSize: 13, color: widget.isDark ? Colors.white70 : Colors.black87),
                       textAlign: TextAlign.end,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -561,10 +401,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                 ],
               ),
               const SizedBox(height: 8),
-              _infoTile(
-                Icons.camera_alt_outlined,
-                "Photographer: $photographerName",
-              ),
+              _infoTile(Icons.camera_alt_outlined, "Photographer: $photographerName"),
               const SizedBox(height: 8),
               _infoTile(Icons.location_on_outlined, locationStr),
               if (!isApprovedAndActive) ...[
@@ -573,29 +410,11 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: _buildTimelineStep(
-                        "Request",
-                        currentStep >= 0,
-                        false,
-                      ),
-                    ),
+                    Expanded(child: _buildTimelineStep("Request", currentStep >= 0, false)),
                     _buildTimelineArrow(currentStep >= 1),
-                    Expanded(
-                      child: _buildTimelineStep(
-                        "Processing",
-                        currentStep >= 1,
-                        false,
-                      ),
-                    ),
+                    Expanded(child: _buildTimelineStep("Processing", currentStep >= 1, false)),
                     _buildTimelineArrow(currentStep >= 2),
-                    Expanded(
-                      child: _buildTimelineStep(
-                        isAppealCancelled ? "Rejected" : "Approved",
-                        currentStep >= 2,
-                        isAppealCancelled,
-                      ),
-                    ),
+                    Expanded(child: _buildTimelineStep(isAppealCancelled ? "Rejected" : "Approved", currentStep >= 2, isAppealCancelled)),
                   ],
                 ),
               ],
@@ -608,18 +427,9 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: statusBadgeColor),
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: Text(
-                        "View Details",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: statusBadgeColor,
-                        ),
-                      ),
+                      child: Text("View Details", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: statusBadgeColor)),
                     ),
                   ),
                   if (!isApprovedAndActive) ...[
@@ -627,60 +437,32 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
                     Expanded(
                       child: isCurrentlyInFlight
                           ? ElevatedButton(
-                              onPressed: null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey.withOpacity(0.3),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: Text(
-                                appealStatus == "processing"
-                                    ? "Processing"
-                                    : "Appealed",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white60,
-                                ),
-                              ),
-                            )
+                        onPressed: null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.withOpacity(0.3),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text(
+                          appealStatus == "processing" ? "Processing" : "Appealed",
+                          style: const TextStyle(fontSize: 12, color: Colors.white60),
+                        ),
+                      )
                           : ElevatedButton(
-                              onPressed: isLimitExceeded
-                                  ? () => _showLimitExceededDialog(context)
-                                  : () => _openInternalAppealSheet(
-                                      context,
-                                      bookingId,
-                                      appealCount,
-                                    ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isLimitExceeded
-                                    ? Colors.grey.withOpacity(0.5)
-                                    : (isAppealCancelled
-                                          ? Colors.orangeAccent
-                                          : Colors.blueAccent),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: Text(
-                                isLimitExceeded
-                                    ? "Limit Exceeded"
-                                    : (isAppealCancelled
-                                          ? "Re-Appeal"
-                                          : "Appeal"),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
+                        onPressed: isLimitExceeded
+                            ? () => _showLimitExceededDialog(context)
+                            : () => _openInternalAppealSheet(context, bookingId, appealCount),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isLimitExceeded ? Colors.grey.withOpacity(0.5) : (isAppealCancelled ? Colors.orangeAccent : Colors.blueAccent),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text(
+                          isLimitExceeded ? "Limit Exceeded" : (isAppealCancelled ? "Re-Appeal" : "Appeal"),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ),
                     ),
                   ],
                 ],
@@ -693,19 +475,11 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
   }
 
   Widget _buildTimelineStep(String label, bool isActive, bool isErrorState) {
-    Color stepColor = isActive
-        ? (isErrorState ? Colors.red : Colors.green)
-        : (widget.isDark ? Colors.white30 : Colors.black26);
+    Color stepColor = isActive ? (isErrorState ? Colors.red : Colors.green) : (widget.isDark ? Colors.white30 : Colors.black26);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          isErrorState && isActive
-              ? Icons.cancel
-              : (isActive ? Icons.check_circle : Icons.radio_button_unchecked),
-          size: 11,
-          color: stepColor,
-        ),
+        Icon(isErrorState && isActive ? Icons.cancel : (isActive ? Icons.check_circle : Icons.radio_button_unchecked), size: 11, color: stepColor),
         const SizedBox(height: 1),
         FittedBox(
           fit: BoxFit.scaleDown,
@@ -715,11 +489,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
             style: TextStyle(
               fontSize: 8,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive
-                  ? (isErrorState
-                        ? Colors.red
-                        : (widget.isDark ? Colors.white : Colors.black87))
-                  : Colors.grey,
+              color: isActive ? (isErrorState ? Colors.red : (widget.isDark ? Colors.white : Colors.black87)) : Colors.grey,
             ),
           ),
         ),
@@ -732,13 +502,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
       child: Center(
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(
-            "➔",
-            style: TextStyle(
-              fontSize: 8,
-              color: isActive ? Colors.green : Colors.grey.withOpacity(0.3),
-            ),
-          ),
+          child: Text("➔", style: TextStyle(fontSize: 8, color: isActive ? Colors.green : Colors.grey.withOpacity(0.3))),
         ),
       ),
     );
@@ -756,10 +520,7 @@ class _SuspendedBookingCardState extends State<SuspendedBookingCard> {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              color: widget.isDark ? Colors.white70 : Colors.black87,
-            ),
+            style: TextStyle(fontSize: 11, color: widget.isDark ? Colors.white70 : Colors.black87),
           ),
         ),
       ],
