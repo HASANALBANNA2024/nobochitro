@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'cancel_controller.dart';
@@ -10,7 +11,7 @@ class CancelListItem extends StatelessWidget {
 
   CancelListItem({super.key, required this.item, required this.onUpdate});
 
-  // --- ডাটা ফিল্ড বিল্ডার ---
+  /// data filed builder
   List<Widget> _buildDataList() {
     List<Widget> widgets = [];
     item.forEach((key, value) {
@@ -27,35 +28,131 @@ class CancelListItem extends StatelessWidget {
     });
     return widgets;
   }
-
+  /// refunded dialogue box
   void _showRefundDialog(BuildContext context, String status) {
     TextEditingController transCtrl = TextEditingController(text: item['refund_transaction'] ?? "");
-    File? selectedImage;
+    Uint8List? webImage; // Web এর জন্য বাইট লিস্ট
 
-    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-      return AlertDialog(
-        title: Text("Confirm: ${status.toUpperCase()}"),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: transCtrl, decoration: const InputDecoration(labelText: "Transaction ID")),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.camera_alt), label: const Text("Pick Image"),
-            onPressed: () async {
-              final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-              if (picked != null) setDialogState(() => selectedImage = File(picked.path));
-            },
-          ),
-          if (selectedImage != null) const Text("Image Selected!", style: TextStyle(color: Colors.green)),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(onPressed: () async {
-            await _controller.saveRefund(item['booking_id'], item['user_id'].toString(), status, transCtrl.text, selectedImage, onUpdate);
-            Navigator.pop(context);
-          }, child: const Text("Confirm")),
-        ],
-      );
-    }));
+    showDialog(
+      context: context,
+      // ডায়ালগের বাইরের অংশে ক্লিক করলে যেন বন্ধ না হয় (ইমেজ পিক করার সময় যেন সমস্যা না হয়)
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text("Confirm: ${status.toUpperCase()}"),
+            // ডায়ালগ যেন পুরো স্ক্রিন না নিয়ে নেয়
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            // --- কন্টেন্ট অংশ (সবচেয়ে গুরুত্বপূর্ণ পরিবর্তন) ---
+            content: Container(
+              // কন্টেন্টের একটা নির্দিষ্ট প্রস্থ দিন
+              width: 400,
+              // SingleChildScrollView ব্যবহার করছি যাতে কন্টেন্ট বেশি হলে স্ক্রল করা যায়
+              child: SingleChildScrollView(
+                child: Column(
+                  // কন্টেন্ট অনুযায়ী প্রস্থ সেট হবে
+                  mainAxisSize: MainAxisSize.min,
+                  // বাম দিক থেকে অ্যালাইন
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                        controller: transCtrl,
+                        decoration: const InputDecoration(labelText: "Transaction ID")
+                    ),
+                    const SizedBox(height: 15),
+
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text("Pick Receipt Image"),
+                      onPressed: () async {
+                        try {
+                          final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                          if (picked != null) {
+                            // ওয়েব এর জন্য বাইট হিসেবে রিড করা
+                            var f = await picked.readAsBytes();
+                            setDialogState(() {
+                              webImage = f;
+                            });
+                          }
+                        } catch (e) {
+                          print("Error picking image: $e");
+                          // ব্যবহারকারীকে এরর মেসেজ দেখান
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Could not pick image: $e")),
+                          );
+                        }
+                      },
+                    ),
+
+                    // --- ইমেজ প্রিভিউ অংশ (এটি স্ক্রিনশটে হিডেন ছিল) ---
+                    if (webImage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 15, bottom: 5),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Receipt Preview:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            const SizedBox(height: 5),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              // Image.memory ব্যবহার করছি Web এর জন্য
+                              child: Image.memory(
+                                webImage!,
+                                height: 150, // একটি নির্দিষ্ট উচ্চতা দিন
+                                width: double.infinity, // কন্টেনারের সমান প্রস্থ
+                                fit: BoxFit.cover, // ইমেজটিকে কন্টেনারের ভেতর ফিট করবে
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // একটি স্পেস যাতে বাটনগুলো কন্টেন্টের সাথে লেগে না থাকে
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            ),
+            // --- বাটন অংশ ---
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    // কন্ট্রোলার রিলিজ করে দিন ডায়ালগ বন্ধ করার আগে
+                    // transCtrl.dispose();
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Cancel")
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (transCtrl.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Please enter Transaction ID"))
+                    );
+                    return;
+                  }
+
+                  // সেভ কল করছি। লক্ষ্য করুন, আমি null পাঠাচ্ছি selectedImage এর বদলে।
+                  // আপনার কন্ট্রোলার Uint8List (webImage) গ্রহণ করার জন্য আপডেট করতে হবে।
+                  await _controller.saveRefund(
+                      item['booking_id'],
+                      item['user_id'].toString(),
+                      status,
+                      transCtrl.text,
+                      null, // কন্ট্রোলারের Uint8List সাপোর্টের জন্য এটি চেক করুন
+                          () {
+                        // transCtrl.dispose();
+                        onUpdate(); // লিস্ট রিফ্রেশ হবে
+                        Navigator.pop(context); // ডায়লগ বন্ধ হবে
+                      }
+                  );
+                },
+                child: const Text("Confirm"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -137,3 +234,4 @@ class CancelListItem extends StatelessWidget {
     );
   }
 }
+
