@@ -9,9 +9,12 @@ class ActiveService {
       final response = await _client
           .from('payment_verifications')
           .select('*')
-          .not('booking_status', 'in', '("cancelled", "suspended")')
-          .not('payment_status', 'in', '("cancelled", "suspended")')
+      // এখানে সরাসরি লিস্ট অফ স্ট্রিং পাস করো
+          .not('booking_status', 'in', ['cancelled', 'suspended', 'cancellation pending','cancellation approved'])
+          .not('payment_status', 'in', ['cancelled', 'suspended'])
           .order('submitted_at', ascending: false);
+
+      debugPrint("🔥 Total Active Bookings: ${response.length}");
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       debugPrint("❌ Database Error: $e");

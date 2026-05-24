@@ -8,6 +8,25 @@ class PaymentListItem extends StatelessWidget {
 
   PaymentListItem({super.key, required this.item, required this.onUpdate});
 
+  // --- সময় ফরম্যাটিং মেথড ---
+  String _formatValue(String key, dynamic value) {
+    if ((key.toLowerCase().contains('date') ||
+        key.toLowerCase().contains('time') ||
+        key.toLowerCase().contains('at')) && value is String) {
+      try {
+        DateTime dt = DateTime.parse(value);
+        String date = "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}";
+        int hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+        String ampm = dt.hour >= 12 ? "PM" : "AM";
+        String time = "${hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} $ampm";
+        return "$date, $time";
+      } catch (e) {
+        return value.toString();
+      }
+    }
+    return value.toString();
+  }
+
   // --- সব ডায়ালগ এবং হেল্পার মেথড ---
   void _showSuspendDialog(BuildContext context) {
     TextEditingController noteController = TextEditingController();
@@ -63,7 +82,7 @@ class PaymentListItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(children: [
             Expanded(flex: 2, child: Text(key.replaceAll('_', ' ').toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey))),
-            Expanded(flex: 3, child: Text(": $value", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
+            Expanded(flex: 3, child: Text(": ${_formatValue(key, value)}", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
           ]),
         ));
       }
@@ -113,7 +132,7 @@ class PaymentListItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ..._buildDataList(), // সব তথ্য এখানে দেখা যাবে
+                    ..._buildDataList(),
                     if (item['transaction_image_url'] != null)
                       GestureDetector(
                         onTap: () => _showExpandedImage(context),

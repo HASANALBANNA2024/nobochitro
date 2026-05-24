@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/admin_panel/payment_verifications/active/active_payments_tab.dart';
+import 'package:nobochitro/admin_panel/payment_verifications/cancel/cancel_view.dart';
 
 
 class PaymentDashboard extends StatelessWidget {
@@ -23,7 +24,7 @@ class PaymentDashboard extends StatelessWidget {
         body: const TabBarView(
           children: [
             ActivePaymentsTab(),
-            Center(child: Text("Cancelled Data")), // ২ নম্বর ট্যাব (অবশ্যই দিতে হবে)
+            CancelView(),
             Center(child: Text("Suspended Data")),
           ],
         ),
