@@ -56,9 +56,13 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   bool _isCouponApplied = false;
   int _discountPercentage = 0;
 
+  bool _isCouponSystemActive = false;
+  bool _isLoadingCampaign = true;
+
   @override
   void initState() {
     super.initState();
+    _checkActiveCampaign();
     _selectedDurationHours = widget.packageData['base_hours'] ?? 1;
     _photographersFuture = DatabaseHelper.instance.getPhotographers();
 
@@ -72,7 +76,16 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     super.dispose();
   }
 
-  // 🔴 ফায়ারস্টোর থেকে রিয়েলটাইম ক্লায়েন্টের NSR-ID, নাম, ফোন ও ইমেইল তুলে আনার ফাংশন
+  /// coupon System Check
+  Future<void> _checkActiveCampaign() async {
+    final activeCampaign = await DatabaseHelper.instance.getActiveCampaign();
+    setState(() {
+      _isCouponSystemActive = (activeCampaign != null);
+      _isLoadingCampaign = false;
+    });
+  }
+
+  /// client name user email receive
   Future<void> _fetchFirebaseUserData() async {
     try {
       final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
@@ -327,13 +340,13 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
                     // 🎯 ─── কুপন কোড ইনপুট ফিল্ড ও বাটন UI সেকশন ───
                     const SizedBox(height: 25),
-                    _buildSectionTitle("Have a Coupon?", theme),
                     Row(
                       children: [
                         Expanded(
+
                           child: TextField(
                             controller: _couponController,
-                            enabled: !_isCouponApplied,
+                            enabled: !_isCouponApplied, // অ্যাপ্লাই হয়ে গেলে ফিল্ডটি লক হয়ে যাবে
                             textCapitalization: TextCapitalization.characters,
                             decoration: InputDecoration(
                               hintText: "Enter Coupon Code",
@@ -344,6 +357,20 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.black12),
                               ),
+                              // কুপন অ্যাপ্লাই হয়ে গেলে রাইট সাইডে একটি 'Clear' আইকন দেখাবে
+                              suffixIcon: _isCouponApplied
+                                  ? IconButton(
+                                icon: const Icon(Icons.close, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    _isCouponApplied = false;
+                                    _appliedCouponCode = null;
+                                    _discountPercentage = 0;
+                                    _couponController.clear();
+                                  });
+                                },
+                              )
+                                  : null,
                             ),
                           ),
                         ),
@@ -641,8 +668,12 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             'total_amount': totalAmount,
 
             // পেমেন্ট শীটে কুপন ট্র্যাকিংয়ের জন্য ডাটা পাঠানো হচ্ছে
-            'applied_coupon_code': _appliedCouponCode ?? "NONE",
-            'coupon_discount_percentage': _discountPercentage,
+            'applied_coupon_code': (_appliedCouponCode != null && _appliedCouponCode!.isNotEmpty)
+                ? _appliedCouponCode
+                : null,
+            'coupon_discount_percentage': (_discountPercentage != null && _discountPercentage! > 0)
+                ? _discountPercentage
+                : null,
 
             'selected_addons_breakdown': _selectedAddOnsList.map((item) => {
               'name': item['name'],
@@ -699,3 +730,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     );
   }
 }
+
+
+/// coupon System chek
