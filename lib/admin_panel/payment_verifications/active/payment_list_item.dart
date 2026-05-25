@@ -92,7 +92,7 @@ class PaymentListItem extends StatelessWidget {
 
   // --- স্ট্যাটাস রেডিও লিস্ট ---
   Widget _buildStatusRadioGroup(BuildContext context) {
-    final List<String> statusOrder = ['pending', 'approved', 'shooting', 'final_draft', 'handover'];
+    final List<String> statusOrder = ['pending', 'approved', 'shooting', 'final draft', 'handover'];
     int currentIndex = statusOrder.indexOf(item['booking_status'] ?? 'pending');
 
     return Wrap(spacing: 8, children: statusOrder.map((status) {

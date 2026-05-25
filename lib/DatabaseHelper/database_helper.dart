@@ -298,7 +298,7 @@ class DatabaseHelper {
           .from('payment_verifications')
           .update({
             'booking_status': 'suspended',
-            'appeal_status': null,
+            'appeal_status': "request",
             'appeal_note': appealNote,
             'appeal_image_url': appealImageUrl,
             'appeal_count': appealCount,

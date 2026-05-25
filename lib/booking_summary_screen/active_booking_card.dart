@@ -89,7 +89,6 @@ class ActiveBookingCard extends StatelessWidget {
       children: [
         Container(
           margin: const EdgeInsets.only(bottom: 12),
-          // 🎯 প্যাডিং কিছুটা কমানো হয়েছে (Top/Bottom 12)
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
