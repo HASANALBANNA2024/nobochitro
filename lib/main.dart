@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/firebase_options.dart';
 import 'package:nobochitro/screens/splash_screen.dart';
 import 'package:nobochitro/support_hub/support_hub.dart';
@@ -76,7 +75,7 @@ class _PhotographyAppState extends State<PhotographyApp> {
 
         return Scaffold(
           body: child,
-          // কেবল মাত্র যখন _showSupportHub true হবে, তখনই এটি দেখাবে
+          //for chat window floating action button
           floatingActionButton: _showSupportHub
               ? SupportHub(primaryAccent: primaryAccent)
               : null,

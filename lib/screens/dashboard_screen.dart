@@ -31,7 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
   bool _isReviewVisible = false;
   Timer? _reviewTimer;
-  Timer? _hideTimer; // 🟢 হাইড করার জন্য আরেকটি সেফ টাইমার মেমোরি
+  Timer? _hideTimer;
 
   // drawer open control
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -39,17 +39,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // 🟢 টাইমার লজিকটি initState-এ নিয়ে আসা হলো যাতে স্ক্রিন লোড হতেই পারফেক্টলি কাজ শুরু করে
     _startReviewButtonTimer();
   }
 
   void _startReviewButtonTimer() {
-    // প্রতি ২০ সেকেন্ডের লুপ (১০ সেকেন্ড শো থাকবে, ১০ সেকেন্ড হাইড থাকবে)
+    /// after 20 second and display of 10 second
     _reviewTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
       if (mounted) {
-        setState(() => _isReviewVisible = true); // ১০ সেকেন্ড পর শো হবে
+        setState(() => _isReviewVisible = true);
 
-        // ঠিক ১০ সেকেন্ড পর আবার বাটনটি সুন্দর অ্যানিমেশন দিয়ে হাইড হয়ে যাবে
+        /// after 10 second display
+
+        /// animation of duration
         _hideTimer = Timer(const Duration(seconds: 10), () {
           if (mounted) {
             setState(() => _isReviewVisible = false);
@@ -61,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
-    // 🛑 মেমোরি লিক এবং ব্যাকগ্রাউন্ড ক্র্যাশ রোধ করতে টাইমারগুলো ডিসপোজ করা হলো
+    /// 🛑 memory leak and background crash safety
     _reviewTimer?.cancel();
     _hideTimer?.cancel();
     super.dispose();
@@ -117,7 +118,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      // 🟢 ফিক্সড বাটন কল
+
+      /// 🟢  fixed button
       floatingActionButton: _buildWriteReviewButton(context, primaryAccent),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
 
@@ -178,7 +180,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   }
                 } else if (index == 0) {
-                  // কারেন্ট স্ক্রিনেই থাকলে নতুন করে পুশ করার দরকার নেই, জাস্ট স্টেট রিসেট করলেই হয়
                   setState(() => _currentIndex = 0);
                 } else {
                   setState(() => _currentIndex = index);

@@ -15,7 +15,7 @@ class PackageResultScreen extends StatefulWidget {
     super.key,
     required this.categoryName,
     required this.primaryAccent,
-    required String package, // কনস্ট্রাক্টরে এটি থাকছে আপনার রিকোয়েস্ট অনুযায়ী
+    required String package,
   });
 
   @override
@@ -63,7 +63,6 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
     if (selectedFilter == 'All') return allPackages;
 
     return allPackages.where((pkg) {
-      // base_price ফিল্ডটিকে নিরাপদে ডাবল-এ রূপান্তর
       final dynamic rawPrice = pkg['base_price'];
       double price = 0.0;
 
@@ -121,17 +120,17 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _packageFuture,
         builder: (context, snapshot) {
-          // ১. লোডিং স্টেট
+          /// loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // ২. এরর স্টেট
+          /// error state
           if (snapshot.hasError) {
             return _buildStatusState("Something went wrong. Please try again.");
           }
 
-          // ৩. ডাটা না পাওয়ার স্টেট
+          /// not exist data state
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return _buildStatusState("No packages found in this category.");
           }
@@ -139,7 +138,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
           final allPackages = snapshot.data!;
           final filteredPackages = _applyFilter(allPackages);
 
-          // ব্যানার ইমেজ লিস্ট তৈরি (null চেক সহ)
+          /// banner image list create and null safety
           _bannerImages =
               (filteredPackages.isNotEmpty ? filteredPackages : allPackages)
                   .map((e) => e['image_url']?.toString() ?? "")
@@ -162,8 +161,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                       accentColor: widget.primaryAccent,
                       onSelected: (value) {
                         setState(() {
-                          selectedFilter =
-                              value; // শুধু এই এক লাইনে আপনার ফিল্টার আপডেট হবে
+                          selectedFilter = value;
                         });
                       },
                     ),
@@ -183,7 +181,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // ফিল্টার করার পর ডাটা না থাকলে সুন্দর মেসেজ
+                    /// not exist data for display
                     filteredPackages.isEmpty
                         ? _buildNoDataMessage(isDark)
                         : _buildPackageList(filteredPackages, isDark),
@@ -196,10 +194,8 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
                     const SizedBox(height: 20),
                     ResponsiveReviewList(
                       primaryAccent: const Color(0xFFE5A93C),
-                      sectionTitle:
-                          'Reviews for ${widget.categoryName}', // যেমন: Reviews for Wedding
-                      filterCategoryName:
-                          widget.categoryName, // ক্যাটাগরির নাম পাস করবেন
+                      sectionTitle: 'Reviews for ${widget.categoryName}',
+                      filterCategoryName: widget.categoryName,
                     ),
                     const SizedBox(height: 50),
                   ],
@@ -212,7 +208,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
     );
   }
 
-  // --- ডাটা না থাকলে ইউজারকে দেখানোর জন্য ---
+  /// --- demon message null from not exist in data
   Widget _buildNoDataMessage(bool isDark) {
     return Container(
       width: double.infinity,
@@ -316,7 +312,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 15),
         itemCount: pkgs.length,
         itemBuilder: (context, index) {
-          // টাইটেল ফেচিং-এ নাল সেফটি
+          /// title fetching null safety
           final title = pkgs[index]['title']?.toString() ?? "Package";
           return Container(
             margin: const EdgeInsets.only(right: 10),
@@ -347,7 +343,7 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: Wrap(
         spacing: 15,
-        runSpacing: 20, // আপনার উল্লিখিত সমস্যা সমাধানে ভার্টিক্যাল গ্যাপ
+        runSpacing: 20,
         children: pkgs
             .map(
               (pkg) => PackageCard(

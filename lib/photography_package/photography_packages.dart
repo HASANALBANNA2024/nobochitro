@@ -23,7 +23,8 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
   @override
   void initState() {
     super.initState();
-    // ইনিশিয়াল কন্ট্রোলার
+
+    /// initial controller
     _pageController = PageController(viewportFraction: 0.85, initialPage: 0);
     _loadPackages();
   }
@@ -75,13 +76,11 @@ class _PhotographyPackagesState extends State<PhotographyPackages> {
     final isDark = theme.brightness == Brightness.dark;
     final double screenWidth = MediaQuery.of(context).size.width;
 
-    // --- রেসপনসিভ ফ্র্যাকশন লজিক ---
-    // মোবাইল (0.85), ট্যাব (0.5), লার্জ স্ক্রিন (0.3)
+    /// ---- responsive fraction logic -------
     double fraction = screenWidth > 1200
         ? 0.33
         : (screenWidth > 700 ? 0.55 : 0.85);
 
-    // কন্ট্রোলারকে ডাইনামিকভাবে আপডেট করা যাতে স্ক্রিন রোটেশনে সমস্যা না হয়
     if (_pageController.viewportFraction != fraction) {
       final oldPage = _currentPage;
       _pageController.dispose();

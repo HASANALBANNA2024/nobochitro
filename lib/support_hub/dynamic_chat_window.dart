@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class DynamicChatWindow extends StatefulWidget {
   final String title;
@@ -19,10 +18,18 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
   bool _isMaximized = false;
   final TextEditingController _messageController = TextEditingController();
 
-  // মেসেজ লিস্টে এখন ইমেজ বা লিঙ্ক থাকতে পারে
+  /// message link of image or text
   final List<Map<String, dynamic>> _messages = [
-    {"text": "Hello! How can we help you today?", "isMe": false, "type": "text"},
-    {"text": "Check our portfolio: https://nobochitro.com", "isMe": false, "type": "text"},
+    {
+      "text": "Hello! How can we help you today?",
+      "isMe": false,
+      "type": "text",
+    },
+    {
+      "text": "Check our portfolio: https://nobochitro.com",
+      "isMe": false,
+      "type": "text",
+    },
   ];
 
   Offset _position = const Offset(-1, -1);
@@ -33,10 +40,13 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
     final bool isMobile = size.width < 700;
 
     if (_position == const Offset(-1, -1)) {
-      _position = Offset(size.width - (isMobile ? size.width : 380) - 25, size.height - (isMobile ? size.height : 550));
+      _position = Offset(
+        size.width - (isMobile ? size.width : 380) - 25,
+        size.height - (isMobile ? size.height : 550),
+      );
     }
 
-    // ফুল স্ক্রিন লজিক: _isMaximized হলে একদম ১০০% সাইজ নেবে
+    /// full screen logic
     double width = isMobile ? size.width : (_isMaximized ? size.width : 380);
     double height = isMobile ? size.height : (_isMaximized ? size.height : 550);
 
@@ -63,18 +73,22 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
                 margin: EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular((isMobile || _isMaximized) ? 0 : 20),
+                  borderRadius: BorderRadius.circular(
+                    (isMobile || _isMaximized) ? 0 : 20,
+                  ),
                   boxShadow: [
                     if (!isMobile && !_isMaximized)
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
                         blurRadius: 20,
                         offset: const Offset(0, -5),
-                      )
+                      ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular((isMobile || _isMaximized) ? 0 : 20),
+                  borderRadius: BorderRadius.circular(
+                    (isMobile || _isMaximized) ? 0 : 20,
+                  ),
                   child: Scaffold(
                     appBar: _buildAppBar(isMobile),
                     body: Column(
@@ -97,7 +111,9 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: MouseRegion(
-        cursor: !_isMaximized ? SystemMouseCursors.grab : SystemMouseCursors.basic,
+        cursor: !_isMaximized
+            ? SystemMouseCursors.grab
+            : SystemMouseCursors.basic,
         child: AppBar(
           backgroundColor: widget.primaryAccent,
           elevation: 0,
@@ -113,18 +129,30 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
                     width: 26,
                     height: 26,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 20, color: Colors.white),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.person, size: 20, color: Colors.white),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(
+                widget.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
           actions: [
             if (!isMobile) ...[
               IconButton(
-                icon: Icon(_isMaximized ? Icons.close_fullscreen : Icons.open_in_full, size: 20, color: Colors.white),
+                icon: Icon(
+                  _isMaximized ? Icons.close_fullscreen : Icons.open_in_full,
+                  size: 20,
+                  color: Colors.white,
+                ),
                 onPressed: () => setState(() {
                   _isMaximized = !_isMaximized;
                   if (_isMaximized) _position = Offset.zero;
@@ -136,7 +164,10 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
               ),
             ],
             if (isMobile)
-              IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
           ],
         ),
       ),
@@ -155,21 +186,29 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
           alignment: msg['isMe'] ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
-            padding: isImage ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+            padding: isImage
+                ? EdgeInsets.zero
+                : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
+            ),
             decoration: BoxDecoration(
-              color: isImage ? Colors.transparent : (msg['isMe'] ? widget.primaryAccent : Colors.grey[200]),
+              color: isImage
+                  ? Colors.transparent
+                  : (msg['isMe'] ? widget.primaryAccent : Colors.grey[200]),
               borderRadius: BorderRadius.circular(15),
             ),
             child: isImage
                 ? ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: Image.network(msg['text'], fit: BoxFit.cover), // নেটওয়ার্ক ইমেজ সাপোর্ট
-            )
+                    borderRadius: BorderRadius.circular(15),
+                    child: Image.network(msg['text'], fit: BoxFit.cover),
+                  )
                 : Text(
-              msg['text'],
-              style: TextStyle(color: msg['isMe'] ? Colors.white : Colors.black87),
-            ),
+                    msg['text'],
+                    style: TextStyle(
+                      color: msg['isMe'] ? Colors.white : Colors.black87,
+                    ),
+                  ),
           ),
         );
       },
@@ -197,7 +236,10 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
               controller: _messageController,
               decoration: InputDecoration(
                 hintText: "Type a message...",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide.none,
+                ),
                 filled: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 15),
               ),
@@ -211,7 +253,11 @@ class _DynamicChatWindowState extends State<DynamicChatWindow> {
               onPressed: () {
                 if (_messageController.text.isNotEmpty) {
                   setState(() {
-                    _messages.add({"text": _messageController.text, "isMe": true, "type": "text"});
+                    _messages.add({
+                      "text": _messageController.text,
+                      "isMe": true,
+                      "type": "text",
+                    });
                     _messageController.clear();
                   });
                 }

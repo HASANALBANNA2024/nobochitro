@@ -15,7 +15,7 @@ class SettingsUtils {
     }
   }
 
-  // ওয়েবের জন্য সেটিংস ডায়ালগ
+  ///settings dialogue of mobile
   static void _showSettingsDialog(
     BuildContext context,
     Color primaryAccent,
@@ -31,10 +31,10 @@ class SettingsUtils {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: SizedBox(
-          width: 450, // ওয়েবের জন্য একটু বড় করা হয়েছে
+          width: 450,
           child: _SettingsContent(
             primaryAccent: primaryAccent,
-            isSheet: false, // ডায়ালগ মোড
+            isSheet: false,
             onThemeChanged: onThemeChanged,
           ),
         ),
@@ -48,7 +48,7 @@ class SettingsUtils {
     );
   }
 
-  // মোবাইলের জন্য বটম শিট
+  /// mobile bottom sheet
   static void _showSettingsSheet(
     BuildContext context,
     Color primaryAccent,
@@ -63,7 +63,7 @@ class SettingsUtils {
       ),
       builder: (context) => _SettingsContent(
         primaryAccent: primaryAccent,
-        isSheet: true, // বটম শিট মোড
+        isSheet: true,
         onThemeChanged: onThemeChanged,
       ),
     );
@@ -110,7 +110,7 @@ class _SettingsContent extends StatelessWidget {
             const Divider(),
           ],
 
-          // ১. ডার্ক মোড সুইচ (শুধুমাত্র মোবাইলের জন্য, ওয়েবে এটি হাইড থাকবে)
+          /// dark mode switch for mobile only
           if (isSheet)
             SwitchListTile(
               secondary: Icon(
@@ -127,7 +127,7 @@ class _SettingsContent extends StatelessWidget {
               },
             ),
 
-          // ২. নোটিফিকেশন সেটিংস
+          ///Notification settings
           ListTile(
             leading: Icon(
               Icons.notifications_none_rounded,
@@ -139,17 +139,6 @@ class _SettingsContent extends StatelessWidget {
             onTap: () {
               // TODO: Navigate to Notification Settings
             },
-          ),
-
-          // ৩. ল্যাঙ্গুয়েজ সেটিংস
-          ListTile(
-            leading: Icon(Icons.language_rounded, color: primaryAccent),
-            title: const Text('Language'),
-            trailing: const Text(
-              'English (US)',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            onTap: () {},
           ),
 
           // Privacy & Security
@@ -178,8 +167,7 @@ class _SettingsContent extends StatelessWidget {
             onTap: () {},
           ),
 
-          if (!isSheet)
-            const SizedBox(height: 10), // ডায়ালগের ক্ষেত্রে নিচের স্পেসিং
+          if (!isSheet) const SizedBox(height: 10),
         ],
       ),
     );

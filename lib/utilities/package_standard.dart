@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PackageStandard {
-  // প্যাকেজ লেভেলের লিস্ট যা ফিল্টারে ব্যবহার হবে
+  /// package level list
   static List<String> get packageFilters => [
     'All',
     'Budget',

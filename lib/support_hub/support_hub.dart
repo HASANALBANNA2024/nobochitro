@@ -1,6 +1,7 @@
 import 'dart:math' as math;
-import 'package:nobochitro/main.dart';
+
 import 'package:flutter/material.dart';
+import 'package:nobochitro/main.dart';
 import 'package:nobochitro/support_hub/dynamic_chat_window.dart';
 
 class SupportHub extends StatefulWidget {
@@ -64,10 +65,14 @@ class _SupportHubState extends State<SupportHub>
                   const Color(0xFF25D366),
                   "WhatsApp",
                   2,
-                      () async {
-                    _toggleMenu(); // আগে মেনু বন্ধ হবে
+                  () async {
+                    _toggleMenu();
 
-                    setState(() => _isChatOpen = true); // বাটন হাইড হবে
+                    /// toggle close
+
+                    setState(() => _isChatOpen = true);
+
+                    /// button hide
 
                     final navContext = navigatorKey.currentContext;
                     if (navContext != null) {
@@ -96,13 +101,13 @@ class _SupportHubState extends State<SupportHub>
                   const Color(0xFF0084FF),
                   "Messenger",
                   1,
-                      ()  async{
+                  () async {
                     _toggleMenu();
                     setState(() {
                       _isChatOpen = true;
                     });
                     final navContext = navigatorKey.currentContext;
-                    if(navContext != null){
+                    if (navContext != null) {
                       await showGeneralDialog(
                         context: navContext,
                         barrierDismissible: true,
@@ -119,7 +124,6 @@ class _SupportHubState extends State<SupportHub>
                       if (mounted) {
                         setState(() => _isChatOpen = false);
                       }
-
                     }
                   },
                 ),
@@ -129,7 +133,7 @@ class _SupportHubState extends State<SupportHub>
                   widget.primaryAccent,
                   "AI Support",
                   0,
-                      () {
+                  () {
                     _toggleMenu();
                     print("Navigating to AI Support Screen...");
                   },
@@ -147,7 +151,9 @@ class _SupportHubState extends State<SupportHub>
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: _isOpen ? Colors.redAccent : widget.primaryAccent,
+                          color: _isOpen
+                              ? Colors.redAccent
+                              : widget.primaryAccent,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -174,7 +180,13 @@ class _SupportHubState extends State<SupportHub>
     );
   }
 
-  Widget _buildOption(IconData icon, Color color, String label, int index, VoidCallback onTap) {
+  Widget _buildOption(
+    IconData icon,
+    Color color,
+    String label,
+    int index,
+    VoidCallback onTap,
+  ) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -185,13 +197,16 @@ class _SupportHubState extends State<SupportHub>
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: GestureDetector(
-                onTap: onTap, // সরাসরি পাস করা হলো কারণ লজিক উপরে হ্যান্ডেল করা হয়েছে
+                onTap: onTap,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_isOpen)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
                           color: Colors.black87,

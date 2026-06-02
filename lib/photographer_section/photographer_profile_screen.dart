@@ -38,7 +38,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         image: DecorationImage(
                           image: NetworkImage(
-                            // ডাটাবেস কী: banner_image_url
+                            /// banner_image_url
                             photographerData['banner_image_url'] ??
                                 "https://via.placeholder.com/1200x250",
                           ),
@@ -59,7 +59,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                           radius: 75,
                           backgroundColor: Colors.grey[200],
                           backgroundImage: NetworkImage(
-                            // ডাটাবেস কী: profile_image_url
+                            /// profile_image_url
                             photographerData['profile_image_url'] ?? "",
                           ),
                         ),
@@ -77,7 +77,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            // ডাটাবেস কী: name
+                            /// name
                             photographerData['name'] ?? "User",
                             style: const TextStyle(
                               fontSize: 32,
@@ -85,7 +85,8 @@ class PhotographerProfileScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          // ডাটাবেস কী: is_available
+
+                          /// is_available
                           if (photographerData['is_available'] == true)
                             Icon(
                               Icons.verified,
@@ -95,7 +96,7 @@ class PhotographerProfileScreen extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        // ডাটাবেস কী: specialty
+                        ///: specialty
                         photographerData['specialty'] ?? "Photographer",
                         style: const TextStyle(
                           fontSize: 18,
@@ -105,7 +106,6 @@ class PhotographerProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 40),
 
-                      // আপনার দেওয়া লেআউট লজিক হুবহু রাখা হয়েছে
                       screenWidth > 850
                           ? Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +156,7 @@ class PhotographerProfileScreen extends StatelessWidget {
   }
 
   Widget _buildDetailedInfo(Map<String, dynamic> data) {
-    // ডাটাবেস কী: technical_arsenal
+    /// technical_arsenal
     List<String> gearList = (data['technical_arsenal'] ?? "").toString().split(
       ',',
     );
@@ -170,7 +170,7 @@ class PhotographerProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          // ডাটাবেস কী: bio
+          /// bio
           data['bio'] ?? "No bio available.",
           style: const TextStyle(fontSize: 15, height: 1.6),
         ),
@@ -211,32 +211,35 @@ class PhotographerProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ডাটাবেস কী: projects_completed
+          /// projects_completed
           _statRow(
             Icons.event_available,
             "${data['projects_completed'] ?? '0'} Projects",
           ),
-          // ডাটাবেস কী: delivery_time
+
+          /// delivery_time
           _statRow(
             Icons.timer_outlined,
             "${data['delivery_time'] ?? 'N/A'} Delivery",
           ),
-          // ডাটাবেস কী: experience_years
+
+          /// experience_years
           _statRow(
             Icons.workspace_premium,
             "${data['experience_years'] ?? '0'} Years Exp.",
           ),
-          // ডাটাবেস কী: location
+
+          /// location
           _statRow(Icons.location_on, data['location'] ?? "Not Specified"),
-          // ডাটাবেস কী: per_hours_fee
+
+          /// per_hours_fee
           _statRow(
             Icons.monetization_on,
             "৳${data['per_hours_fee'] ?? '0'} / hr",
           ),
           const SizedBox(height: 20),
-          // আপনার Nobochitro প্রজেক্টের জন্য বুকিং বাটন (প্রয়োজনীয়)
           ElevatedButton(
-            // আপনার প্রোফাইল স্ক্রিনের 'Book Now' বাটনে জাস্ট এইটুকু লিখুন
+            /// book now
             onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAccent,
@@ -255,7 +258,7 @@ class PhotographerProfileScreen extends StatelessWidget {
     );
   }
 
-  // BuildContext context যোগ করা হয়েছে
+  // BuildContext context
 
   Widget _statRow(IconData icon, String text) {
     return Padding(

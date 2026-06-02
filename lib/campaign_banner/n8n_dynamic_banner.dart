@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -23,8 +24,6 @@ class BannerData {
     required this.imageUrl,
     this.endDate,
   });
-
-  // 🎯 সুপাবেসের যেকোনো ফিল্ড null বা খালি থাকলে অ্যাপ ক্র্যাশ করা আটকাবে
   factory BannerData.fromSupabase(Map<String, dynamic>? json) {
     if (json == null) {
       return BannerData(
@@ -33,46 +32,55 @@ class BannerData {
         subtitle: "Special Discount Available",
         description: "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching",
         buttonText: "COPY CODE",
-        imageUrl: "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
+        imageUrl:
+            "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
         endDate: null,
       );
     }
 
-    // 🎯 ─── কলামের নাম 'targeted_package_id' অনুযায়ী নিখুঁত সাবটাইটেল লজিক ───
+    /// targeted package ID
     final int discountPct = json['discount_pct'] ?? 0;
     final String? targetedCategory = json['targeted_category']?.toString();
-    final String? targetedPackage = json['targeted_package_id']?.toString(); // 👈 স্ক্রিনশট অনুযায়ী কলাম নেম ফিক্স করা হলো
+    final String? targetedPackage = json['targeted_package_id']?.toString();
 
     String dynamicSubtitle = "$discountPct% OFF";
 
-    // 'EMPTY' বা খালি লেখা থাকলে সেটাকে আমরা নো-ডাটা হিসেবে কাউন্ট করব
-    bool hasCategory = targetedCategory != null && targetedCategory.trim().isNotEmpty && targetedCategory.trim().toUpperCase() != "EMPTY";
-    bool hasPackage = targetedPackage != null && targetedPackage.trim().isNotEmpty && targetedPackage.trim().toUpperCase() != "EMPTY";
+    bool hasCategory =
+        targetedCategory != null &&
+        targetedCategory.trim().isNotEmpty &&
+        targetedCategory.trim().toUpperCase() != "EMPTY";
+    bool hasPackage =
+        targetedPackage != null &&
+        targetedPackage.trim().isNotEmpty &&
+        targetedPackage.trim().toUpperCase() != "EMPTY";
 
     if (hasCategory && hasPackage) {
-      // ১. যদি দুইটাই থাকে
-      dynamicSubtitle = "$discountPct% OFF - Category: $targetedCategory ($targetedPackage)";
+      dynamicSubtitle =
+          "$discountPct% OFF - Category: $targetedCategory ($targetedPackage)";
     } else if (hasCategory) {
-      // ২. শুধু ক্যাটাগরি থাকলে
-      dynamicSubtitle = "$discountPct% OFF - All Packages under $targetedCategory";
+      dynamicSubtitle =
+          "$discountPct% OFF - All Packages under $targetedCategory";
     } else if (hasPackage) {
-      // ৩. শুধু প্যাকেজ থাকলে
       dynamicSubtitle = "$discountPct% OFF - Package: $targetedPackage";
     } else {
-      // ৪. কোনোটিই যদি না থাকে (সব ক্যাটাগরি ও প্যাকেজে কাউন্ট হবে)
-      dynamicSubtitle = "$discountPct% OFF - Applicable for All Packages & Categories";
+      dynamicSubtitle =
+          "$discountPct% OFF - Applicable for All Packages & Categories";
     }
 
     return BannerData(
       campaignId: json['campaign_id']?.toString() ?? "COUPON",
       title: json['title']?.toString() ?? "EXCLUSIVE OFFER!",
-      subtitle: dynamicSubtitle, // 👈 ডাইনামিক সাবটাইটেল সেটিং
+      subtitle: dynamicSubtitle,
       description: "✓ High-Res Digital Photos\n✓ Pro Lighting & Retouching",
       buttonText: json['campaign_id']?.toString() ?? "COPY CODE",
-      imageUrl: (json['banner_url'] != null && json['banner_url'].toString().isNotEmpty)
+      imageUrl:
+          (json['banner_url'] != null &&
+              json['banner_url'].toString().isNotEmpty)
           ? json['banner_url'].toString()
           : "https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg",
-      endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date'].toString()) : null,
+      endDate: json['end_date'] != null
+          ? DateTime.tryParse(json['end_date'].toString())
+          : null,
     );
   }
 }
@@ -91,7 +99,8 @@ class SupabaseDynamicBanner extends StatefulWidget {
   State<SupabaseDynamicBanner> createState() => _SupabaseDynamicBannerState();
 }
 
-class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with TickerProviderStateMixin {
+class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner>
+    with TickerProviderStateMixin {
   BannerData? _currentBanner;
   Timer? _countdownTimer;
   int _secondsRemaining = 0;
@@ -119,7 +128,9 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
           _isLoading = false;
 
           if (_currentBanner?.endDate != null) {
-            _secondsRemaining = _currentBanner!.endDate!.difference(DateTime.now()).inSeconds;
+            _secondsRemaining = _currentBanner!.endDate!
+                .difference(DateTime.now())
+                .inSeconds;
             if (_secondsRemaining > 0) {
               _startCountdown();
             } else {
@@ -131,7 +142,7 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
         if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
-      debugPrint("❌ ব্যানার ডাটা ফেচিং সেফটি চেইক এরর: $e");
+      debugPrint("ব্যানার ডাটা ফেচিং সেফটি চেইক এরর: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -166,11 +177,14 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-    if (_currentBanner == null) return HeroBanner(primaryAccent: widget.primaryAccent);
+    if (_currentBanner == null)
+      return HeroBanner(primaryAccent: widget.primaryAccent);
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isWeb = screenWidth > 600;
-    final String currentDate = DateFormat('dd MMM, EEEE').format(DateTime.now());
+    final String currentDate = DateFormat(
+      'dd MMM, EEEE',
+    ).format(DateTime.now());
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 800),
@@ -222,7 +236,10 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
                       runSpacing: 4,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(4),
@@ -318,23 +335,25 @@ class _SupabaseDynamicBannerState extends State<SupabaseDynamicBanner> with Tick
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('🎉 কুপন কোড "${_currentBanner!.campaignId}" কপি হয়েছে!'),
+                                  content: Text(
+                                    '🎉 কুপন কোড "${_currentBanner!.campaignId}" কপি হয়েছে!',
+                                  ),
                                   backgroundColor: Colors.green,
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
                             }
                           }
-                          if (widget.onBookingClick != null) widget.onBookingClick!();
+                          if (widget.onBookingClick != null)
+                            widget.onBookingClick!();
                         },
-                        icon: Icon(
-                          Icons.copy,
-                          size: isWeb ? 16 : 14,
-                        ),
+                        icon: Icon(Icons.copy, size: isWeb ? 16 : 14),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFD4AF37),
                           foregroundColor: Colors.black,
-                          padding: EdgeInsets.symmetric(horizontal: isWeb ? 25 : 16),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWeb ? 25 : 16,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),

@@ -17,14 +17,13 @@ class GalleryModel {
 class CommunityGallery extends StatefulWidget {
   final List<GalleryModel>? customGalleryItems;
   final Color primaryAccent;
-  final String
-  sectionTitle; // এখানে টাইটেল পাস করার জন্য প্যারামিটার যোগ করা হয়েছে
+  final String sectionTitle;
 
   const CommunityGallery({
     super.key,
     this.customGalleryItems,
     required this.primaryAccent,
-    this.sectionTitle = 'Community Highlights', // ডিফল্ট একটি টাইটেল দেওয়া থাকল
+    this.sectionTitle = 'Community Highlights',
   });
 
   @override
@@ -93,7 +92,6 @@ class _CommunityGalleryState extends State<CommunityGallery> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // এখানে widget.sectionTitle ব্যবহার করা হয়েছে যা আপনি কল করার সময় দেবেন
           Text(
             widget.sectionTitle,
             style: textTheme.headlineSmall?.copyWith(

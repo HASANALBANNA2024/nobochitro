@@ -13,40 +13,75 @@ class DatabaseHelper {
   /// to client use
   static SupabaseClient get client => _client;
 
-  static Future<void> insert({required String table, required Map<String, dynamic> data}) async {
-    try { await _client.from(table).insert(data); } catch (e) { throw Exception("Insert Error: $e"); }
-  }
-
-  static Future<void> update({required String table, required String column, required dynamic value, required Map<String, dynamic> data}) async {
-    try { await _client.from(table).update(data).eq(column, value); } catch (e) { throw Exception("Update Error: $e"); }
-  }
-
-  static Future<void> delete({required String table, required String column, required dynamic value}) async {
-    try { await _client.from(table).delete().eq(column, value); } catch (e) { throw Exception("Delete Error: $e"); }
-  }
-
-  static Future<Map<String, String>?> uploadImageBytes({required String folder, required String userId, required Uint8List bytes}) async {
+  static Future<void> insert({
+    required String table,
+    required Map<String, dynamic> data,
+  }) async {
     try {
-      final String fileName = '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await _client.from(table).insert(data);
+    } catch (e) {
+      throw Exception("Insert Error: $e");
+    }
+  }
+
+  static Future<void> update({
+    required String table,
+    required String column,
+    required dynamic value,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      await _client.from(table).update(data).eq(column, value);
+    } catch (e) {
+      throw Exception("Update Error: $e");
+    }
+  }
+
+  static Future<void> delete({
+    required String table,
+    required String column,
+    required dynamic value,
+  }) async {
+    try {
+      await _client.from(table).delete().eq(column, value);
+    } catch (e) {
+      throw Exception("Delete Error: $e");
+    }
+  }
+
+  static Future<Map<String, String>?> uploadImageBytes({
+    required String folder,
+    required String userId,
+    required Uint8List bytes,
+  }) async {
+    try {
+      final String fileName =
+          '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
       final String fullPath = '$folder/$fileName';
       await _client.storage.from('user_assets').uploadBinary(fullPath, bytes);
-      final String url = _client.storage.from('user_assets').getPublicUrl(fullPath);
+      final String url = _client.storage
+          .from('user_assets')
+          .getPublicUrl(fullPath);
       return {'url': url, 'path': fullPath};
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   }
 
   static Future<void> deleteFolder(String folderPath) async {
     try {
-      // এখানে .list() এর রেজাল্টকে List<FileObject> হিসেবে ধরুন
-      final List<FileObject> list = await _client.storage.from('user_assets').list(path: folderPath);
+      final List<FileObject> list = await _client.storage
+          .from('user_assets')
+          .list(path: folderPath);
 
       for (var file in list) {
-        // file.name সরাসরি এক্সেস করুন, কারণ এটি একটি Object
-        await _client.storage.from('user_assets').remove(['$folderPath/${file.name}']);
+        await _client.storage.from('user_assets').remove([
+          '$folderPath/${file.name}',
+        ]);
       }
       debugPrint("✅ Folder deleted: $folderPath");
     } catch (e) {
-      debugPrint("❌ Folder delete error: $e");
+      debugPrint("Folder delete error: $e");
     }
   }
 
@@ -69,6 +104,7 @@ class DatabaseHelper {
       return [];
     }
   }
+
   /// get photographer data receive
   static Stream<List<Map<String, dynamic>>> getPhotographerStream() {
     return _client
@@ -144,7 +180,7 @@ class DatabaseHelper {
       await _client.from('payment_verifications').insert(dbData);
       debugPrint("✅ Booking and Payment Data Successfully Saved!");
     } catch (e) {
-      debugPrint("❌ Error in insertBookingWithTransactionImage: $e");
+      debugPrint("Error in insertBookingWithTransactionImage: $e");
       rethrow;
     }
   }
@@ -239,7 +275,7 @@ class DatabaseHelper {
 
       return _client.storage.from(bucketName).getPublicUrl(path);
     } catch (e) {
-      debugPrint("❌ Error uploading appeal image: $e");
+      debugPrint("Error uploading appeal image: $e");
       return null;
     }
   }
@@ -282,7 +318,7 @@ class DatabaseHelper {
 
       return _client.storage.from(bucketName).getPublicUrl(storagePath);
     } catch (e) {
-      debugPrint("❌ Bucket Upload Error: $e");
+      debugPrint("Bucket Upload Error: $e");
       return null;
     }
   }
@@ -322,11 +358,10 @@ class DatabaseHelper {
       await _client.from('reviews').insert(reviewData);
       debugPrint("✅ Review successfully saved to Supabase!");
     } catch (e) {
-      debugPrint("❌ Error in insertReview: $e");
+      debugPrint("Error in insertReview: $e");
       throw Exception("Failed to save review: $e");
     }
   }
-
 
   /// Fetch all reviews from Supabase 'reviews' table
   Future<List<Map<String, dynamic>>> getReviews() async {
@@ -334,7 +369,7 @@ class DatabaseHelper {
       final response = await _client.from('reviews').select();
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint("❌ Error fetching reviews: $e");
+      debugPrint("Error fetching reviews: $e");
       return [];
     }
   }
@@ -348,7 +383,7 @@ class DatabaseHelper {
       await _client.from('reviews').delete().eq(column, value);
       debugPrint("✅ Review successfully deleted from Supabase!");
     } catch (e) {
-      debugPrint("❌ Error deleting review: $e");
+      debugPrint("Error deleting review: $e");
       throw Exception("Failed to delete review: $e");
     }
   }
@@ -366,7 +401,7 @@ class DatabaseHelper {
 
       return response;
     } catch (e) {
-      debugPrint("❌ Error fetching active campaign: $e");
+      debugPrint("Error fetching active campaign: $e");
       return null;
     }
   }
@@ -374,15 +409,14 @@ class DatabaseHelper {
   /// Addons list receive for display
   Future<List<Map<String, dynamic>>> getAddons() async {
     try {
-      // তুমি যদি সব ডাটা চাও, তবে .eq('is_active', true) অংশটুকু বাদ দিতে পারো
       final response = await _client
           .from('addons')
           .select()
-          .order('addon_id', ascending: true); // আইডি অনুযায়ী সাজিয়ে আনবে
+          .order('addon_id', ascending: true);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint("❌ Error fetching addons: $e");
+      debugPrint("Error fetching addons: $e");
       return [];
     }
   }
@@ -393,14 +427,13 @@ class DatabaseHelper {
       final response = await _client.from(table).select();
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      debugPrint("❌ Error fetching $table: $e");
+      debugPrint("Error fetching $table: $e");
       return [];
     }
   }
 
   /// all table data deleted with images
 
-  /// সব টেবিলের ডাটা এবং ইমেজ ডিলিট করার জন্য এটি ব্যবহার করো
   static Future<void> deleteWithStorage({
     required String table,
     required String column,
@@ -409,21 +442,20 @@ class DatabaseHelper {
     required String? imagePath,
   }) async {
     try {
-      // ১. স্টোরেজ থেকে ইমেজ ডিলিট (যদি পাথ থাকে)
+      /// image delete of storage
       if (imagePath != null && imagePath.isNotEmpty) {
         await _client.storage.from(bucketName).remove([imagePath]);
         debugPrint("✅ Storage Image deleted: $imagePath");
       }
 
-      // ২. ডাটাবেস থেকে রো ডিলিট
+      /// delete
       await _client.from(table).delete().eq(column, value);
       debugPrint("✅ Data deleted from $table");
     } catch (e) {
-      debugPrint("❌ Delete Error: $e");
+      debugPrint("Delete Error: $e");
       throw Exception("Delete Operation Failed: $e");
     }
   }
-
 
   /// review image delete
   static Future<void> deleteFileFromStorage(String path) async {
@@ -434,5 +466,4 @@ class DatabaseHelper {
       debugPrint("Storage Delete Error: $e");
     }
   }
-
 }

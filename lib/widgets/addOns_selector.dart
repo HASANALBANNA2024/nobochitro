@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 
 class AddOnsSelector extends StatefulWidget {
-  final String selectedCategory; // প্যাকেজের ক্যাটেগরি (যেমন: Wedding বা Event)
+  final String selectedCategory;
+
+  ///package category
   final Function(List<Map<String, dynamic>>) onSelectionChanged;
 
   const AddOnsSelector({
@@ -22,14 +24,16 @@ class _AddOnsSelectorState extends State<AddOnsSelector> {
   @override
   void initState() {
     super.initState();
-    // এখানে ক্যাটেগরি অনুযায়ী ডাটা ফিল্টার করে আনা হচ্ছে
+
+    /// category wise filter
     _addonsFuture = _getFilteredAddons();
   }
 
-  // ক্যাটেগরি অনুযায়ী ফিল্টার করার লজিক
+  /// category filter logic
   Future<List<Map<String, dynamic>>> _getFilteredAddons() async {
     final allAddons = await DatabaseHelper.instance.getAddons();
-    // প্যাকেজের ক্যাটেগরির সাথে অ্যাড-অনের ক্যাটেগরি মিলিয়ে ফিল্টার করা হচ্ছে
+
+    /// package category
     return allAddons
         .where(
           (addon) =>
@@ -57,7 +61,7 @@ class _AddOnsSelectorState extends State<AddOnsSelector> {
           );
         }
 
-        // যদি ওই ক্যাটেগরিতে কোনো অ্যাড-অন না থাকে
+        /// if no exist in addons category
         if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -77,7 +81,7 @@ class _AddOnsSelectorState extends State<AddOnsSelector> {
             spacing: 12,
             runSpacing: 12,
             children: addons.map((addon) {
-              // সিলেকশন চেক করার জন্য title বা id ব্যবহার করা নিরাপদ
+              /// for logic of selection check
               final isSelected = _selectedAddons.any(
                 (item) => item['title'] == addon['title'],
               );

@@ -16,12 +16,16 @@ class CustomSearchBar extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      height: 48, // হাইট সামান্য বাড়ানো হয়েছে প্রফেশনাল লুকের জন্য
+      height: 48,
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(12), // রাউন্ডেড কর্নার কিছুটা শার্প করা হয়েছে (Modern Look)
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.08),
+          color: isDark
+              ? Colors.white.withOpacity(0.12)
+              : Colors.black.withOpacity(0.08),
           width: 1,
         ),
       ),
@@ -37,12 +41,12 @@ class CustomSearchBar extends StatelessWidget {
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: Icon(
-              Icons.search_rounded,
-              size: 20,
-              color: isDark ? Colors.white54 : Colors.black54
+            Icons.search_rounded,
+            size: 20,
+            color: isDark ? Colors.white54 : Colors.black54,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 13), // টেক্সট ভার্টিক্যালি সেন্ট্রাল করার জন্য
+          contentPadding: const EdgeInsets.symmetric(vertical: 13),
         ),
       ),
     );

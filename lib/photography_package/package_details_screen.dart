@@ -10,7 +10,9 @@ import '../responsive_review_list/responsive_review_list.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final Color primaryAccent;
-  final Map<String, dynamic> packageData; // ডাটাবেস থেকে আসা মেইন ডাটা
+  final Map<String, dynamic> packageData;
+
+  /// to load main data from database
 
   const PackageDetailsScreen({
     super.key,
@@ -34,17 +36,18 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     _loadComparisonData();
   }
 
-  // একই ক্যাটাগরির Min, Mid, Max প্রাইসের প্যাকেজগুলো লোড করা
+  /// same package to load max,min, mid level of price
   Future<void> _loadComparisonData() async {
     try {
       final String category = widget.packageData['category'] ?? "";
-      // ডাটাবেস থেকে ওই ক্যাটাগরির সব ডাটা নিয়ে আসা
+
+      /// to receive data from database
       final allInCategory = await DatabaseHelper.instance.getPackagesByCategory(
         category,
       );
 
       if (allInCategory.isNotEmpty) {
-        // দাম অনুযায়ী ছোট থেকে বড় সর্ট করা
+        /// to sorting of price
         allInCategory.sort(
           (a, b) => (double.tryParse(a['base_price'].toString()) ?? 0)
               .compareTo(double.tryParse(b['base_price'].toString()) ?? 0),
@@ -53,16 +56,16 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         List<Map<String, dynamic>> temp = [];
 
         if (allInCategory.length >= 3) {
-          temp.add(allInCategory.first); // সর্বনিম্ন (Min)
-          temp.add(allInCategory[allInCategory.length ~/ 2]); // মাঝারি (Mid)
-          temp.add(allInCategory.last); // সর্বোচ্চ (Max)
+          temp.add(allInCategory.first);
+          temp.add(allInCategory[allInCategory.length ~/ 2]);
+          temp.add(allInCategory.last);
         } else {
-          temp = allInCategory; // ৩টির কম থাকলে যা আছে তাই
+          temp = allInCategory;
         }
 
         setState(() {
           comparisonPackages = temp;
-          isCompLoading = false; // লোডিং শেষ
+          isCompLoading = false;
         });
       } else {
         setState(() => isCompLoading = false);
@@ -148,7 +151,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     );
   }
 
-  // ডাইনামিক হিরো কার্ড
+  /// dynamic hero card
   Widget _buildDynamicHero(Map<String, dynamic> pkg) {
     return Container(
       height: 250,

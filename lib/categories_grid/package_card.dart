@@ -41,11 +41,10 @@ class _PackageCardState extends State<PackageCard> {
 
   @override
   Widget build(BuildContext context) {
-    // ফিচারগুলোকে নিরাপদে লিস্টে রূপান্তর
+    /// list convert of features
     final List<String> features = (widget.pkg['features'] as String? ?? "")
         .split(',');
 
-    // AppUtils ব্যবহার করে লেবেল এবং কালার নেওয়া হচ্ছে
     final String badgeLabel = PackageStandard.getBadgeLabel(
       widget.pkg['base_price'],
     );
@@ -53,7 +52,7 @@ class _PackageCardState extends State<PackageCard> {
 
     return Container(
       width: 320,
-      height: 380, // সব কার্ডের উচ্চতা সমান রাখার জন্য ফিক্সড হাইট
+      height: 380,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF1A1A1A) : Colors.white,
@@ -71,7 +70,7 @@ class _PackageCardState extends State<PackageCard> {
       ),
       child: Column(
         children: [
-          // উপরের অংশ: ইমেজ এবং ব্যাজ
+          /// image and badge
           Expanded(
             flex: 5,
             child: Stack(
@@ -80,7 +79,8 @@ class _PackageCardState extends State<PackageCard> {
                   duration: const Duration(milliseconds: 500),
                   child: _buildImage(widget.pkg['image_url']),
                 ),
-                // ডানে টপ কর্নারে ব্যাজ
+
+                /// corner of top badge
                 Positioned(
                   top: 12,
                   right: 12,
@@ -110,7 +110,7 @@ class _PackageCardState extends State<PackageCard> {
             ),
           ),
 
-          // নিচের অংশ: টাইটেল, ফিচার এবং বাটন
+          /// title feature and button
           Expanded(
             flex: 5,
             child: Padding(
@@ -144,7 +144,7 @@ class _PackageCardState extends State<PackageCard> {
                   ),
                   const SizedBox(height: 10),
 
-                  // ফিচারস এরিয়া
+                  /// features area
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),

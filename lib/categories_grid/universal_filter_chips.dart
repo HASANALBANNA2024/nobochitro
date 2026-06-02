@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 class UniversalFilterChips extends StatefulWidget {
   final Function(String) onSelected;
   final Color accentColor;
-
-  // এখানে আমরা ডিফল্ট ভ্যালু সেট করে দিচ্ছি যাতে কল করার সময় কিছু না দেওয়া লাগে
   const UniversalFilterChips({
     super.key,
     required this.onSelected,
-    this.accentColor = Colors.blue, // ডিফল্ট কালার
+    this.accentColor = Colors.blue,
   });
 
   @override
@@ -17,8 +15,6 @@ class UniversalFilterChips extends StatefulWidget {
 
 class _UniversalFilterChipsState extends State<UniversalFilterChips> {
   String selectedFilter = 'All';
-
-  // ফিল্টার লিস্ট এখানেই ফিক্সড করে দিলাম
   final List<String> filters = [
     'All',
     'Budget-friendly',
@@ -51,7 +47,7 @@ class _UniversalFilterChipsState extends State<UniversalFilterChips> {
               onSelected: (val) {
                 if (val) {
                   setState(() => selectedFilter = filterName);
-                  widget.onSelected(filterName); // মেইন স্ক্রিনকে জানানো
+                  widget.onSelected(filterName);
                 }
               },
               selectedColor: widget.accentColor,

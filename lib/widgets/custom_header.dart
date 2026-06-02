@@ -1,13 +1,16 @@
-import 'package:firebase_auth/firebase_auth.dart'
-    as fb; // Firebase এর জন্য 'fb'
+import 'package:firebase_auth/firebase_auth.dart' as fb;
+
+/// firebase
+/// firebase
 import 'package:flutter/material.dart';
 import 'package:nobochitro/authentication/login_screen.dart';
 import 'package:nobochitro/authentication/registration_modal_sheet.dart';
 import 'package:nobochitro/client_profile/client_profile_screen.dart';
 import 'package:nobochitro/screens/search_screen.dart';
 import 'package:nobochitro/widgets/custom_search_bar.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'
-    as sb; // Supabase এর জন্য 'sb'
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+
+/// for supabase
 
 class CustomHeader extends StatelessWidget {
   final Color primaryAccent;
@@ -101,7 +104,8 @@ class CustomHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 15),
                   ],
-                  // অথেন্টিকেশন স্টেট চেক
+
+                  /// authentication state check
                   StreamBuilder<fb.User?>(
                     stream: fb.FirebaseAuth.instance.authStateChanges(),
                     builder: (context, snapshot) {
@@ -121,7 +125,7 @@ class CustomHeader extends StatelessWidget {
     );
   }
 
-  // ডাটাবেস থেকে full_name দেখানোর মেথড
+  /// display of full_name of database
   Widget _buildUserGreeting(BuildContext context, String uid) {
     final Color goldColor = const Color(0xFFD4AF37);
 
@@ -140,7 +144,7 @@ class CustomHeader extends StatelessWidget {
           imageUrl = userData['profile_image'];
         }
 
-        // নাম থেকে প্রথম শব্দ নেয়া
+        /// for first word of name
         String firstName = name.split(' ')[0];
 
         return PopupMenuButton(
@@ -166,7 +170,7 @@ class CustomHeader extends StatelessWidget {
               _buildProfileImage(imageUrl, goldColor),
               const SizedBox(width: 6),
               Text(
-                firstName, // ডাটাবেসের full_name এখানে শো হবে
+                firstName,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,

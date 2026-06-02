@@ -62,12 +62,12 @@ class _PhotographerSelectorState extends State<PhotographerSelector> {
   }
 
   Widget _buildEnhancedPhotographerCard(
-      Map<String, dynamic> photographer,
-      ThemeData theme,
-      bool isDark,
-      BuildContext context,
-      int index,
-      ) {
+    Map<String, dynamic> photographer,
+    ThemeData theme,
+    bool isDark,
+    BuildContext context,
+    int index,
+  ) {
     final accentColor = theme.colorScheme.primary;
     final isSelected = _selectedPhotographerIndex == index;
 
@@ -78,7 +78,6 @@ class _PhotographerSelectorState extends State<PhotographerSelector> {
           setState(() {
             _selectedPhotographerIndex = index;
           });
-          // মেইন স্ক্রিনে ডাটা পাঠানোর জন্য কলব্যাক
           widget.onPhotographerSelected(photographer);
         },
         borderRadius: BorderRadius.circular(25),
@@ -140,8 +139,11 @@ class _PhotographerSelectorState extends State<PhotographerSelector> {
                           color: Colors.green,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.check,
-                            color: Colors.white, size: 16),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                 ],
@@ -178,9 +180,11 @@ class _PhotographerSelectorState extends State<PhotographerSelector> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.payments_outlined,
-                      size: 14,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                  Icon(
+                    Icons.payments_outlined,
+                    size: 14,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     "${photographer['per_hours_fee'] ?? '0'} BDT/hr",

@@ -39,7 +39,6 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     Timer(const Duration(seconds: 4), () {
-      // সময় ১ সেকেন্ড বাড়িয়ে ৪ করলাম যাতে ইন্ডিকেটরটা দেখা যায়
       widget.onAppReady();
 
       Navigator.pushReplacement(
@@ -63,7 +62,6 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       body: Stack(
-        // Indicator টিকে একদম নিচে রাখার জন্য Stack ব্যবহার করা হয়েছে
         children: [
           Center(
             child: ScaleTransition(

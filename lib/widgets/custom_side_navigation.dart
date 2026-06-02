@@ -128,7 +128,7 @@ class CustomSideNavigation extends StatelessWidget {
                 if (isSpecialUser)
                   _buildDrawerItem(
                     context,
-                    isSelected: selectedIndex == 5, // নতুন ইন্ডেক্স
+                    isSelected: selectedIndex == 5,
                     icon: Icons.admin_panel_settings_outlined,
                     selectedIcon: Icons.admin_panel_settings_rounded,
                     label: "Admin Dashboard",
@@ -198,7 +198,7 @@ class CustomSideNavigation extends StatelessWidget {
   Widget _buildHeader(BuildContext context, bool isDarkMode) {
     return DrawerHeader(
       margin: EdgeInsets.zero,
-      padding: EdgeInsets.zero, // বাড়তি প্যাডিং কমানোর জন্য
+      padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -208,10 +208,10 @@ class CustomSideNavigation extends StatelessWidget {
       ),
       child: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min, // কনটেন্ট অনুযায়ী সাইজ হবে
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              height: 80, // লোগোর জন্য একটি নির্দিষ্ট হাইট দিন
+              height: 80,
               width: 80,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -222,7 +222,7 @@ class CustomSideNavigation extends StatelessWidget {
               ),
               child: Image.asset(
                 "assets/images/app_icon.png",
-                fit: BoxFit.contain, // ইমেজ যেন কনটেইনারের বাইরে না যায়
+                fit: BoxFit.contain,
               ),
             ),
             const SizedBox(height: 8),

@@ -1,7 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:nobochitro/photographer_section/photographer_profile_screen.dart';
-import 'package:nobochitro/DatabaseHelper/database_helper.dart'; // আপনার হেল্পার ফাইলের পাথ দিন
 
 class PhotographerSection extends StatefulWidget {
   final Color primaryAccent;
@@ -25,7 +26,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
     });
   }
 
-  // অটো স্ক্রলিং লজিক (আপনার আগের কোড অনুযায়ী)
+  /// auto scrolling logic
   void _startAutoScroll() {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_scrollController.hasClients) {
@@ -78,10 +79,7 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  // ডেমো ডাটা ইনসার্ট করার জন্য হেল্পার কল করতে পারেন (টেস্টিং এর জন্য)
-                  // DatabaseHelper.insertDemoPhotographers();
-                },
+                onPressed: () {},
                 child: Text(
                   'See All',
                   style: TextStyle(color: widget.primaryAccent),
@@ -94,11 +92,13 @@ class _PhotographerSectionState extends State<PhotographerSection> {
         SizedBox(
           height: 380,
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            // সরাসরি সুপাবেস কল না করে হেল্পার ব্যবহার করা হয়েছে
+            /// to use helper of database
             stream: DatabaseHelper.getPhotographerStream(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return const Center(child: Text("Error loading data from helper"));
+                return const Center(
+                  child: Text("Error loading data from helper"),
+                );
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -146,16 +146,22 @@ class _PhotographerSectionState extends State<PhotographerSection> {
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: Image.network(
                     data['profile_image_url'] ?? '',
                     width: double.infinity,
-                    fit: BoxFit.cover, // ডিজাইনের জন্য cover রাখা ভালো
+                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: theme.colorScheme.onSurface.withOpacity(0.05),
                         child: const Center(
-                          child: Icon(Icons.person, size: 50, color: Colors.grey),
+                          child: Icon(
+                            Icons.person,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
                         ),
                       );
                     },
@@ -202,7 +208,11 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
                         Text(
                           data['avg_rating']?.toString() ?? '0.0',
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -235,7 +245,9 @@ class _PhotographerSectionState extends State<PhotographerSection> {
                       );
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: theme.colorScheme.onSurface.withOpacity(0.05),
+                      backgroundColor: theme.colorScheme.onSurface.withOpacity(
+                        0.05,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

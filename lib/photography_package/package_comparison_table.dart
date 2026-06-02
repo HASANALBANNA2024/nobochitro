@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// আপনার প্রজেক্টের সঠিক পাথ অনুযায়ী ইমপোর্ট করুন
 import 'package:nobochitro/utilities/package_standard.dart';
 
 class PackageComparisonTable extends StatelessWidget {
@@ -24,7 +23,7 @@ class PackageComparisonTable extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // ১টি বা তার কম প্যাকেজ থাকলে টেবিল দেখাবে না
+    /// does not display comparison table if exist of one package any category
     if (comparisonPackages.length <= 1) {
       return const SizedBox.shrink();
     }
@@ -65,7 +64,7 @@ class PackageComparisonTable extends StatelessWidget {
                     ...comparisonPackages.map(
                       (pkg) => DataColumn(
                         label: Text(
-                          // Utility ক্লাস থেকে লেবেল কল করা হচ্ছে
+                          /// Utility to call from class
                           PackageStandard.getBadgeLabel(pkg['base_price']),
                           style: const TextStyle(
                             fontSize: 11,
@@ -105,7 +104,7 @@ class PackageComparisonTable extends StatelessWidget {
                           ),
                         ),
                         ...comparisonPackages.map((pkg) {
-                          // Utility ক্লাস থেকে লেবেল নিয়ে আইকন সেট করা
+                          /// Utility icon set from class level
                           String label = PackageStandard.getBadgeLabel(
                             pkg['base_price'],
                           );

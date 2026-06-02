@@ -5,10 +5,7 @@ import 'package:nobochitro/categories_grid/package_result_screen.dart';
 class CategoriesGrid extends StatefulWidget {
   final Color primaryAccent;
 
-  const CategoriesGrid({
-    super.key,
-    required this.primaryAccent,
-  });
+  const CategoriesGrid({super.key, required this.primaryAccent});
 
   @override
   State<CategoriesGrid> createState() => _CategoriesGridState();
@@ -23,18 +20,20 @@ class _CategoriesGridState extends State<CategoriesGrid> {
     _categoriesFuture = DatabaseHelper.instance.getUniqueCategories();
   }
 
-  // ক্যাটাগরি অনুযায়ী আইকন সিলেক্ট করার লজিক
+  /// category icon logic
   IconData _getIconForCategory(String category) {
     String name = category.toLowerCase();
     if (name.contains('wedding')) return Icons.favorite_rounded;
     if (name.contains('birth')) return Icons.cake_rounded;
     if (name.contains('portrait')) return Icons.portrait_rounded;
     if (name.contains('event')) return Icons.theater_comedy_rounded;
-    if (name.contains('nature') || name.contains('wild')) return Icons.terrain_rounded;
-    if (name.contains('product') || name.contains('commercial')) return Icons.business_center_rounded;
+    if (name.contains('nature') || name.contains('wild'))
+      return Icons.terrain_rounded;
+    if (name.contains('product') || name.contains('commercial'))
+      return Icons.business_center_rounded;
     if (name.contains('fashion')) return Icons.checkroom_rounded;
     if (name.contains('food')) return Icons.restaurant_rounded;
-    return Icons.grid_view_rounded; // ডিফল্ট আইকন
+    return Icons.grid_view_rounded;
   }
 
   @override
@@ -87,11 +86,10 @@ class _CategoriesGridState extends State<CategoriesGrid> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // আইকন সার্কেল (ডার্ক মোড মেইনটেইন করা হয়েছে)
                       CircleAvatar(
                         backgroundColor: isDark
-                            ? Colors.white.withOpacity(0.08) // ডার্ক মোডে হালকা সাদাটে ভাব
-                            : widget.primaryAccent.withOpacity(0.1), // লাইট মোডে অ্যাকসেন্ট কালার
+                            ? Colors.white.withOpacity(0.08)
+                            : widget.primaryAccent.withOpacity(0.1),
                         radius: 30,
                         child: Icon(
                           _getIconForCategory(categoryName),
