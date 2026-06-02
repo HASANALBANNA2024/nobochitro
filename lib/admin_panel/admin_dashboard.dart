@@ -5,7 +5,7 @@ import 'package:nobochitro/admin_panel/packages/package_view.dart';
 import 'package:nobochitro/admin_panel/payment_verifications/payment_dashboard.dart';
 import 'package:nobochitro/admin_panel/photographers/photographer_view.dart';
 import 'package:nobochitro/admin_panel/reviews/reviews_view.dart';
-import 'package:nobochitro/widgets/custom_appbar.dart';
+import 'package:nobochitro/screens/dashboard_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -44,7 +44,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     bool isLargeScreen = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      appBar: buildCustomAppBar(context, primaryAccent, "Admin Dashboard"),
+      // appBar: buildCustomAppBar(context, primaryAccent, "Admin Dashboard"),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text("Admin Dashboard"),
+        leading: IconButton(
+          onPressed: () {
+            final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DashboardScreen(
+                  onThemeChanged: (value) {
+                    print("Theme changed to: $value");
+                  },
+                ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.arrow_back_ios_new_outlined),
+        ),
+      ),
 
       bottomNavigationBar: isLargeScreen
           ? null
