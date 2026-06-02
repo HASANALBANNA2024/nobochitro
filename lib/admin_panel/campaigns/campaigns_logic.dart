@@ -12,20 +12,20 @@ class CampaignsLogic {
         data: data,
       );
 
-  // ডিলিট করার সময় ছবি ডিলিট লজিক
+  /// delete with image
   static Future<void> deleteCampaign(Map<String, dynamic> item) async {
-    // যদি ইমেজ পাথ থাকে, তবে আগে স্টোরেজ থেকে ডিলিট করো
     if (item['image_path'] != null &&
         item['image_path'].toString().isNotEmpty) {
       await DatabaseHelper.deleteWithStorage(
         table: 'campaigns',
         column: 'id',
         value: item['id'],
-        bucketName: 'user_assets', // তোমার বাকেট নাম নিশ্চিত করো
+        bucketName: 'user_assets',
         imagePath: item['image_path'],
       );
     }
-    // তারপর ডাটাবেস থেকে ডিলিট করো
+
+    /// delete database
     await DatabaseHelper.delete(
       table: 'campaigns',
       column: 'id',

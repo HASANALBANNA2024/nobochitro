@@ -45,7 +45,7 @@ class PackagesListItem extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () async {
-                // কনফার্মেশন ডায়ালগ যোগ করা ভালো (নিরাপত্তার জন্য)
+                /// confirmation dialogue
                 bool? confirm = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
@@ -67,7 +67,7 @@ class PackagesListItem extends StatelessWidget {
                 );
 
                 if (confirm == true) {
-                  // এখানে item পাস করো, কারণ এটাই তোমার ডাটা ম্যাপ
+                  /// item and data map
                   await PackageLogic.deletePackage(item);
                   onUpdate();
                 }

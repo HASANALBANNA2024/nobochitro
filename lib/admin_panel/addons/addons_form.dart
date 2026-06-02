@@ -17,7 +17,8 @@ void showAddonsForm(
 
   String? imageUrl = item?['image_url'];
   String? imagePath = item?['image_path'];
-  // 🟢 সুইচ স্ট্যাটাসের জন্য ভেরিয়েবল
+
+  /// switch status variable
   bool isActive = item?['is_active'] ?? true;
 
   final ImagePicker picker = ImagePicker();
@@ -87,7 +88,7 @@ void showAddonsForm(
                 ),
               ),
 
-              // 🟢 সুইচ লিস্ট টাইল যোগ করা হয়েছে
+              /// switch list title
               const SizedBox(height: 10),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -113,7 +114,7 @@ void showAddonsForm(
                 'category': catCtrl.text,
                 'image_url': imageUrl,
                 'image_path': imagePath,
-                'is_active': isActive, // 🟢 সুইচের ভ্যালু ডাটাতে যোগ করা হয়েছে
+                'is_active': isActive,
               };
 
               if (item == null) {

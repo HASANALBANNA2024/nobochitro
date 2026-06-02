@@ -39,11 +39,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final primaryAccent = isDarkMode
         ? const Color(0xFFD4AF37)
         : const Color(0xFF008080);
+
     /// safe area
     bool isLargeScreen = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
       appBar: buildCustomAppBar(context, primaryAccent, "Admin Dashboard"),
+
       bottomNavigationBar: isLargeScreen
           ? null
           : _buildBottomNavBar(isDarkMode, primaryAccent),
@@ -65,7 +67,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _getSelectedWidget() {
-    // এখানে IndexedStack ব্যবহার করলে ব্যাক করলেও ট্যাব স্টেট ঠিক থাকে
     return IndexedStack(
       index: _selectedIndex,
       children: const [

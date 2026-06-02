@@ -5,7 +5,7 @@ class EnhancedSummaryCard extends StatelessWidget {
   final Color primaryAccent;
   final int selectedHours;
   final int selectedMinutes;
-  final String selectedTime; // নতুন টাইম প্যারামিটার
+  final String selectedTime;
   final String locationType;
   final double totalAddonsPrice;
 
@@ -20,18 +20,18 @@ class EnhancedSummaryCard extends StatelessWidget {
     required this.totalAddonsPrice,
   });
 
-  // --- ডাইনামিক প্রাইস ক্যালকুলেশন লজিক ---
+  ///----- dynamic price calculation---
   Map<String, double> _calculateDetailedTotal() {
     double basePrice =
         double.tryParse(packageData['base_price'].toString()) ?? 0;
     int baseHours = packageData['base_hours'] ?? 1;
 
-    // প্রতি ঘণ্টার রেট বের করা (Base Price / Base Hours)
+    /// per hour rate (Base Price / Base Hours)
     double ratePerHour = basePrice / baseHours;
     double selectedTotalDuration = selectedHours + (selectedMinutes / 60);
     double extraCost = 0;
 
-    // এক্সট্রা টাইম ক্যালকুলেশন
+    /// extra time calculation
     if (selectedTotalDuration > baseHours) {
       double extraTime = selectedTotalDuration - baseHours;
       extraCost = extraTime * ratePerHour;
@@ -92,14 +92,14 @@ class EnhancedSummaryCard extends StatelessWidget {
           ),
           const Divider(height: 35, thickness: 0.8),
 
-          // ডাটা রোগুলো
+          /// data row
           _infoRow(
             Icons.timer_outlined,
             "Total Duration",
             "$selectedHours h $selectedMinutes m",
           ),
 
-          // আপনার চাহিদা অনুযায়ী ডিউরেশনের নিচে টাইম স্লট
+          /// duration and time slot
           _infoRow(Icons.access_time_rounded, "Scheduled Time", selectedTime),
 
           _infoRow(

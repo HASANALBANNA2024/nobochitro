@@ -5,7 +5,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // ফোন নম্বর ফরম্যাট করার জন্য প্রাইভেট মেথড (+88 যুক্ত করবে)
+  /// phone number formated logic
   String _formatPhoneNumber(String phone) {
     String p = phone.trim();
     if (p.startsWith('+88')) {
@@ -28,7 +28,7 @@ class AuthService {
     required String CustomId,
   }) async {
     try {
-      // ফোন নম্বর ফরম্যাট করা
+      /// phone number format
       String formattedPhone = _formatPhoneNumber(phone);
 
       UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -79,7 +79,6 @@ class AuthService {
   }
 
   // --- Phone OTP (For Registration or Password Reset) ---
-  // এখানে phoneNumber দিলে অটোমেটিক +88 অ্যাড হয়ে যাবে
   Future<void> sendPhoneOTP({
     required String phoneNumber,
     required Function(String verId) onCodeSent,
@@ -119,7 +118,7 @@ class AuthService {
     }
   }
 
-  // --- Password Change (ইউজার লগইন থাকা অবস্থায়) ---
+  // --- Password Change  ---
   Future<bool> updatePassword(String newPassword) async {
     try {
       User? user = _auth.currentUser;

@@ -1,12 +1,13 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:nobochitro/authentication/login_screen.dart'; // আপনার প্রজেক্টের পাথ অনুযায়ী ঠিক আছে
-import 'auth_service.dart';
+import 'package:nobochitro/authentication/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'auth_service.dart';
 
 class RegistrationModalSheet extends StatefulWidget {
   const RegistrationModalSheet({super.key});
-
   @override
   State<RegistrationModalSheet> createState() => _RegistrationModalSheetState();
 }
@@ -45,12 +46,11 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
 
         return Material(
           color: Colors.transparent,
-          // 🎯 কিবোর্ড ওপেনিং এবং যেকোনো স্ক্রিন সাইজের ওভারফ্লো চিরতরে বন্ধ করতে SingleChildScrollView যুক্ত করা হলো
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom, // কিবোর্ডের উচ্চতা অনুযায়ী স্পেস নেবে
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -66,18 +66,22 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
                   ),
                   const SizedBox(height: 10),
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                     child: Container(
                       color: Theme.of(context).scaffoldBackgroundColor,
                       child: Center(
                         child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: isDesktop ? 500 : double.infinity),
+                          constraints: BoxConstraints(
+                            maxWidth: isDesktop ? 500 : double.infinity,
+                          ),
                           child: Padding(
                             padding: EdgeInsets.fromLTRB(
                               isDesktop ? 30 : horizontalPadding,
                               20,
                               isDesktop ? 30 : horizontalPadding,
-                              20, // বটম প্যাডিং ফিক্সড করা হলো যেহেতু ভিউইনসেট প্যারেন্টে হ্যান্ডেল করা আছে
+                              20,
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -92,121 +96,230 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
                                 ),
                                 const SizedBox(height: 25),
 
-                                // Controller Field
-                                _buildField(context, "Full Name", Icons.person_outline, isDesktop, controller: _nameController),
+                                /// Controller Field
+                                _buildField(
+                                  context,
+                                  "Full Name",
+                                  Icons.person_outline,
+                                  isDesktop,
+                                  controller: _nameController,
+                                ),
                                 const SizedBox(height: 15),
 
-                                _buildField(context, "Email", Icons.email_outlined, isDesktop, controller: _emailController, keyboardType: TextInputType.emailAddress),
+                                _buildField(
+                                  context,
+                                  "Email",
+                                  Icons.email_outlined,
+                                  isDesktop,
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
                                 const SizedBox(height: 15),
 
-                                _buildField(context, "Mobile Number", Icons.phone_android_outlined, isDesktop, controller: _phoneController, keyboardType: TextInputType.phone),
+                                _buildField(
+                                  context,
+                                  "Mobile Number",
+                                  Icons.phone_android_outlined,
+                                  isDesktop,
+                                  controller: _phoneController,
+                                  keyboardType: TextInputType.phone,
+                                ),
                                 const SizedBox(height: 15),
 
-                                _buildField(context, "Password", Icons.lock_outline, isDesktop, controller: _passController, isPass: true),
+                                _buildField(
+                                  context,
+                                  "Password",
+                                  Icons.lock_outline,
+                                  isDesktop,
+                                  controller: _passController,
+                                  isPass: true,
+                                ),
                                 const SizedBox(height: 15),
 
-                                _buildField(context, "Confirm Password", Icons.lock_reset, isDesktop, controller: _confirmPassController, isPass: true),
+                                _buildField(
+                                  context,
+                                  "Confirm Password",
+                                  Icons.lock_reset,
+                                  isDesktop,
+                                  controller: _confirmPassController,
+                                  isPass: true,
+                                ),
                                 const SizedBox(height: 30),
 
-                                // Sign up Button and logic connect
+                                /// Sign up Button and logic connect
                                 _isLoading
                                     ? const CircularProgressIndicator()
                                     : ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: accent,
-                                    minimumSize: const Size(double.infinity, 50),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () async {
-                                    // ১. পাসওয়ার্ড ম্যাচিং চেক
-                                    if (_passController.text != _confirmPassController.text) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Password and Confirm Password must be same!")));
-                                      return;
-                                    }
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: accent,
+                                          minimumSize: const Size(
+                                            double.infinity,
+                                            50,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        onPressed: () async {
+                                          /// password matching
+                                          if (_passController.text !=
+                                              _confirmPassController.text) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Password and Confirm Password must be same!",
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
 
-                                    // ২. এম্পটি ফিল্ড ভ্যালিডেশন চেক (সেফটি)
-                                    if (_nameController.text.trim().isEmpty ||
-                                        _emailController.text.trim().isEmpty ||
-                                        _phoneController.text.trim().isEmpty ||
-                                        _passController.text.trim().isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Please fill all the fields!")));
-                                      return;
-                                    }
+                                          /// null safety
+                                          if (_nameController.text
+                                                  .trim()
+                                                  .isEmpty ||
+                                              _emailController.text
+                                                  .trim()
+                                                  .isEmpty ||
+                                              _phoneController.text
+                                                  .trim()
+                                                  .isEmpty ||
+                                              _passController.text
+                                                  .trim()
+                                                  .isEmpty) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Please fill all the fields!",
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
 
-                                    setState(() => _isLoading = true);
+                                          setState(() => _isLoading = true);
 
-                                    // user unique identity number
-                                    String customId = "NSR-${Random().nextInt(900000) + 100000}";
+                                          // user unique identity number
+                                          String customId =
+                                              "NSR-${Random().nextInt(900000) + 100000}";
 
-                                    // firebase sign up
-                                    var user = await _auth.signUp(
-                                      name: _nameController.text.trim(),
-                                      email: _emailController.text.trim(),
-                                      password: _passController.text.trim(),
-                                      phone: _phoneController.text.trim(),
-                                      CustomId: customId,
-                                    );
+                                          // firebase sign up
+                                          var user = await _auth.signUp(
+                                            name: _nameController.text.trim(),
+                                            email: _emailController.text.trim(),
+                                            password: _passController.text
+                                                .trim(),
+                                            phone: _phoneController.text.trim(),
+                                            CustomId: customId,
+                                          );
 
-                                    if (user != null) {
-                                      // formatted Number
-                                      String rawPhone = _phoneController.text.trim();
-                                      String formattedPhone = rawPhone;
-                                      if (!rawPhone.startsWith('+88')) {
-                                        if (rawPhone.startsWith('88')) {
-                                          formattedPhone = '+$rawPhone';
-                                        } else if (rawPhone.startsWith('0')) {
-                                          formattedPhone = '+88$rawPhone';
-                                        } else {
-                                          formattedPhone = '+880$rawPhone';
-                                        }
-                                      }
+                                          if (user != null) {
+                                            // formatted Number
+                                            String rawPhone = _phoneController
+                                                .text
+                                                .trim();
+                                            String formattedPhone = rawPhone;
+                                            if (!rawPhone.startsWith('+88')) {
+                                              if (rawPhone.startsWith('88')) {
+                                                formattedPhone = '+$rawPhone';
+                                              } else if (rawPhone.startsWith(
+                                                '0',
+                                              )) {
+                                                formattedPhone = '+88$rawPhone';
+                                              } else {
+                                                formattedPhone =
+                                                    '+880$rawPhone';
+                                              }
+                                            }
 
-                                      try {
-                                        // সুপাবেস ডাটা ইনসার্ট
-                                        await Supabase.instance.client.from("users").insert({
-                                          'id': customId,
-                                          'user_id': user.uid,
-                                          'full_name': _nameController.text.trim(),
-                                          'email': _emailController.text.trim(),
-                                          'phone_number': formattedPhone,
-                                          'user_role': 'client',
-                                        });
+                                            try {
+                                              /// supabase data insert
+                                              await Supabase.instance.client
+                                                  .from("users")
+                                                  .insert({
+                                                    'id': customId,
+                                                    'user_id': user.uid,
+                                                    'full_name': _nameController
+                                                        .text
+                                                        .trim(),
+                                                    'email': _emailController
+                                                        .text
+                                                        .trim(),
+                                                    'phone_number':
+                                                        formattedPhone,
+                                                    'user_role': 'client',
+                                                  });
 
-                                        if (mounted) {
-                                          setState(() => _isLoading = false);
-                                          Navigator.pop(context); // সফল হলে রেজিস্ট্রেশন শিট বন্ধ হবে
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text("Registration Successful! Welcome.")));
-                                        }
-                                      } catch (e) {
-                                        if (mounted) {
-                                          setState(() => _isLoading = false);
-                                          Navigator.pop(context);
-                                          print("Supabase Sync Error :$e");
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text("Profile Created, But profile Sync Failed")));
-                                        }
-                                      }
-                                    } else {
-                                      if (mounted) {
-                                        setState(() => _isLoading = false);
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text("Registration Failed. Try again.")));
-                                      }
-                                    }
-                                  },
-                                  child: Text(
-                                    "SIGN UP",
-                                    style: TextStyle(
-                                      color: isDark ? Colors.black : Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
+                                              if (mounted) {
+                                                setState(
+                                                  () => _isLoading = false,
+                                                );
+                                                Navigator.pop(context);
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      "Registration Successful! Welcome.",
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            } catch (e) {
+                                              if (mounted) {
+                                                setState(
+                                                  () => _isLoading = false,
+                                                );
+                                                Navigator.pop(context);
+                                                print(
+                                                  "Supabase Sync Error :$e",
+                                                );
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      "Profile Created, But profile Sync Failed",
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          } else {
+                                            if (mounted) {
+                                              setState(
+                                                () => _isLoading = false,
+                                              );
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    "Registration Failed. Try again.",
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        },
+                                        child: Text(
+                                          "SIGN UP",
+                                          style: TextStyle(
+                                            color: isDark
+                                                ? Colors.black
+                                                : Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
                                 const SizedBox(height: 15),
 
                                 Row(
@@ -217,15 +330,19 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
                                       onTap: () {
                                         Navigator.pop(context);
                                         showModalBottomSheet(
-                                            context: context,
-                                            isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
-                                            builder: (context) => const LoginModalSheet()
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) =>
+                                              const LoginModalSheet(),
                                         );
                                       },
                                       child: Text(
                                         "Login",
-                                        style: TextStyle(color: accent, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                          color: accent,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -248,8 +365,15 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
   }
 
   // Build Field TextEditingController to add
-  Widget _buildField(BuildContext context, String hint, IconData icon, bool isDesktop,
-      {bool isPass = false, TextInputType keyboardType = TextInputType.text, required TextEditingController controller}) {
+  Widget _buildField(
+    BuildContext context,
+    String hint,
+    IconData icon,
+    bool isDesktop, {
+    bool isPass = false,
+    TextInputType keyboardType = TextInputType.text,
+    required TextEditingController controller,
+  }) {
     return TextField(
       controller: controller, // Controller Connect
       obscureText: isPass,
@@ -257,7 +381,11 @@ class _RegistrationModalSheetState extends State<RegistrationModalSheet> {
       style: TextStyle(fontSize: isDesktop ? 16 : 14),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, color: Theme.of(context).primaryColor, size: isDesktop ? 22 : 20),
+        prefixIcon: Icon(
+          icon,
+          color: Theme.of(context).primaryColor,
+          size: isDesktop ? 22 : 20,
+        ),
         filled: true,
         fillColor: Theme.of(context).cardColor,
         border: OutlineInputBorder(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// 📂 আপনার প্রজেক্টের পাথ অনুযায়ী এই ৩টি ইম্পোর্ট ঠিক করে নেবেন
+
 import 'active_booking_card.dart';
 import 'cancelled_booking_card.dart';
 import 'suspended_booking_card.dart';
@@ -11,7 +11,7 @@ class BookingCardWidget extends StatelessWidget {
   final Color primaryAccent;
   final VoidCallback? onViewDetails;
   final VoidCallback? onCancel;
-  final VoidCallback? onAppeal; // 👈 আপিল শিট ওপেন করার ডেডিকেটেড কলব্যাক
+  final VoidCallback? onAppeal;
 
   const BookingCardWidget({
     super.key,
@@ -26,12 +26,17 @@ class BookingCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔄 স্ট্যাটাস কলামগুলো এক্সট্র্যাক্ট করে লোয়ারকেস করে নেওয়া
-    String paymentStatus = (booking['payment_status'] ?? "Pending").toString().trim().toLowerCase();
-    String bookingStatus = (booking['booking_status'] ?? "pending").toString().trim().toLowerCase();
+    String paymentStatus = (booking['payment_status'] ?? "Pending")
+        .toString()
+        .trim()
+        .toLowerCase();
+    String bookingStatus = (booking['booking_status'] ?? "pending")
+        .toString()
+        .trim()
+        .toLowerCase();
 
-    // 🔍 ১. সাসপেন্ডেড স্টেট চেক (যেকোনো একটি কলামে হিট করলেই হবে)
-    bool isSuspendedState = bookingStatus == "suspended" ||
+    bool isSuspendedState =
+        bookingStatus == "suspended" ||
         bookingStatus == "appealed" ||
         paymentStatus == "suspended" ||
         paymentStatus == "appealed";
@@ -42,13 +47,16 @@ class BookingCardWidget extends StatelessWidget {
         isDark: isDark,
         primaryAccent: primaryAccent,
         onViewDetails: onViewDetails,
-        onAppeal: onAppeal, // 🎯 কোনো লজিক ছাড়াই ডিরেক্ট ক্লিক পাস হবে এখানে
+        onAppeal: onAppeal,
       );
     }
 
-    // 🔍 ২. ক্যানসেলেশন স্টেট চেক
     bool isCancellationState = [
-      "cancelled", "cancellation pending", "cancellation approved", "refund processing", "refund done"
+      "cancelled",
+      "cancellation pending",
+      "cancellation approved",
+      "refund processing",
+      "refund done",
     ].contains(bookingStatus);
 
     if (isCancellationState) {
@@ -60,7 +68,6 @@ class BookingCardWidget extends StatelessWidget {
       );
     }
 
-    // 🔍 ৩. ডিফল্ট অ্যাক্টিভ/আপকামিং স্টেট
     return ActiveBookingCard(
       booking: booking,
       isDark: isDark,

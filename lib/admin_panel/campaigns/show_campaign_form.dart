@@ -99,7 +99,7 @@ void showCampaignForm(
                               try {
                                 final bytes = await image.readAsBytes();
 
-                                // ফাংশন কল করা হচ্ছে
+                                /// function call
                                 final result =
                                     await DatabaseHelper.uploadImageBytes(
                                       folder: 'campaigns',
@@ -108,13 +108,11 @@ void showCampaignForm(
                                       bytes: bytes,
                                     );
 
-                                // 🟢 ম্যাপ থেকে ডাটা নেওয়া হচ্ছে
+                                /// map data
                                 if (result != null) {
                                   setState(() {
-                                    bannerCtrl.text =
-                                        result['url']!; // URL টি সেট হলো
-                                    bannerPath =
-                                        result['path']!; // পাথটি এখানে সেট হলো
+                                    bannerCtrl.text = result['url']!;
+                                    bannerPath = result['path']!;
                                   });
                                 }
                               } catch (e) {

@@ -1,18 +1,24 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
-import 'package:flutter/foundation.dart' show kIsWeb; // ওয়েব ডিটেক্ট করার জন্য
-import 'dart:io';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'cancel_service.dart';
 
 class CancelController {
-
-  // লিস্ট ফেচ করার জন্য
+  /// list fetch
   Future<List<Map<String, dynamic>>> fetchCancelled() async =>
       await CancelService.getCancelledPayments();
 
-  // ১. Cancellation Approved লজিক (সাথে অটো ১২% কাটছাট ক্যালকুলেশন)
-  Future<void> approveCancellation(String id, double basePrice, double paymentAmount, VoidCallback onUpdate) async {
+  /// Cancellation Approved logic with 12% deduction
+  Future<void> approveCancellation(
+    String id,
+    double basePrice,
+    double paymentAmount,
+    VoidCallback onUpdate,
+  ) async {
     print("Attempting to approve booking: $id");
     double deduction = basePrice * 0.12;
 
@@ -24,15 +30,22 @@ class CancelController {
         'refund_status': 'request',
         'refund_amount': refundAmount.toString(),
       });
-      print("Update successful!"); // এটি প্রিন্ট হলে বুঝবে ডাটাবেস আপডেট হয়েছে
+      print("Update successful!");
       onUpdate();
     } catch (e) {
-      print("Error during update: $e"); // কোন এরর থাকলে এখানে দেখা যাবে
+      print("Error during update: $e");
     }
   }
 
-  // ২. রিফান্ড স্ট্যাটাস আপডেট লজিক (ইমেজ এবং ট্রানজ্যাকশন সহ)
-  Future<void> saveRefund(String id, String userId, String status, String trans, dynamic image, VoidCallback onDone) async {
+  /// refund status update logic with image and transaction
+  Future<void> saveRefund(
+    String id,
+    String userId,
+    String status,
+    String trans,
+    dynamic image,
+    VoidCallback onDone,
+  ) async {
     String? imageUrl;
 
     if (image != null) {
@@ -41,25 +54,31 @@ class CancelController {
       final path = 'refunded/images/$fileName';
 
       if (kIsWeb) {
-        // --- ওয়েবের জন্য লজিক ---
-        await Supabase.instance.client.storage.from('user_assets').uploadBinary(
-            path,
-            image as Uint8List, // ওয়েব থেকে বাইট আসছে
-            fileOptions: const FileOptions(upsert: true)
-        );
+        /// -- web logic  ---
+        await Supabase.instance.client.storage
+            .from('user_assets')
+            .uploadBinary(
+              path,
+              image as Uint8List,
+              fileOptions: const FileOptions(upsert: true),
+            );
       } else {
-        // --- মোবাইলের জন্য লজিক ---
-        await Supabase.instance.client.storage.from('user_assets').upload(
-            path,
-            image as File, // মোবাইল থেকে ফাইল আসছে
-            fileOptions: const FileOptions(upsert: true)
-        );
+        /// mobile logic  ---
+        await Supabase.instance.client.storage
+            .from('user_assets')
+            .upload(
+              path,
+              image as File,
+              fileOptions: const FileOptions(upsert: true),
+            );
       }
 
-      imageUrl = Supabase.instance.client.storage.from('user_assets').getPublicUrl(path);
+      imageUrl = Supabase.instance.client.storage
+          .from('user_assets')
+          .getPublicUrl(path);
     }
 
-    // ডাটাবেস আপডেট
+    /// database update
     await CancelService.updateRefundData(id, {
       'refund_status': status.toLowerCase(),
       'refund_transaction': trans,
@@ -69,8 +88,12 @@ class CancelController {
     onDone();
   }
 
-  // ৩. সাধারণ রিফান্ড স্ট্যাটাস আপডেট (ম্যানুয়াল ক্লিকের জন্য)
-  Future<void> updateRefundStatusOnly(String id, String status, VoidCallback onDone) async {
+  /// refund status update
+  Future<void> updateRefundStatusOnly(
+    String id,
+    String status,
+    VoidCallback onDone,
+  ) async {
     await CancelService.updateRefundData(id, {
       'refund_status': status.toLowerCase(),
     });

@@ -17,7 +17,7 @@ void showPackageForm(
   final featureCtrl = TextEditingController();
   final hoursCtrl = TextEditingController();
 
-  // URL এবং Path ট্র্যাক করার জন্য স্টেট ভেরিয়েবল
+  /// url and path check state
   String profileUrl = item?['image_url'] ?? '';
   String profilePath = item?['image_path'] ?? '';
   List<String> galleryUrls =
@@ -100,11 +100,12 @@ void showPackageForm(
                     IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: () {
-                        if (featureCtrl.text.isNotEmpty)
+                        if (featureCtrl.text.isNotEmpty) {
                           setState(() {
                             features.add(featureCtrl.text);
                             featureCtrl.clear();
                           });
+                        }
                       },
                     ),
                   ],
@@ -134,11 +135,12 @@ void showPackageForm(
                     IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: () {
-                        if (hoursCtrl.text.isNotEmpty)
+                        if (hoursCtrl.text.isNotEmpty) {
                           setState(() {
                             hoursList.add(hoursCtrl.text);
                             hoursCtrl.clear();
                           });
+                        }
                       },
                     ),
                   ],
@@ -168,12 +170,13 @@ void showPackageForm(
                         userId: 'p_${DateTime.now().millisecondsSinceEpoch}',
                         bytes: await img.readAsBytes(),
                       );
-                      if (res != null)
+                      if (res != null) {
                         setState(() {
                           profileUrl = res['url']!;
                           profilePath = res['path']!;
                           isUploading = false;
                         });
+                      }
                     }
                   },
                   child: const Text("Select Profile Image"),
@@ -201,12 +204,13 @@ void showPackageForm(
                                 'g_${DateTime.now().millisecondsSinceEpoch}',
                             bytes: await img.readAsBytes(),
                           );
-                          if (res != null)
+                          if (res != null) {
                             setState(() {
                               galleryUrls.add(res['url']!);
                               galleryPaths.add(res['path']!);
                               isUploading = false;
                             });
+                          }
                         }
                       },
                     ),
@@ -266,7 +270,7 @@ void showPackageForm(
                 'image_url': profileUrl,
                 'image_path': profilePath,
                 'gallary_image_url': galleryUrls.join(','),
-                'gallery_paths': galleryPaths.join(','),
+                'gallary_paths': galleryPaths.join(','),
                 'is_active': isActive,
                 'is_customization': isCustom,
               };

@@ -38,7 +38,7 @@ class CampaignsListItem extends StatelessWidget {
             ),
             const SizedBox(width: 15),
 
-            // ২. বাকি সব ডাটা
+            /// all data
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +51,8 @@ class CampaignsListItem extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  // গ্রিড বা র‍্যাপ আকারে সব ডাটা
+
+                  /// grid view of campaign
                   Wrap(
                     spacing: 10,
                     runSpacing: 5,
@@ -79,7 +80,7 @@ class CampaignsListItem extends StatelessWidget {
               ),
             ),
 
-            // ৩. এডিট/ডিলিট বাটন
+            /// edit and delete
             Column(
               children: [
                 IconButton(
@@ -93,7 +94,7 @@ class CampaignsListItem extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () async {
-                    // ডিলিট করার আগে কনফার্মেশন নেওয়া ভালো
+                    /// before confirmation delete addons
                     bool? confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -115,7 +116,7 @@ class CampaignsListItem extends StatelessWidget {
                     );
 
                     if (confirm == true) {
-                      // এখানে CampaignsLogic.delete এর বদলে deleteCampaign ব্যবহার করো
+                      /// delete campaign
                       await CampaignsLogic.deleteCampaign(item);
                       onUpdate();
                     }

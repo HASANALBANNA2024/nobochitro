@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'addons_logic.dart';
+
 import 'addons_form.dart';
+import 'addons_logic.dart';
 
 class AddonsListItem extends StatelessWidget {
   final Map<String, dynamic> item;
@@ -14,7 +15,8 @@ class AddonsListItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        // ইমেজ সেকশন
+
+        /// Image Section
         leading: Container(
           width: 60,
           height: 60,
@@ -24,22 +26,29 @@ class AddonsListItem extends StatelessWidget {
           ),
           child: item['image_url'] != null
               ? ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(item['image_url'], fit: BoxFit.cover),
-          )
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(item['image_url'], fit: BoxFit.cover),
+                )
               : const Icon(Icons.image, color: Colors.grey),
         ),
-        // টাইটেল এবং সাব-টাইটেল (Price & Category)
-        title: Text(item['title'] ?? 'No Title', style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text("Price: ${item['price']}৳ | Cat: ${item['category'] ?? 'N/A'}"),
 
-        // বাটন সেকশন
+        /// Title and sub title and price
+        title: Text(
+          item['title'] ?? 'No Title',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          "Price: ${item['price']}৳ | Cat: ${item['category'] ?? 'N/A'}",
+        ),
+
+        /// Button Section
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.blue),
-              onPressed: () => showAddonsForm(context, item: item, onComplete: onUpdate),
+              onPressed: () =>
+                  showAddonsForm(context, item: item, onComplete: onUpdate),
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),

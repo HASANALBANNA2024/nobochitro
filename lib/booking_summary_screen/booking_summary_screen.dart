@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +10,7 @@ import 'package:nobochitro/payments/payment_sheet.dart';
 import 'package:nobochitro/widgets/addOns_selector.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 import 'package:nobochitro/widgets/photographer_selector.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👈 সুপাবেস ক্লায়েন্ট ব্যবহারের জন্য নিশ্চিত করা হলো
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   final Color primaryAccent;
@@ -37,20 +37,17 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   String _selectedPhotographer = "None";
   double totalAddonsPrice = 0.0;
 
-  // 🔴 ফায়ারবেস থেকে ডাইনামিক ক্লায়েন্ট ডাটা ট্র্যাকিং
   String dynamicNsrId = "NSR-LOADING...";
   String dynamicUserName = "Loading User...";
   String dynamicUserEmail = "";
   String dynamicUserPhone = "";
 
-  // 🔴 সুপাবেস থেকে ডাইনামিক ফটোগ্রাফার ডাটা ট্র্যাকিং
   String? _selectedPhotographerId;
   double _selectedPhotographerHourlyRate = 0.0;
 
   List<Map<String, dynamic>> _selectedAddOnsList = [];
   late Future<List<Map<String, dynamic>>> _photographersFuture;
 
-  // 🎯 ─── কুপন সিস্টেমের নতুন ভ্যারিয়েবলস ───
   final TextEditingController _couponController = TextEditingController();
   String? _appliedCouponCode;
   bool _isCouponApplied = false;
@@ -66,13 +63,12 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     _selectedDurationHours = widget.packageData['base_hours'] ?? 1;
     _photographersFuture = DatabaseHelper.instance.getPhotographers();
 
-    // 🔴 স্ক্রিন ওপেন হওয়ার সাথে সাথে ফায়ারস্টোর থেকে ইউজারের ডাটা লোড হবে
     _fetchFirebaseUserData();
   }
 
   @override
   void dispose() {
-    _couponController.dispose(); // কন্ট্রোলার মেমোরি ক্লিয়ার করা
+    _couponController.dispose();
     super.dispose();
   }
 
@@ -114,7 +110,6 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     }
   }
 
-  // 🎯 ─── সুপাবেস কুপন চেক ও অ্যাপ্লাই লজিক (targeted_category এবং targeted_package চেইক) ───
   Future<void> _applyCouponCode() async {
     final inputCode = _couponController.text.trim();
     if (inputCode.isEmpty) {
@@ -131,7 +126,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           .maybeSingle();
 
       if (response == null) {
-        _showSnackBar("❌ Invalid or inactive coupon code!", Colors.red);
+        _showSnackBar("Invalid or inactive coupon code!", Colors.red);
         return;
       }
 
@@ -139,50 +134,64 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       final DateTime now = DateTime.now();
       final DateTime endDate = DateTime.parse(response['end_date'].toString());
       if (now.isAfter(endDate)) {
-        _showSnackBar("❌ Sorry, this coupon code has expired!", Colors.red);
+        _showSnackBar("Sorry, this coupon code has expired!", Colors.red);
         return;
       }
 
-      // কারেন্ট প্যাকেজের আইডি এবং ক্যাটাগরি ডাটা
-      final String currentPackageId = widget.packageData['package_id']?.toString() ?? "PKG-UNKNOWN";
-      final String currentCategory = widget.packageData['category']?.toString() ?? "General";
+      /// current package id and category
+      final String currentPackageId =
+          widget.packageData['package_id']?.toString() ?? "PKG-UNKNOWN";
+      final String currentCategory =
+          widget.packageData['category']?.toString() ?? "General";
 
       final String? dbCategory = response['targeted_category']?.toString();
       final String? dbPackage = response['targeted_package']?.toString();
 
       bool isEligible = false;
 
-      // ২. সুনির্দিষ্ট প্যাকেজ চেক (targeted_package কলাম চেক)
+      /// targeted package
       if (dbPackage != null && dbPackage.trim().isNotEmpty) {
-        List<String> allowedPackages = dbPackage.split(',').map((e) => e.trim().toLowerCase()).toList();
+        List<String> allowedPackages = dbPackage
+            .split(',')
+            .map((e) => e.trim().toLowerCase())
+            .toList();
         if (allowedPackages.contains(currentPackageId.toLowerCase())) {
           isEligible = true;
         }
       }
 
-      // ৩. ক্যাটাগরি চেক (targeted_category কলাম চেক - যদি প্যাকেজ দিয়ে ম্যাচ না হয়ে থাকে)
+      /// category check
       if (!isEligible && dbCategory != null && dbCategory.trim().isNotEmpty) {
-        List<String> allowedCategories = dbCategory.split(',').map((e) => e.trim().toLowerCase()).toList();
+        List<String> allowedCategories = dbCategory
+            .split(',')
+            .map((e) => e.trim().toLowerCase())
+            .toList();
         if (allowedCategories.contains(currentCategory.toLowerCase())) {
           isEligible = true;
         }
       }
 
-      // কুপন যদি কোনো নির্দিষ্ট কন্ডিশন হোল্ড করে কিন্তু কোনোটাই ম্যাচ না করে
-      if ((dbPackage != null && dbPackage.trim().isNotEmpty || dbCategory != null && dbCategory.trim().isNotEmpty) && !isEligible) {
-        _showSnackBar("❌ This coupon is not valid for this package or category!", Colors.red);
+      if ((dbPackage != null && dbPackage.trim().isNotEmpty ||
+              dbCategory != null && dbCategory.trim().isNotEmpty) &&
+          !isEligible) {
+        _showSnackBar(
+          "This coupon is not valid for this package or category!",
+          Colors.red,
+        );
         return;
       }
 
-      // ৪. সব চেক পাস হলে ডিসকাউন্ট স্টেট সেট হবে
+      /// all check pass and discount check
       setState(() {
         _discountPercentage = response['discount_pct'] ?? 0;
         _appliedCouponCode = inputCode;
         _isCouponApplied = true;
       });
 
-      _showSnackBar("🎉 Coupon applied successfully! ৳$_discountPercentage% off.", Colors.green);
-
+      _showSnackBar(
+        "🎉 Coupon applied successfully! ৳$_discountPercentage% off.",
+        Colors.green,
+      );
     } catch (e) {
       debugPrint("Coupon Apply Error: $e");
       _showSnackBar("Error validating coupon!", Colors.red);
@@ -191,34 +200,43 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
   void _showSnackBar(String message, Color bgColor) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: bgColor, duration: const Duration(seconds: 2)),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: bgColor,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
-  // আপনার দেওয়া ৬০% লজিক অনুযায়ী ফটোগ্রাফারের এক্সট্রা আওয়ার্লি চার্জ ক্যালকুলেশন
   double _calculateExtraPhotographerCharge() {
-    if (_selectedPhotographer == "None" || _selectedPhotographer.isEmpty) return 0.0;
+    if (_selectedPhotographer == "None" || _selectedPhotographer.isEmpty)
+      return 0.0;
 
-    double basePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
+    double basePrice =
+        double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
     int baseHours = widget.packageData['base_hours'] ?? 1;
 
     double packageAllocatedHourlyRate = (basePrice * 0.6) / baseHours;
 
     if (_selectedPhotographerHourlyRate > packageAllocatedHourlyRate) {
-      double hourlyRateDifference = _selectedPhotographerHourlyRate - packageAllocatedHourlyRate;
-      double totalSelectedDuration = _selectedDurationHours + (_selectedDurationMinutes / 60);
+      double hourlyRateDifference =
+          _selectedPhotographerHourlyRate - packageAllocatedHourlyRate;
+      double totalSelectedDuration =
+          _selectedDurationHours + (_selectedDurationMinutes / 60);
       return totalSelectedDuration * hourlyRateDifference;
     }
 
     return 0.0;
   }
 
-  // এক্সট্রা আওয়ার্সের প্রাইস ক্যালকুলেশন
+  /// Extra hours calculation
   double _calculateExtraHoursPrice() {
-    double basePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
+    double basePrice =
+        double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
     int baseHours = widget.packageData['base_hours'] ?? 1;
     double pricePerHour = basePrice / baseHours;
-    double selectedDuration = _selectedDurationHours + (_selectedDurationMinutes / 60);
+    double selectedDuration =
+        _selectedDurationHours + (_selectedDurationMinutes / 60);
     double extraPrice = 0.0;
 
     if (selectedDuration > baseHours) {
@@ -228,10 +246,15 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     return extraPrice;
   }
 
-  // 🎯 মেইন টোটাল অ্যামাউন্ট হিসাব (কুপন ডিসকাউন্ট শুধুমাত্র মেইন ফাইনাল টাকা থেকে মাইনাস হবে)
+  /// main total amount
   double _calculateFinalAmount() {
-    double basePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
-    double totalBeforeDiscount = basePrice + _calculateExtraHoursPrice() + _calculateExtraPhotographerCharge() + totalAddonsPrice;
+    double basePrice =
+        double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
+    double totalBeforeDiscount =
+        basePrice +
+        _calculateExtraHoursPrice() +
+        _calculateExtraPhotographerCharge() +
+        totalAddonsPrice;
 
     if (_isCouponApplied) {
       double discount = totalBeforeDiscount * (_discountPercentage / 100);
@@ -246,10 +269,12 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    double basePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
+    double basePrice =
+        double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
     int baseHours = widget.packageData['base_hours'] ?? 1;
     double packageAllocatedHourlyRate = (basePrice * 0.6) / baseHours;
-    bool isPhotographerSelected = _selectedPhotographer != "None" && _selectedPhotographer.isNotEmpty;
+    bool isPhotographerSelected =
+        _selectedPhotographer != "None" && _selectedPhotographer.isNotEmpty;
 
     return Scaffold(
       appBar: buildCustomAppBar(
@@ -276,7 +301,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                       selectedHours: _selectedDurationHours,
                       selectedMinutes: _selectedDurationMinutes,
                       selectedTime: _selectedTime,
-                      locationType: (_selectedLocationType == "Outdoor" && _outdoorAddress.isNotEmpty)
+                      locationType:
+                          (_selectedLocationType == "Outdoor" &&
+                              _outdoorAddress.isNotEmpty)
                           ? _outdoorAddress
                           : _selectedLocationType,
                       totalAddonsPrice: totalAddonsPrice,
@@ -288,21 +315,27 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                       photographersFuture: _photographersFuture,
                       onPhotographerSelected: (p) => setState(() {
                         _selectedPhotographer = p['name'] ?? "Unknown";
-                        _selectedPhotographerId = p['photographer_id']?.toString() ?? "N-UNKNOWN";
-                        _selectedPhotographerHourlyRate = double.tryParse(p['price_per_hour'].toString()) ?? 0.0;
+                        _selectedPhotographerId =
+                            p['photographer_id']?.toString() ?? "N-UNKNOWN";
+                        _selectedPhotographerHourlyRate =
+                            double.tryParse(p['price_per_hour'].toString()) ??
+                            0.0;
                       }),
                     ),
 
                     if (isPhotographerSelected) ...[
                       const SizedBox(height: 8),
                       Text(
-                        _selectedPhotographerHourlyRate <= packageAllocatedHourlyRate
+                        _selectedPhotographerHourlyRate <=
+                                packageAllocatedHourlyRate
                             ? "This photographer is valid for package not pay extra fees"
                             : "Premium Photographer Extra Fee: ৳${_calculateExtraPhotographerCharge().toStringAsFixed(0)} (+৳${(_selectedPhotographerHourlyRate - packageAllocatedHourlyRate).toStringAsFixed(0)}/h)",
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: _selectedPhotographerHourlyRate <= packageAllocatedHourlyRate
+                          color:
+                              _selectedPhotographerHourlyRate <=
+                                  packageAllocatedHourlyRate
                               ? Colors.green
                               : widget.primaryAccent,
                         ),
@@ -312,17 +345,24 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     const SizedBox(height: 25),
                     const Text(
                       "Extra Service",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     AddOnsSelector(
-                      selectedCategory: widget.packageData['category'] ?? "Not available",
+                      selectedCategory:
+                          widget.packageData['category'] ?? "Not available",
                       onSelectionChanged: (newList) {
                         setState(() {
                           _selectedAddOnsList = newList;
                           totalAddonsPrice = newList.fold(
                             0.0,
-                                (sum, item) => sum + (double.tryParse(item['price'].toString()) ?? 0.0),
+                            (sum, item) =>
+                                sum +
+                                (double.tryParse(item['price'].toString()) ??
+                                    0.0),
                           );
                         });
                       },
@@ -338,38 +378,48 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     _buildSectionTitle("Event Location", theme),
                     _buildLocationSelector(isDark),
 
-                    // 🎯 ─── কুপন কোড ইনপুট ফিল্ড ও বাটন UI সেকশন ───
+                    /// cupon code and ui button apply section ───
                     const SizedBox(height: 25),
                     Row(
                       children: [
                         Expanded(
-
                           child: TextField(
                             controller: _couponController,
-                            enabled: !_isCouponApplied, // অ্যাপ্লাই হয়ে গেলে ফিল্ডটি লক হয়ে যাবে
+                            enabled: !_isCouponApplied,
                             textCapitalization: TextCapitalization.characters,
                             decoration: InputDecoration(
                               hintText: "Enter Coupon Code",
                               filled: true,
-                              fillColor: isDark ? Colors.grey[900] : Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              fillColor: isDark
+                                  ? Colors.grey[900]
+                                  : Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.black12),
+                                borderSide: BorderSide(
+                                  color: isDark
+                                      ? Colors.white10
+                                      : Colors.black12,
+                                ),
                               ),
-                              // কুপন অ্যাপ্লাই হয়ে গেলে রাইট সাইডে একটি 'Clear' আইকন দেখাবে
                               suffixIcon: _isCouponApplied
                                   ? IconButton(
-                                icon: const Icon(Icons.close, color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    _isCouponApplied = false;
-                                    _appliedCouponCode = null;
-                                    _discountPercentage = 0;
-                                    _couponController.clear();
-                                  });
-                                },
-                              )
+                                      icon: const Icon(
+                                        Icons.close,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isCouponApplied = false;
+                                          _appliedCouponCode = null;
+                                          _discountPercentage = 0;
+                                          _couponController.clear();
+                                        });
+                                      },
+                                    )
                                   : null,
                             ),
                           ),
@@ -378,11 +428,15 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                         SizedBox(
                           height: 52,
                           child: ElevatedButton(
-                            onPressed: _isCouponApplied ? null : _applyCouponCode,
+                            onPressed: _isCouponApplied
+                                ? null
+                                : _applyCouponCode,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: widget.primaryAccent,
                               foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: Text(_isCouponApplied ? "Applied" : "Apply"),
                           ),
@@ -393,7 +447,11 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                       const SizedBox(height: 6),
                       Text(
                         "🎉 Coupon '$_appliedCouponCode' Active ($_discountPercentage% Discount Appended)",
-                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
 
@@ -431,10 +489,16 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     onSelected: (val) => setState(() => _selectedTime = time),
                     selectedColor: widget.primaryAccent,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.black : (isDark ? Colors.white : Colors.black),
+                      color: isSelected
+                          ? Colors.black
+                          : (isDark ? Colors.white : Colors.black),
                     ),
-                    backgroundColor: isDark ? Colors.grey[850] : Colors.grey[200],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: isDark
+                        ? Colors.grey[850]
+                        : Colors.grey[200],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     showCheckmark: false,
                   ),
                 );
@@ -451,10 +515,13 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     context: context,
                     initialTime: TimeOfDay.now(),
                   );
-                  if (t != null) setState(() => _selectedTime = t.format(context));
+                  if (t != null)
+                    setState(() => _selectedTime = t.format(context));
                 },
                 backgroundColor: isDark ? Colors.grey[850] : Colors.grey[200],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ],
           ),
@@ -473,11 +540,17 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Booking Duration", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  const Text(
+                    "Booking Duration",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     "${_selectedDurationHours}h ${_selectedDurationMinutes}m",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -486,7 +559,8 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   _buildRoundBtn(Icons.remove, () {
                     setState(() {
                       int baseH = widget.packageData['base_hours'] ?? 1;
-                      if (_selectedDurationHours > baseH || _selectedDurationMinutes >= 30) {
+                      if (_selectedDurationHours > baseH ||
+                          _selectedDurationMinutes >= 30) {
                         if (_selectedDurationMinutes == 0) {
                           _selectedDurationHours--;
                           _selectedDurationMinutes = 30;
@@ -520,7 +594,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: widget.primaryAccent, shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: widget.primaryAccent,
+          shape: BoxShape.circle,
+        ),
         child: Icon(icon, color: Colors.black, size: 20),
       ),
     );
@@ -592,12 +669,20 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           decoration: BoxDecoration(
             color: isSelected ? widget.primaryAccent : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? widget.primaryAccent : Colors.grey.withOpacity(0.3)),
+            border: Border.all(
+              color: isSelected
+                  ? widget.primaryAccent
+                  : Colors.grey.withOpacity(0.3),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: isSelected ? Colors.black : Colors.grey),
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected ? Colors.black : Colors.grey,
+              ),
               const SizedBox(width: 8),
               Text(
                 type,
@@ -618,20 +703,28 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     double extraHoursPrice = _calculateExtraHoursPrice();
     double extraPhotographerPrice = _calculateExtraPhotographerCharge();
 
-    String databasePackageId = widget.packageData['package_id'] ?? "PKG-UNKNOWN";
-    String databasePackageName = widget.packageData['title'] ?? "Unknown Package";
+    String databasePackageId =
+        widget.packageData['package_id'] ?? "PKG-UNKNOWN";
+    String databasePackageName =
+        widget.packageData['title'] ?? "Unknown Package";
     String databaseCategory = widget.packageData['category'] ?? "General";
-    double packageBasePrice = double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
-    String rawFeatures = widget.packageData['features']?.toString() ?? "No features listed";
+    double packageBasePrice =
+        double.tryParse(widget.packageData['base_price'].toString()) ?? 0.0;
+    String rawFeatures =
+        widget.packageData['features']?.toString() ?? "No features listed";
 
     String databaseNsrId = dynamicNsrId;
     String databaseUserName = dynamicUserName;
     String databasePhotographerId = _selectedPhotographerId ?? "N-UNKNOWN";
 
     bool isDateSelected = _selectedDate != null;
-    bool isPhotographerSelected = _selectedPhotographer != "None" && _selectedPhotographer.isNotEmpty;
-    bool isLocationValid = _selectedLocationType == "Outdoor" ? _outdoorAddress.trim().isNotEmpty : true;
-    bool isFormValid = isDateSelected && isPhotographerSelected && isLocationValid;
+    bool isPhotographerSelected =
+        _selectedPhotographer != "None" && _selectedPhotographer.isNotEmpty;
+    bool isLocationValid = _selectedLocationType == "Outdoor"
+        ? _outdoorAddress.trim().isNotEmpty
+        : true;
+    bool isFormValid =
+        isDateSelected && isPhotographerSelected && isLocationValid;
 
     return SizedBox(
       width: double.infinity,
@@ -639,64 +732,79 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       child: ElevatedButton(
         onPressed: isFormValid
             ? () {
-          final Map<String, dynamic> currentBooking = {
-            'user_id': databaseNsrId,
-            'user_name': databaseUserName,
-            'user_email': dynamicUserEmail,
-            'user_phone': dynamicUserPhone,
+                final Map<String, dynamic> currentBooking = {
+                  'user_id': databaseNsrId,
+                  'user_name': databaseUserName,
+                  'user_email': dynamicUserEmail,
+                  'user_phone': dynamicUserPhone,
 
-            'package_id': databasePackageId,
-            'package_name': databasePackageName,
-            'package_category': databaseCategory,
-            'base_price': packageBasePrice,
-            'package_features': rawFeatures,
+                  'package_id': databasePackageId,
+                  'package_name': databasePackageName,
+                  'package_category': databaseCategory,
+                  'base_price': packageBasePrice,
+                  'package_features': rawFeatures,
 
-            'photographer_id': databasePhotographerId,
-            'photographer_name': _selectedPhotographer,
-            'photographer_hourly_rate': _selectedPhotographerHourlyRate,
+                  'photographer_id': databasePhotographerId,
+                  'photographer_name': _selectedPhotographer,
+                  'photographer_hourly_rate': _selectedPhotographerHourlyRate,
 
-            'event_date': DateFormat('yyyy-MM-dd').format(_selectedDate!),
-            'event_time': _selectedTime,
-            'event_duration': "${_selectedDurationHours}h ${_selectedDurationMinutes}m",
-            'event_location': _selectedLocationType == "Outdoor" && _outdoorAddress.isNotEmpty
-                ? _outdoorAddress
-                : _selectedLocationType,
+                  'event_date': DateFormat('yyyy-MM-dd').format(_selectedDate!),
+                  'event_time': _selectedTime,
+                  'event_duration':
+                      "${_selectedDurationHours}h ${_selectedDurationMinutes}m",
+                  'event_location':
+                      _selectedLocationType == "Outdoor" &&
+                          _outdoorAddress.isNotEmpty
+                      ? _outdoorAddress
+                      : _selectedLocationType,
 
-            'extra_hours_price': extraHoursPrice,
-            'extra_photographer_price': extraPhotographerPrice,
-            'total_addons_price': totalAddonsPrice,
-            'total_amount': totalAmount,
+                  'extra_hours_price': extraHoursPrice,
+                  'extra_photographer_price': extraPhotographerPrice,
+                  'total_addons_price': totalAddonsPrice,
+                  'total_amount': totalAmount,
 
-            // পেমেন্ট শীটে কুপন ট্র্যাকিংয়ের জন্য ডাটা পাঠানো হচ্ছে
-            'applied_coupon_code': (_appliedCouponCode != null && _appliedCouponCode!.isNotEmpty)
-                ? _appliedCouponCode
-                : null,
-            'coupon_discount_percentage': (_discountPercentage != null && _discountPercentage! > 0)
-                ? _discountPercentage
-                : null,
+                  /// payment for cupon tracking
+                  'applied_coupon_code':
+                      (_appliedCouponCode != null &&
+                          _appliedCouponCode!.isNotEmpty)
+                      ? _appliedCouponCode
+                      : null,
+                  'coupon_discount_percentage':
+                      (_discountPercentage != null && _discountPercentage! > 0)
+                      ? _discountPercentage
+                      : null,
 
-            'selected_addons_breakdown': _selectedAddOnsList.map((item) => {
-              'name': item['name'],
-              'price': double.tryParse(item['price'].toString()) ?? 0.0,
-            }).toList(),
+                  'selected_addons_breakdown': _selectedAddOnsList
+                      .map(
+                        (item) => {
+                          'name': item['name'],
+                          'price':
+                              double.tryParse(item['price'].toString()) ?? 0.0,
+                        },
+                      )
+                      .toList(),
 
-            'addons_summary_text': _selectedAddOnsList.map((item) => item['name']).join(', '),
-          };
+                  'addons_summary_text': _selectedAddOnsList
+                      .map((item) => item['name'])
+                      .join(', '),
+                };
 
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            builder: (context) => PaymentSheet(
-              primaryAccent: widget.primaryAccent,
-              amount: totalAmount,
-              bookingData: currentBooking,
-            ),
-          );
-        }
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (context) => PaymentSheet(
+                    primaryAccent: widget.primaryAccent,
+                    amount: totalAmount,
+                    bookingData: currentBooking,
+                  ),
+                );
+              }
             : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: widget.primaryAccent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
         ),
         child: Text(
           "Pay ৳${totalAmount.toStringAsFixed(0)}",
@@ -725,11 +833,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 }
-
-
-/// coupon System chek

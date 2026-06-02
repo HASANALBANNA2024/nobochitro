@@ -18,7 +18,7 @@ class _PhotographerViewState extends State<PhotographerView> {
   @override
   void initState() {
     super.initState();
-    _fetchData(); // শুরুতে ডাটা আনা
+    _fetchData();
   }
 
   Future<void> _fetchData() async {
@@ -44,15 +44,13 @@ class _PhotographerViewState extends State<PhotographerView> {
               : _photographers.isEmpty
               ? const Center(child: Text("No photographers found"))
               : ListView.builder(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 100),
-            itemCount: _photographers.length,
-            itemBuilder: (ctx, i) => PhotographerListItem(
-              item: _photographers[i],
-              onUpdate: _fetchData,
-            ),
-
-          ),
-
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 100),
+                  itemCount: _photographers.length,
+                  itemBuilder: (ctx, i) => PhotographerListItem(
+                    item: _photographers[i],
+                    onUpdate: _fetchData,
+                  ),
+                ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(

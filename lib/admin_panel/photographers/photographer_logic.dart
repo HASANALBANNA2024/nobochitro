@@ -1,21 +1,22 @@
-import 'dart:convert'; // এটি অবশ্যই লাগবে
+import 'dart:convert';
 import 'dart:math';
+
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PhotographerLogic {
-
   static String generatePhotographerId() {
     final random = Random().nextInt(900000) + 100000;
     return 'PH-$random';
   }
 
-
   /// add photographer
   static Future<void> addPhotographer(Map<String, dynamic> data) async {
     final Map<String, dynamic> preparedData = Map<String, dynamic>.from(data);
     if (preparedData['recent_image_gallary_path'] is List) {
-      preparedData['recent_image_gallary_path'] = jsonEncode(preparedData['recent_image_gallary_path']);
+      preparedData['recent_image_gallary_path'] = jsonEncode(
+        preparedData['recent_image_gallary_path'],
+      );
     }
 
     await DatabaseHelper.insert(table: 'photographers', data: preparedData);
@@ -32,9 +33,10 @@ class PhotographerLogic {
     const String bucketName = 'user_assets';
     final storage = DatabaseHelper.client.storage.from(bucketName);
 
-    /// ১. ইমেজ রিপ্লেস লজিক (পুরনো ডিলিট, নতুন আসবে)
-    // প্রোফাইল ছবি চেঞ্জ হলে
-    if (oldProfile != null && oldProfile.isNotEmpty && oldProfile != data['profile_image_path']) {
+    /// image logic
+    if (oldProfile != null &&
+        oldProfile.isNotEmpty &&
+        oldProfile != data['profile_image_path']) {
       try {
         await storage.remove([oldProfile]);
       } catch (e) {
@@ -42,8 +44,10 @@ class PhotographerLogic {
       }
     }
 
-    // ব্যানার ছবি চেঞ্জ হলে
-    if (oldBanner != null && oldBanner.isNotEmpty && oldBanner != data['banner_image_path']) {
+    /// banner image change
+    if (oldBanner != null &&
+        oldBanner.isNotEmpty &&
+        oldBanner != data['banner_image_path']) {
       try {
         await storage.remove([oldBanner]);
       } catch (e) {
@@ -51,8 +55,10 @@ class PhotographerLogic {
       }
     }
 
-    /// ২. গ্যালারি ইমেজ ডিলিট লজিক (যা নতুন লিস্টে নেই, তা ডিলিট)
-    List<String> newGallery = List<String>.from(data['recent_image_gallary_path'] ?? []);
+    /// gallery image delete
+    List<String> newGallery = List<String>.from(
+      data['recent_image_gallary_path'] ?? [],
+    );
     for (var path in oldGallery) {
       if (!newGallery.contains(path) && path.isNotEmpty) {
         try {
@@ -63,41 +69,53 @@ class PhotographerLogic {
       }
     }
 
-    /// ৩. ডাটা প্রিপারেশন (এখানে preparedData ডিক্লেয়ার করা হয়েছে)
+    ///data preparation and declaration
     final Map<String, dynamic> preparedData = Map<String, dynamic>.from(data);
 
-    // ডাটাবেসে পাঠানোর আগে গ্যালারি লিস্টকে স্ট্রিংয়ে রূপান্তর
+    /// before string convert to send database
     if (preparedData['recent_image_gallary_path'] is List) {
-      preparedData['recent_image_gallary_path'] = jsonEncode(preparedData['recent_image_gallary_path']);
+      preparedData['recent_image_gallary_path'] = jsonEncode(
+        preparedData['recent_image_gallary_path'],
+      );
     }
 
-    /// ৪. ডাটাবেস আপডেট
+    /// database update
     await DatabaseHelper.update(
-        table: 'photographers',
-        column: 'id',
-        value: id,
-        data: preparedData
+      table: 'photographers',
+      column: 'id',
+      value: id,
+      data: preparedData,
     );
   }
 
   ///delete photographer
   static Future<void> deletePhotographer(Map<String, dynamic> item) async {
-    final String currentId = item['photographer_id'] ?? ''; /// id path
+    final String currentId = item['photographer_id'] ?? '';
+
+    /// id path
     if (currentId.isEmpty) return;
 
     /// database row delete
-    await DatabaseHelper.delete(table: 'photographers', column: 'id', value: item['id']);
+    await DatabaseHelper.delete(
+      table: 'photographers',
+      column: 'id',
+      value: item['id'],
+    );
 
     /// delete of storage of logic
     final storage = DatabaseHelper.client.storage.from('user_assets');
 
     try {
       /// folders
-      final List<FileObject> files = await storage.list(path: 'photographers/$currentId');
+      final List<FileObject> files = await storage.list(
+        path: 'photographers/$currentId',
+      );
 
       if (files.isNotEmpty) {
         /// remove list
-        List<String> pathsToDelete = files.map((file) => 'photographers/$currentId/${file.name}').toList();
+        List<String> pathsToDelete = files
+            .map((file) => 'photographers/$currentId/${file.name}')
+            .toList();
 
         /// remove
         await storage.remove(pathsToDelete);

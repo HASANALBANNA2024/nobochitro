@@ -151,7 +151,7 @@ class ActiveBookingCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
+              const SizedBox(height: 6),
               Text(
                 packageTitle,
                 style: const TextStyle(
@@ -161,7 +161,7 @@ class ActiveBookingCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
+              const SizedBox(height: 6),
               Row(
                 children: [
                   const Icon(Icons.wallet, size: 15, color: Colors.grey),
@@ -189,10 +189,7 @@ class ActiveBookingCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const Divider(
-                height: 12,
-                thickness: 0.5,
-              ), // 🎯 20 থেকে 12 করা হয়েছে
+              const Divider(height: 12, thickness: 0.5),
               Row(
                 children: [
                   Expanded(child: _infoTile(Icons.calendar_today, dateStr)),
@@ -200,17 +197,14 @@ class ActiveBookingCard extends StatelessWidget {
                   Expanded(child: _infoTile(Icons.access_time, timeStr)),
                 ],
               ),
-              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
+              const SizedBox(height: 6),
               _infoTile(
                 Icons.camera_alt_outlined,
                 "Photographer: $photographerName",
               ),
-              const SizedBox(height: 6), // 🎯 8 থেকে 6 করা হয়েছে
+              const SizedBox(height: 6),
               _infoTile(Icons.location_on_outlined, locationStr),
-              const Divider(
-                height: 12,
-                thickness: 0.5,
-              ), // 🎯 20 থেকে 12 করা হয়েছে
+              const Divider(height: 12, thickness: 0.5),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -235,7 +229,7 @@ class ActiveBookingCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 10), // 🎯 12 থেকে 10 করা হয়েছে
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -257,9 +251,7 @@ class ActiveBookingCard extends StatelessWidget {
                       },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: primaryAccent),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                        ), // 🎯 10 থেকে 8 করা হয়েছে
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -286,9 +278,7 @@ class ActiveBookingCard extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryAccent,
                               foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                              ), // 🎯 10 থেকে 8 করা হয়েছে
+                              padding: const EdgeInsets.symmetric(vertical: 8),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -306,9 +296,7 @@ class ActiveBookingCard extends StatelessWidget {
                             onPressed: onCancel,
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.redAccent),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                              ), // 🎯 10 থেকে 8 করা হয়েছে
+                              padding: const EdgeInsets.symmetric(vertical: 8),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),

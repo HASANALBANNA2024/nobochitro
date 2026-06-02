@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart'; // তোমার পাথ অনুযায়ী দাও
+
 import 'reviews_list_view.dart';
 
 class ReviewsView extends StatefulWidget {
@@ -21,7 +22,8 @@ class _ReviewsViewState extends State<ReviewsView> {
 
   Future<void> _loadReviews() async {
     setState(() => _isLoading = true);
-    // ডাটাবেস থেকে রিভিউগুলো ফেচ করা
+
+    /// review fetch to database
     final data = await DatabaseHelper.instance.getData(table: 'reviews');
     setState(() {
       _reviews = data;

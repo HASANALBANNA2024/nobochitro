@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:nobochitro/authentication/otp_sheet.dart';
 
 class ForgotPasswordModalSheet extends StatefulWidget {
   const ForgotPasswordModalSheet({super.key});
 
   @override
-  State<ForgotPasswordModalSheet> createState() => _ForgotPasswordModalSheetState();
+  State<ForgotPasswordModalSheet> createState() =>
+      _ForgotPasswordModalSheetState();
 }
 
 class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
@@ -33,13 +34,17 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
       if (!mounted) return;
       Navigator.pop(context); // sheet close
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Reset link sent! Please check your email inbox or spam.")),
+        const SnackBar(
+          content: Text(
+            "Reset link sent! Please check your email inbox or spam.",
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -57,12 +62,11 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
 
         return Material(
           color: Colors.transparent,
-          // 🎯 মোবাইল স্ক্রিনে কিবোর্ডের কারণে হওয়া ওভারফ্লো চিরতরে বন্ধ করতে SingleChildScrollView ও Padding সেফটি যুক্ত করা হলো
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom, // কিbোর্ডের হাইট অনুযায়ী ডাইনামিক স্পেস নেবে
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -78,28 +82,38 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
                   ),
                   const SizedBox(height: 10),
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                     child: Container(
                       color: Theme.of(context).scaffoldBackgroundColor,
                       child: Center(
                         child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: isDesktop ? 500 : double.infinity),
+                          constraints: BoxConstraints(
+                            maxWidth: isDesktop ? 500 : double.infinity,
+                          ),
                           child: Padding(
                             padding: EdgeInsets.fromLTRB(
                               isDesktop ? 30 : horizontalPadding,
                               25,
                               isDesktop ? 30 : horizontalPadding,
-                              20, // বটম প্যাডিং ফিক্সড রাখা হলো
+                              20,
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Image.asset('assets/images/app_icon.png', height: 70),
+                                Image.asset(
+                                  'assets/images/app_icon.png',
+                                  height: 70,
+                                ),
                                 const SizedBox(height: 20),
 
                                 const Text(
                                   "Forgot Password?",
-                                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 10),
@@ -109,11 +123,13 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
                                       ? "Enter your email to receive a reset link."
                                       : "Enter your phone number to receive an OTP code.",
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                                 const SizedBox(height: 25),
 
-                                // 🎯 ইমেইল এবং ফোন কাস্টম ট্যাব সুইচ
                                 Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
@@ -126,7 +142,7 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
                                         if (!_isEmailMode) {
                                           setState(() {
                                             _isEmailMode = true;
-                                            _identifierController.clear(); // ট্যাব চেঞ্জে ফিল্ড ক্লিয়ার হবে
+                                            _identifierController.clear();
                                           });
                                         }
                                       }),
@@ -134,7 +150,7 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
                                         if (_isEmailMode) {
                                           setState(() {
                                             _isEmailMode = false;
-                                            _identifierController.clear(); // ট্যাব চেঞ্জে ফিল্ড ক্লিয়ার হবে
+                                            _identifierController.clear();
                                           });
                                         }
                                       }),
@@ -145,54 +161,83 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
 
                                 _buildField(
                                   context,
-                                  _isEmailMode ? "Enter Email" : "Enter Phone Number",
-                                  _isEmailMode ? Icons.email_outlined : Icons.phone_android_outlined,
+                                  _isEmailMode
+                                      ? "Enter Email"
+                                      : "Enter Phone Number",
+                                  _isEmailMode
+                                      ? Icons.email_outlined
+                                      : Icons.phone_android_outlined,
                                   isDesktop,
                                   controller: _identifierController,
-                                  keyboardType: _isEmailMode ? TextInputType.emailAddress : TextInputType.phone,
+                                  keyboardType: _isEmailMode
+                                      ? TextInputType.emailAddress
+                                      : TextInputType.phone,
                                 ),
                                 const SizedBox(height: 25),
 
                                 _isLoading
                                     ? const CircularProgressIndicator()
                                     : ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: accent,
-                                    minimumSize: const Size(double.infinity, 50),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () {
-                                    if (_identifierController.text.trim().isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(_isEmailMode ? "Please enter your email!" : "Please enter your phone number!")),
-                                      );
-                                      return;
-                                    }
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: accent,
+                                          minimumSize: const Size(
+                                            double.infinity,
+                                            50,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        onPressed: () {
+                                          if (_identifierController.text
+                                              .trim()
+                                              .isEmpty) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  _isEmailMode
+                                                      ? "Please enter your email!"
+                                                      : "Please enter your phone number!",
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
 
-                                    if (_isEmailMode) {
-                                      // Direct Email Reset function call
-                                      _sendEmailReset();
-                                    } else {
-                                      // Phone mode for otp screen
-                                      Navigator.pop(context);
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) => const OTPModalSheet(),
-                                      );
-                                    }
-                                  },
-                                  child: Text(
-                                    _isEmailMode ? "SEND RESET LINK" : "SEND CODE",
-                                    style: TextStyle(
-                                      color: isDark ? Colors.black : Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
+                                          if (_isEmailMode) {
+                                            // Direct Email Reset function call
+                                            _sendEmailReset();
+                                          } else {
+                                            // Phone mode for otp screen
+                                            Navigator.pop(context);
+                                            showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              builder: (context) =>
+                                                  const OTPModalSheet(),
+                                            );
+                                          }
+                                        },
+                                        child: Text(
+                                          _isEmailMode
+                                              ? "SEND RESET LINK"
+                                              : "SEND CODE",
+                                          style: TextStyle(
+                                            color: isDark
+                                                ? Colors.black
+                                                : Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
                                 const SizedBox(height: 10),
                               ],
                             ),
@@ -218,7 +263,9 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isActive ? Theme.of(context).primaryColor : Colors.transparent,
+            color: isActive
+                ? Theme.of(context).primaryColor
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -237,22 +284,35 @@ class _ForgotPasswordModalSheetState extends State<ForgotPasswordModalSheet> {
     );
   }
 
-  Widget _buildField(BuildContext context, String hint, IconData icon, bool isDesktop,
-      {required TextEditingController controller, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildField(
+    BuildContext context,
+    String hint,
+    IconData icon,
+    bool isDesktop, {
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       style: TextStyle(fontSize: isDesktop ? 16 : 14),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, color: Theme.of(context).primaryColor, size: isDesktop ? 22 : 20),
+        prefixIcon: Icon(
+          icon,
+          color: Theme.of(context).primaryColor,
+          size: isDesktop ? 22 : 20,
+        ),
         filled: true,
         fillColor: Theme.of(context).cardColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 15,
+          vertical: 15,
+        ),
       ),
     );
   }

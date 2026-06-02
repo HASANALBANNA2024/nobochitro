@@ -12,9 +12,9 @@ class PackageLogic {
         data: data,
       );
 
-  /// প্যাকেজ এবং তার ছবিগুলো ডিলিট করার নতুন লজিক
+  /// package and with picture delete
   static Future<void> deletePackage(Map<String, dynamic> package) async {
-    // ১. প্রোফাইল ইমেজ ডিলিট
+    /// Profile image delete
     if (package['image_path'] != null) {
       await DatabaseHelper.deleteWithStorage(
         table: 'packages',
@@ -25,7 +25,7 @@ class PackageLogic {
       );
     }
 
-    // ২. গ্যালারি ইমেজগুলো ডিলিট
+    /// gallery image delete
     if (package['gallery_paths'] != null) {
       List<String> paths = package['gallery_paths'].toString().split(',');
       for (String path in paths) {
@@ -41,7 +41,7 @@ class PackageLogic {
       }
     }
 
-    // ৩. ফাইনাল ডিলিট (যদি উপরেরগুলো বাদে শুধু ডাটা ডিলিট করতে চাও)
+    /// final delete
     await DatabaseHelper.delete(
       table: 'packages',
       column: 'id',
@@ -56,7 +56,7 @@ class PackageLogic {
   ) async {
     final String bucketName = 'user_assets';
 
-    // ১. প্রোফাইল ইমেজ পরিবর্তন হলে পুরোনোটি ডিলিট করো
+    /// profile image change then old picture delete
     if (newData['image_path'] != null &&
         newData['image_path'] != oldData['image_path']) {
       if (oldData['image_path'] != null) {
@@ -70,7 +70,7 @@ class PackageLogic {
       }
     }
 
-    // ২. গ্যালারি ইমেজ পরিবর্তন হলে পুরোনোগুলো ডিলিট করো
+    /// if gallery image change and old gallery is delete
     if (newData['gallery_paths'] != null &&
         newData['gallery_paths'] != oldData['gallery_paths']) {
       if (oldData['gallery_paths'] != null) {
@@ -89,7 +89,7 @@ class PackageLogic {
       }
     }
 
-    // ৩. ফাইনাল ডাটাবেস আপডেট
+    /// final database update
     await DatabaseHelper.update(
       table: 'packages',
       column: 'id',

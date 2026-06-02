@@ -5,14 +5,18 @@ class PaymentController {
     return await ActiveService.getActivePayments();
   }
 
-  // এটি Approve/Suspend এর জন্য (payment & booking দুটোই আপডেট করবে)
+  /// approve and suspend (payment and booking update)
   Future<void> updateStatus(String id, String status, Function onDone) async {
     await ActiveService.updatePaymentStatus(id, status);
     onDone();
   }
 
-  // এটি চেইনিংয়ের জন্য (শুধু booking_status আপডেট করবে)
-  Future<void> updateBookingStatusOnly(String id, String status, Function onDone) async {
+  /// only booking status update
+  Future<void> updateBookingStatusOnly(
+    String id,
+    String status,
+    Function onDone,
+  ) async {
     await ActiveService.updateBookingStatusOnly(id, status);
     onDone();
   }

@@ -7,11 +7,11 @@ class AddonsLogic {
   }
 
   static Future<void> addAddon(Map<String, dynamic> data) async {
-    // ID জেনারেট করে ডাটাবেসে পাঠানো
+    /// Id Generate and passed to database
     final Map<String, dynamic> finalData = Map<String, dynamic>.from(data);
     finalData['addon_id'] = generateAddonId();
 
-    // DatabaseHelper.insert সরাসরি কল করা হচ্ছে
+    /// database helper insert
     await DatabaseHelper.insert(table: 'addons', data: finalData);
   }
 
@@ -25,7 +25,7 @@ class AddonsLogic {
   }
 
   static Future<void> deleteAddon(Map<String, dynamic> item) async {
-    // ডাটাবেস এবং স্টোরেজ একসাথে ডিলিট
+    /// database storage delete
     await DatabaseHelper.deleteWithStorage(
       table: 'addons',
       column: 'id',

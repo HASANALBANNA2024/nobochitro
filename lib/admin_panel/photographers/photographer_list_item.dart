@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:nobochitro/DatabaseHelper/database_helper.dart';
+
 import 'photographer_form.dart';
 import 'photographer_logic.dart';
 
@@ -21,13 +23,13 @@ class PhotographerListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ডাটাবেস থেকে পাওয়া গ্যালারি পাথ হ্যান্ডেল করা
+    /// handler after receive gallery path from database
     List<dynamic> gallery = [];
     var rawGallery = item['recent_image_gallary_path'];
 
     if (rawGallery is String) {
       try {
-        gallery = jsonDecode(rawGallery); // স্ট্রিং থেকে লিস্টে কনভার্ট
+        gallery = jsonDecode(rawGallery);
       } catch (e) {
         gallery = [];
       }
@@ -39,35 +41,51 @@ class PhotographerListItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       child: ExpansionTile(
         leading: CircleAvatar(
-          backgroundImage: item['profile_image_path'] != null && item['profile_image_path'].isNotEmpty
+          backgroundImage:
+              item['profile_image_path'] != null &&
+                  item['profile_image_path'].isNotEmpty
               ? NetworkImage(getStorageUrl(item['profile_image_path']))
               : null,
-          child: (item['profile_image_path'] == null || item['profile_image_path'].isEmpty)
-              ? const Icon(Icons.person) : null,
+          child:
+              (item['profile_image_path'] == null ||
+                  item['profile_image_path'].isEmpty)
+              ? const Icon(Icons.person)
+              : null,
         ),
         title: Text(item['name'] ?? 'No Name'),
         subtitle: Text(item['specialty'] ?? 'N/A'),
         children: [
-          // ব্যানার ইমেজ
+          /// banner image
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: (item['banner_image_path'] != null && item['banner_image_path'].isNotEmpty)
+            child:
+                (item['banner_image_path'] != null &&
+                    item['banner_image_path'].isNotEmpty)
                 ? Image.network(
-              getStorageUrl(item['banner_image_path']),
-              height: 150,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox(height: 100, child: Center(child: Icon(Icons.broken_image))),
-            )
-                : const SizedBox(height: 50, child: Center(child: Text("No Banner"))),
+                    getStorageUrl(item['banner_image_path']),
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox(
+                      height: 100,
+                      child: Center(child: Icon(Icons.broken_image)),
+                    ),
+                  )
+                : const SizedBox(
+                    height: 50,
+                    child: Center(child: Text("No Banner")),
+                  ),
           ),
 
           const Padding(
             padding: EdgeInsets.all(8.0),
-            child: Text("Recent Work Gallery:", style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              "Recent Work Gallery:",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
 
-          // গ্যালারি গ্রিড
+          /// gallery grid
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -85,7 +103,7 @@ class PhotographerListItem extends StatelessWidget {
             ),
           ),
 
-          // এডিট ও ডিলিট বাটন
+          /// edit and delete button
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -100,15 +118,23 @@ class PhotographerListItem extends StatelessWidget {
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () async {
                   bool? confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text("Confirm Delete"),
-                        content: const Text("Are you sure you want to delete this photographer?"),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("No")),
-                          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Yes")),
-                        ],
-                      )
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text("Confirm Delete"),
+                      content: const Text(
+                        "Are you sure you want to delete this photographer?",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text("No"),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text("Yes"),
+                        ),
+                      ],
+                    ),
                   );
                   if (confirm == true) {
                     await PhotographerLogic.deletePhotographer(item);
