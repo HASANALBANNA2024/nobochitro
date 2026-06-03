@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:nobochitro/admin_panel/admin_dashboard.dart';
 import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/client_profile/client_profile_screen.dart';
+import 'package:nobochitro/settings/privacy_security_view.dart';
 
 import '../authentication/login_screen.dart';
 
@@ -122,6 +123,27 @@ class CustomSideNavigation extends StatelessWidget {
                         builder: (context) => const LoginModalSheet(),
                       );
                     }
+                  },
+                ),
+
+                /// Privacy and legal Policy
+                _buildDrawerItem(
+                  context,
+                  isSelected: selectedIndex == 4,
+                  icon: Icons.arrow_forward_ios_outlined,
+                  selectedIcon: Icons.arrow_forward_ios_rounded,
+                  label: "Privacy & Policy",
+                  primaryAccent: primaryAccent,
+                  onTap: () {
+                    onDestinationSelected(4);
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PrivacySecurityView(onThemeChanged: onThemeChanged),
+                      ),
+                    );
                   },
                 ),
 

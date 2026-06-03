@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/settings/privacy_security_view.dart';
 
 class SettingsUtils {
   static void showSettings(
@@ -144,10 +145,19 @@ class _SettingsContent extends StatelessWidget {
           // Privacy & Security
           ListTile(
             leading: Icon(Icons.lock_outline_rounded, color: primaryAccent),
-            title: const Text('Privacy & Security'),
-            subtitle: const Text('Password, account safety'),
+            title: const Text('Privacy & Policy'),
+            subtitle: const Text('Privacy and Policy of Our Event Management'),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      PrivacySecurityView(onThemeChanged: onThemeChanged),
+                ),
+              );
+            },
           ),
 
           // Help Support
