@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nobochitro/settings/help_center_view.dart';
 import 'package:nobochitro/settings/privacy_security_view.dart';
 
 class SettingsUtils {
@@ -138,7 +139,7 @@ class _SettingsContent extends StatelessWidget {
             subtitle: const Text('Manage alerts & updates'),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
             onTap: () {
-              // TODO: Navigate to Notification Settings
+              Navigator.pop(context);
             },
           ),
 
@@ -164,7 +165,16 @@ class _SettingsContent extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.help_outline_rounded, color: primaryAccent),
             title: const Text('Help Center'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      HelpCenterView(onThemeChanged: onThemeChanged),
+                ),
+              );
+            },
           ),
 
           const Divider(),
@@ -172,7 +182,7 @@ class _SettingsContent extends StatelessWidget {
           // App Info
           ListTile(
             leading: const Icon(Icons.info_outline_rounded),
-            title: const Text('About NoboChitro'),
+            title: const Text('NOBOCHITRO'),
             subtitle: const Text('Version 1.2.0'),
             onTap: () {},
           ),
