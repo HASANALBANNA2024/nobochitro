@@ -6,7 +6,6 @@ import 'package:nobochitro/booking_summary_screen/my_booking_screen.dart';
 import 'package:nobochitro/campaign_banner/n8n_dynamic_banner.dart';
 import 'package:nobochitro/categories_grid/categories_grid.dart';
 import 'package:nobochitro/client_profile/client_profile_screen.dart';
-import 'package:nobochitro/community_gallery/community_gallery.dart';
 import 'package:nobochitro/photographer_section/photographer_section.dart';
 import 'package:nobochitro/photography_package/photography_packages.dart';
 import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
@@ -16,7 +15,9 @@ import 'package:nobochitro/widgets/custom_bottom_nav.dart';
 import 'package:nobochitro/widgets/custom_header.dart';
 import 'package:nobochitro/widgets/custom_side_navigation.dart';
 
+import '../DatabaseHelper/database_helper.dart';
 import '../authentication/login_screen.dart';
+import '../community_gallery/community_gallery.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(bool) onThemeChanged;
@@ -62,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
-    /// 🛑 memory leak and background crash safety
+    /// memory leak and background crash safety
     _reviewTimer?.cancel();
     _hideTimer?.cancel();
     super.dispose();
@@ -119,7 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
 
-      /// 🟢  fixed button
+      /// fixed button
       floatingActionButton: _buildWriteReviewButton(context, primaryAccent),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
 
@@ -231,8 +232,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   PhotographerSection(primaryAccent: primaryAccent),
                   const SizedBox(height: 5),
                   CommunityGallery(
-                    primaryAccent: primaryAccent,
-                    sectionTitle: "Community Highlights",
+                    galleryFuture: DatabaseHelper.instance
+                        .getAllCommunityImages(),
+                    primaryAccent: Colors.blue,
                   ),
                   const SizedBox(height: 5),
                   ResponsiveReviewList(

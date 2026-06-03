@@ -3,6 +3,8 @@ import 'package:nobochitro/community_gallery/community_gallery.dart';
 import 'package:nobochitro/responsive_review_list/responsive_review_list.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
+import '../DatabaseHelper/database_helper.dart';
+
 class PhotographerProfileScreen extends StatelessWidget {
   final Color primaryAccent;
   final Map<String, dynamic> photographerData; // Database to come call
@@ -133,8 +135,13 @@ class PhotographerProfileScreen extends StatelessWidget {
 
                       const SizedBox(height: 15),
                       CommunityGallery(
+                        galleryFuture: DatabaseHelper.instance
+                            .getPhotographerGallery(
+                              photographerData['photographer_id'] ?? "",
+                            ),
                         primaryAccent: primaryAccent,
-                        sectionTitle: "Recent Masterpiece",
+                        sectionTitle:
+                            "Gallery of ${photographerData['name'] ?? 'photographer'}",
                       ),
                       const SizedBox(height: 15),
                       ResponsiveReviewList(

@@ -466,4 +466,63 @@ class DatabaseHelper {
       debugPrint("Storage Delete Error: $e");
     }
   }
+
+  /// Community Gallery
+
+  /// Dashboard screen ar function all image of category and all package gallery
+  Future<List<String>> getAllCommunityImages() async {
+    final pkgRes = await _client.from('packages').select('gallary_image_url');
+    final phRes = await _client
+        .from('photographers')
+        .select('recent_image_gallary_path');
+
+    List<String> allImages = [];
+    for (var p in pkgRes as List) {
+      if (p['gallary_image_url'] != null)
+        allImages.addAll(List<String>.from(p['gallary_image_url']));
+    }
+    for (var ph in phRes as List) {
+      if (ph['recent_image_gallary_path'] != null)
+        allImages.addAll(List<String>.from(ph['recent_image_gallary_path']));
+    }
+    return allImages.toSet().toList();
+  }
+
+  /// Package
+  Future<List<String>> getPackageGallery(String packageId) async {
+    final response = await _client
+        .from('packages')
+        .select('gallary_image_url')
+        .eq('package_id', packageId)
+        .maybeSingle();
+    return response != null && response['gallary_image_url'] != null
+        ? List<String>.from(response['gallary_image_url'])
+        : [];
+  }
+
+  /// Photographers
+  Future<List<String>> getPhotographerGallery(String photographerId) async {
+    final response = await _client
+        .from('photographers')
+        .select('recent_image_gallary_path')
+        .eq('photographer_id', photographerId)
+        .maybeSingle();
+    return response != null && response['recent_image_gallary_path'] != null
+        ? List<String>.from(response['recent_image_gallary_path'])
+        : [];
+  }
+
+  /// Categories
+  Future<List<String>> getCategoryGallery(String categoryName) async {
+    final response = await _client
+        .from('packages')
+        .select('gallary_image_url')
+        .eq('category', categoryName);
+    List<String> allImages = [];
+    for (var p in response as List) {
+      if (p['gallary_image_url'] != null)
+        allImages.addAll(List<String>.from(p['gallary_image_url']));
+    }
+    return allImages;
+  }
 }

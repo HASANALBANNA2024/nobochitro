@@ -6,7 +6,7 @@ import 'package:nobochitro/photography_package/package_comparison_table.dart';
 import 'package:nobochitro/widgets/custom_appbar.dart';
 
 import '../authentication/login_screen.dart';
-import '../responsive_review_list/responsive_review_list.dart';
+import '../community_gallery/community_gallery.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final Color primaryAccent;
@@ -82,6 +82,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF252525) : Colors.white;
     final pkg = widget.packageData;
+    final String packageId = pkg['package_id'].toString();
 
     return Scaffold(
       backgroundColor: isDark
@@ -127,14 +128,14 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 ),
 
                 const SizedBox(height: 20),
+                CommunityGallery(
+                  galleryFuture: DatabaseHelper.instance.getPackageGallery(
+                    packageId,
+                  ),
+                  primaryAccent: Colors.blue,
+                ),
 
                 _buildBookButton(pkg),
-                const SizedBox(height: 20),
-                ResponsiveReviewList(
-                  primaryAccent: const Color(0xFFE5A93C),
-                  sectionTitle: 'Package Reviews',
-                  filterPackageName: pkg['title']?.toString(),
-                ),
                 const SizedBox(height: 20),
               ],
             ),

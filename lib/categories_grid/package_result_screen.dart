@@ -188,8 +188,10 @@ class _PackageResultScreenState extends State<PackageResultScreen> {
 
                     const SizedBox(height: 40),
                     CommunityGallery(
-                      primaryAccent: widget.primaryAccent,
-                      sectionTitle: "Portfolio Showcase",
+                      galleryFuture: DatabaseHelper.instance.getCategoryGallery(
+                        widget.categoryName,
+                      ),
+                      primaryAccent: Colors.teal,
                     ),
                     const SizedBox(height: 20),
                     ResponsiveReviewList(
