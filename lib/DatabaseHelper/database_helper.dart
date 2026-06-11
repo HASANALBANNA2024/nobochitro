@@ -460,7 +460,7 @@ class DatabaseHelper {
   /// review image delete
   static Future<void> deleteFileFromStorage(String path) async {
     try {
-      // Supabase storage delete logic
+      /// Supabase storage delete logic
       await _client.storage.from('review_images').remove([path]);
     } catch (e) {
       debugPrint("Storage Delete Error: $e");
@@ -471,21 +471,50 @@ class DatabaseHelper {
 
   /// Dashboard screen ar function all image of category and all package gallery
   Future<List<String>> getAllCommunityImages() async {
-    final pkgRes = await _client.from('packages').select('gallary_image_url');
-    final phRes = await _client
-        .from('photographers')
-        .select('recent_image_gallary_path');
+    try {
+      final pkgRes = await _client.from('packages').select('gallary_image_url');
+      final phRes = await _client
+          .from('photographers')
+          .select('recent_image_gallary_path');
 
-    List<String> allImages = [];
-    for (var p in pkgRes as List) {
-      if (p['gallary_image_url'] != null)
-        allImages.addAll(List<String>.from(p['gallary_image_url']));
+      List<String> allImages = [];
+
+      /// package image processing
+      for (var p in pkgRes as List) {
+        final rawData = p['gallary_image_url'];
+        if (rawData != null) {
+          allImages.addAll(_parseStringToList(rawData));
+        }
+      }
+
+      /// photographer image processing
+      for (var ph in phRes as List) {
+        final rawData = ph['recent_image_gallary_path'];
+        if (rawData != null) {
+          allImages.addAll(_parseStringToList(rawData));
+        }
+      }
+
+      return allImages.toSet().toList();
+    } catch (e) {
+      print("Error fetching community images: $e");
+      return [];
     }
-    for (var ph in phRes as List) {
-      if (ph['recent_image_gallary_path'] != null)
-        allImages.addAll(List<String>.from(ph['recent_image_gallary_path']));
+  }
+
+  /// string to list converter
+  List<String> _parseStringToList(dynamic rawData) {
+    if (rawData is List) {
+      return List<String>.from(rawData);
+    } else if (rawData is String) {
+      // কমা দিয়ে আলাদা করা থাকলে স্প্লিট করবে
+      return rawData
+          .split(',')
+          .map((url) => url.trim())
+          .where((url) => url.isNotEmpty)
+          .toList();
     }
-    return allImages.toSet().toList();
+    return [];
   }
 
   /// Package
